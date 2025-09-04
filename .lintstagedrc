@@ -1,6 +1,5 @@
 {
     "backend/**/*.go": [
-      "cd backend && go fmt ./...",
-      "cd backend && golangci-lint run"
+        "make backend-check"
     ]
 }
