@@ -4,6 +4,9 @@
 		"lint-staged": "^16.1.6"
 	},
 	"scripts": {
-		"prepare": "husky"
+		"prepare": "husky",
+		"backend-check": "cd backend && go fmt ./... && golangci-lint run",
+		"backend-format": "cd backend && go fmt ./...",
+		"backend-lint": "cd backend && golangci-lint run"
 	}
 }

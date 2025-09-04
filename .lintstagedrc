@@ -1,5 +1,5 @@
 {
     "backend/**/*.go": [
-        "make backend-check"
+        "pnpm backend-check"
     ]
 }
