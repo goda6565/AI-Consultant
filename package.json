@@ -5,8 +5,9 @@
 	},
 	"scripts": {
 		"prepare": "husky",
-		"backend-check": "cd backend && go fmt ./... && golangci-lint run",
+		"backend-check": "cd backend && go fmt ./... && golangci-lint run && go test ./...",
 		"backend-format": "cd backend && go fmt ./...",
-		"backend-lint": "cd backend && golangci-lint run"
+		"backend-lint": "cd backend && golangci-lint run",
+		"backend-test": "cd backend && go test ./..."
 	}
 }
