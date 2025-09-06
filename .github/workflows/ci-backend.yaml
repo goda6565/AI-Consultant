@@ -33,7 +33,7 @@ jobs:
         run: go mod tidy
 
       - name: Run linter
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           working-directory: backend
           version: ${{ matrix.golangci-lint-version }}
