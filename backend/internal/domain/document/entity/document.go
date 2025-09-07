@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/value"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
 )
@@ -8,13 +10,12 @@ import (
 type Document struct {
 	id                sharedValue.ID
 	title             value.Title
-	documentType      value.DocumentType
 	documentExtension value.DocumentExtension
-	storagePath       *value.StoragePath
+	storagePath       value.StorageInfo
 	status            value.DocumentStatus
 	syncStep          value.SyncStep
-	createdAt         sharedValue.DateTime
-	updatedAt         sharedValue.DateTime
+	createdAt         *time.Time
+	updatedAt         *time.Time
 }
 
 func (d *Document) MarkAsSyncVectorDone() {
@@ -29,7 +30,7 @@ func (d *Document) MarkAsFailed() {
 	d.status = value.DocumentStatusFailed
 }
 
-func (d *Document) SetUpdatedAt(updatedAt sharedValue.DateTime) {
+func (d *Document) SetUpdatedAt(updatedAt *time.Time) {
 	d.updatedAt = updatedAt
 }
 
@@ -41,15 +42,11 @@ func (d *Document) GetTitle() value.Title {
 	return d.title
 }
 
-func (d *Document) GetDocumentType() value.DocumentType {
-	return d.documentType
-}
-
 func (d *Document) GetDocumentExtension() value.DocumentExtension {
 	return d.documentExtension
 }
 
-func (d *Document) GetStoragePath() *value.StoragePath {
+func (d *Document) GetStoragePath() value.StorageInfo {
 	return d.storagePath
 }
 
@@ -61,31 +58,32 @@ func (d *Document) GetSyncStep() value.SyncStep {
 	return d.syncStep
 }
 
-func (d *Document) GetCreatedAt() sharedValue.DateTime {
+func (d *Document) GetCreatedAt() *time.Time {
 	return d.createdAt
 }
 
-func (d *Document) GetUpdatedAt() sharedValue.DateTime {
+func (d *Document) GetUpdatedAt() *time.Time {
 	return d.updatedAt
 }
 
 func NewDocument(
 	id sharedValue.ID,
 	title value.Title,
-	documentType value.DocumentType,
 	documentExtension value.DocumentExtension,
-	storagePath *value.StoragePath,
-	createdAt sharedValue.DateTime,
+	storageInfo value.StorageInfo,
+	status value.DocumentStatus,
+	syncStep value.SyncStep,
+	createdAt *time.Time,
+	updatedAt *time.Time,
 ) *Document {
 	return &Document{
 		id:                id,
 		title:             title,
-		documentType:      documentType,
 		documentExtension: documentExtension,
-		storagePath:       storagePath,
-		status:            value.DocumentStatusProcessing,
-		syncStep:          value.SyncStepPending,
+		storagePath:       storageInfo,
+		status:            status,
+		syncStep:          syncStep,
 		createdAt:         createdAt,
-		updatedAt:         createdAt,
+		updatedAt:         updatedAt,
 	}
 }

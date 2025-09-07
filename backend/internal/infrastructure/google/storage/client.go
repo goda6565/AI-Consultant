@@ -42,7 +42,7 @@ func (c *StorageClient) Upload(ctx context.Context, bucketName string, objectNam
 	return nil
 }
 
-func (c *StorageClient) Download(ctx context.Context, path value.StoragePath) (io.ReadCloser, error) {
+func (c *StorageClient) Download(ctx context.Context, path value.StorageInfo) (io.ReadCloser, error) {
 	bucketName := path.BucketName()
 	objectName := path.ObjectName()
 	bucket := c.client.Bucket(bucketName)
@@ -54,7 +54,7 @@ func (c *StorageClient) Download(ctx context.Context, path value.StoragePath) (i
 	return reader, nil
 }
 
-func (c *StorageClient) Delete(ctx context.Context, path value.StoragePath) error {
+func (c *StorageClient) Delete(ctx context.Context, path value.StorageInfo) error {
 	bucketName := path.BucketName()
 	objectName := path.ObjectName()
 	bucket := c.client.Bucket(bucketName)

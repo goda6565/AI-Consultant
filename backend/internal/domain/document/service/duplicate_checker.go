@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/repository"
@@ -17,23 +18,10 @@ func NewDuplicateChecker(documentRepository repository.DocumentRepository) *Dupl
 	}
 }
 
-func (dc *DuplicateChecker) CheckDuplicateByTitle(title value.Title) (bool, error) {
-	existingDoc, err := dc.documentRepository.FindByTitle(title)
+func (dc *DuplicateChecker) CheckDuplicateByTitle(ctx context.Context, title value.Title) (bool, error) {
+	existingDoc, err := dc.documentRepository.FindByTitle(ctx, title)
 	if err != nil {
 		return false, fmt.Errorf("failed to find document by title: %w", err)
-	}
-
-	return existingDoc != nil, nil
-}
-
-func (dc *DuplicateChecker) CheckDuplicateByPath(path *value.StoragePath) (bool, error) {
-	if path == nil {
-		return false, nil
-	}
-
-	existingDoc, err := dc.documentRepository.FindByPath(*path)
-	if err != nil {
-		return false, fmt.Errorf("failed to find document by path: %w", err)
 	}
 
 	return existingDoc != nil, nil

@@ -10,6 +10,7 @@
 package mock
 
 import (
+	context "context"
 	reflect "reflect"
 
 	entity "github.com/goda6565/ai-consultant/backend/internal/domain/document/entity"
@@ -43,104 +44,90 @@ func (m *MockDocumentRepository) EXPECT() *MockDocumentRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockDocumentRepository) Create(document *entity.Document) error {
+func (m *MockDocumentRepository) Create(ctx context.Context, document *entity.Document) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", document)
+	ret := m.ctrl.Call(m, "Create", ctx, document)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockDocumentRepositoryMockRecorder) Create(document any) *gomock.Call {
+func (mr *MockDocumentRepositoryMockRecorder) Create(ctx, document any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDocumentRepository)(nil).Create), document)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDocumentRepository)(nil).Create), ctx, document)
 }
 
 // Delete mocks base method.
-func (m *MockDocumentRepository) Delete(id value0.ID) error {
+func (m *MockDocumentRepository) Delete(ctx context.Context, id value0.ID) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockDocumentRepositoryMockRecorder) Delete(id any) *gomock.Call {
+func (mr *MockDocumentRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDocumentRepository)(nil).Delete), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDocumentRepository)(nil).Delete), ctx, id)
 }
 
 // FindAll mocks base method.
-func (m *MockDocumentRepository) FindAll() ([]entity.Document, error) {
+func (m *MockDocumentRepository) FindAll(ctx context.Context) ([]entity.Document, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAll")
+	ret := m.ctrl.Call(m, "FindAll", ctx)
 	ret0, _ := ret[0].([]entity.Document)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindAll indicates an expected call of FindAll.
-func (mr *MockDocumentRepositoryMockRecorder) FindAll() *gomock.Call {
+func (mr *MockDocumentRepositoryMockRecorder) FindAll(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockDocumentRepository)(nil).FindAll))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockDocumentRepository)(nil).FindAll), ctx)
 }
 
 // FindById mocks base method.
-func (m *MockDocumentRepository) FindById(id value0.ID) (*entity.Document, error) {
+func (m *MockDocumentRepository) FindById(ctx context.Context, id value0.ID) (*entity.Document, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindById", id)
+	ret := m.ctrl.Call(m, "FindById", ctx, id)
 	ret0, _ := ret[0].(*entity.Document)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindById indicates an expected call of FindById.
-func (mr *MockDocumentRepositoryMockRecorder) FindById(id any) *gomock.Call {
+func (mr *MockDocumentRepositoryMockRecorder) FindById(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockDocumentRepository)(nil).FindById), id)
-}
-
-// FindByPath mocks base method.
-func (m *MockDocumentRepository) FindByPath(path value.StoragePath) (*entity.Document, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByPath", path)
-	ret0, _ := ret[0].(*entity.Document)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FindByPath indicates an expected call of FindByPath.
-func (mr *MockDocumentRepositoryMockRecorder) FindByPath(path any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByPath", reflect.TypeOf((*MockDocumentRepository)(nil).FindByPath), path)
-}
-
-// FindByStatus mocks base method.
-func (m *MockDocumentRepository) FindByStatus(status value.DocumentStatus) ([]entity.Document, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByStatus", status)
-	ret0, _ := ret[0].([]entity.Document)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FindByStatus indicates an expected call of FindByStatus.
-func (mr *MockDocumentRepositoryMockRecorder) FindByStatus(status any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByStatus", reflect.TypeOf((*MockDocumentRepository)(nil).FindByStatus), status)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockDocumentRepository)(nil).FindById), ctx, id)
 }
 
 // FindByTitle mocks base method.
-func (m *MockDocumentRepository) FindByTitle(title value.Title) (*entity.Document, error) {
+func (m *MockDocumentRepository) FindByTitle(ctx context.Context, title value.Title) (*entity.Document, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByTitle", title)
+	ret := m.ctrl.Call(m, "FindByTitle", ctx, title)
 	ret0, _ := ret[0].(*entity.Document)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByTitle indicates an expected call of FindByTitle.
-func (mr *MockDocumentRepositoryMockRecorder) FindByTitle(title any) *gomock.Call {
+func (mr *MockDocumentRepositoryMockRecorder) FindByTitle(ctx, title any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByTitle", reflect.TypeOf((*MockDocumentRepository)(nil).FindByTitle), title)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByTitle", reflect.TypeOf((*MockDocumentRepository)(nil).FindByTitle), ctx, title)
+}
+
+// Update mocks base method.
+func (m *MockDocumentRepository) Update(ctx context.Context, document *entity.Document) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, document)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockDocumentRepositoryMockRecorder) Update(ctx, document any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDocumentRepository)(nil).Update), ctx, document)
 }

@@ -1,0 +1,19 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/infrastructure/google/database/internal/query/app/*.sql"
+    schema: "../infrastructure/schemas/migrations/app/*.sql"
+    gen:
+      go:
+        package: "app"
+        out: "internal/infrastructure/google/database/internal/gen/app"
+        sql_package: "pgx/v5"
+
+  - engine: "postgresql"
+    queries: "internal/infrastructure/google/database/internal/query/vector/*.sql"
+    schema: "../infrastructure/schemas/migrations/vector/*.sql"
+    gen:
+      go:
+        package: "vector"
+        out: "internal/infrastructure/google/database/internal/gen/vector"
+        sql_package: "pgx/v5"

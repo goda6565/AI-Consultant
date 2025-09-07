@@ -1,0 +1,46 @@
+services:
+  vector-db:
+    image: pgvector/pgvector:pg17-trixie
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: vector_db
+    volumes:
+      - vector-db-data:/var/lib/postgresql/data
+    networks:
+      - ai-consultant-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vector_db"]
+      timeout: 20s
+      retries: 10
+      interval: 2s
+      start_period: 10s
+  
+  app-db:
+    image: postgres:17
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app_db
+    volumes:
+      - app-db-data:/var/lib/postgresql/data
+    networks:
+      - ai-consultant-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d app_db"]
+      timeout: 20s
+      retries: 10
+      interval: 2s
+      start_period: 10s
+
+networks:
+  ai-consultant-network:
+    driver: bridge
+
+volumes:
+  vector-db-data:
+  app-db-data:

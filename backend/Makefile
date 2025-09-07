@@ -27,3 +27,36 @@ check: ## Check the code
 .PHONY: mock_gen
 mock_gen: ## Generate mock files
 	go generate ./...
+
+# sqlc
+.PHONY: sqlc
+sqlc: ## Generate the sqlc files
+	go tool sqlc generate
+
+# run
+.PHONY: run
+run: ## Run the application
+	docker compose up -d
+
+# stop
+.PHONY: stop
+stop: ## Stop the application
+	docker compose down --volumes --remove-orphans
+
+# migrate-app-up
+.PHONY: migrate-app-up
+migrate-app-up: ## Run the migrations app up
+	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/app -database postgres://postgres:password@localhost:5433/app_db?sslmode=disable up
+
+# migrate-vector-up
+migrate-vector-up: ## Run the migrations vector up
+	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/vector -database postgres://postgres:password@localhost:5432/vector_db?sslmode=disable up
+
+# migrate-down
+.PHONY: migrate-app-down
+migrate-app-down: ## Run the migrations app down
+	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/app -database postgres://postgres:password@localhost:5433/app_db?sslmode=disable down -all
+
+# migrate-vector-down
+migrate-vector-down: ## Run the migrations vector down
+	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/vector -database postgres://postgres:password@localhost:5432/vector_db?sslmode=disable down -all

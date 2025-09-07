@@ -43,7 +43,7 @@ func (m *MockStoragePort) EXPECT() *MockStoragePortMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockStoragePort) Delete(ctx context.Context, path value.StoragePath) error {
+func (m *MockStoragePort) Delete(ctx context.Context, path value.StorageInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, path)
 	ret0, _ := ret[0].(error)
@@ -57,7 +57,7 @@ func (mr *MockStoragePortMockRecorder) Delete(ctx, path any) *gomock.Call {
 }
 
 // Download mocks base method.
-func (m *MockStoragePort) Download(ctx context.Context, path value.StoragePath) (io.ReadCloser, error) {
+func (m *MockStoragePort) Download(ctx context.Context, path value.StorageInfo) (io.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Download", ctx, path)
 	ret0, _ := ret[0].(io.ReadCloser)
