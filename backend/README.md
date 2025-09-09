@@ -12,6 +12,8 @@ There are 3 services in the backend.
 - Agent: AI Consultant Agent (websocket)
 - Vector: Sync Document to Vector Database (pubsub)
 
+All services are running on the cloud run.
+
 ## Run Application
 
 ```bash
