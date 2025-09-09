@@ -6,7 +6,7 @@ resource "google_sql_database_instance" "instance" {
 
   settings {
     tier = var.tier
-    edition = "STANDARD"
+    edition = "ENTERPRISE"
 
     ip_configuration {
       ipv4_enabled    = false
