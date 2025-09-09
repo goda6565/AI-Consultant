@@ -4,7 +4,7 @@ This directory manages the infrastructure for AI Consultant.
 
 ## What's Not Managed
 - Google Cloud Project
-- Google Cloud API’s Enablement (Should be enabled manually)
+- Google Cloud API’s Enablement (Some APIs are managed by Terraform but not must)
 - Terraform backend bucket
 
 ## Backend Bucket
