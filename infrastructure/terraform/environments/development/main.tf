@@ -58,7 +58,7 @@ module "backend_admin_cloudbuild_trigger" {
   trigger_name                  = "${var.environment}-${var.service}-backend-admin-cloudbuild-trigger"
   trigger_description           = "Cloud Build trigger for backend admin development"
   file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/backend-admin.yaml"
-  included_files                = ["backend/**, infrastructure/deployments/${var.environment}/backend-admin.yaml"]
+  included_files                = ["backend/**, infrastructure/deployments/cloudbuild/${var.environment}/backend-admin.yaml"]
   cloudbuild_service_account_id = var.cloudbuild_service_account_id
   github_repository_id          = var.github_repository_id
   branch_pattern                = "^develop$"
