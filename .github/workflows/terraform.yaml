@@ -1,0 +1,151 @@
+name: "Terraform plan/apply"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform.yaml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/terraform.yaml'
+env:
+  TF_VERSION: 1.12.0
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  detect:
+    name: "Detect changed environments"
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Filter changed paths
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            global:
+              - 'infrastructure/terraform/environments/shared/**'
+            development:
+              - 'infrastructure/terraform/environments/development/**'
+            stage:
+              - 'infrastructure/terraform/environments/staging/**'
+            production:
+              - 'infrastructure/terraform/environments/production/**'
+            modules:
+              - 'infrastructure/terraform/modules/**'
+            workflow:
+              - '.github/workflows/terraform.yaml'
+
+      - name: Set matrix
+        id: set-matrix
+        shell: bash
+        run: |
+          dirs=()
+          add_dir() {
+            if [ -d "$1" ]; then dirs+=("$1"); fi
+          }
+          if [[ "${{ steps.changes.outputs.modules }}" == 'true' || "${{ steps.changes.outputs.workflow }}" == 'true' ]]; then
+            add_dir "infrastructure/terraform/environments/shared"
+            add_dir "infrastructure/terraform/environments/development"
+            add_dir "infrastructure/terraform/environments/staging"
+            add_dir "infrastructure/terraform/environments/production"
+          else
+            if [[ "${{ steps.changes.outputs.global }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/shared"; fi
+            if [[ "${{ steps.changes.outputs.development }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/development"; fi
+            if [[ "${{ steps.changes.outputs.stage }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/staging"; fi
+            if [[ "${{ steps.changes.outputs.production }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/production"; fi
+          fi
+          if [ ${#dirs[@]} -eq 0 ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo 'matrix=[]' >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            # Build JSON array without jq
+            json="["
+            for d in "${dirs[@]}"; do
+              json+="\"$d\"," 
+            done
+            json="${json%,}]"
+            echo "matrix=$json" >> $GITHUB_OUTPUT
+          fi
+
+  terraform:
+    name: "Terraform Apply Plan"
+    needs: detect
+    if: needs.detect.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ${{ fromJSON(needs.detect.outputs.matrix) }}
+      fail-fast: false
+    defaults:
+      run:
+        working-directory: ${{ matrix.directory }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup tfcmt
+        uses: shmokmt/actions-setup-tfcmt@v2
+        with:
+          version: v4.13.0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/165573575904/locations/global/workloadIdentityPools/github-actions-wip-pool/providers/github-actions-pool-provider
+          service_account: terraform-executor@ai-consultant-471305.iam.gserviceaccount.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Set environment name
+        id: set-env
+        run: echo "env_name=$(basename "${{ matrix.directory }}")" >> $GITHUB_OUTPUT
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tfcmt -var "target:${{ steps.set-env.outputs.env_name }}" plan -patch -- terraform plan -no-color -input=false
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tfcmt apply -- terraform apply -auto-approve -input=false
