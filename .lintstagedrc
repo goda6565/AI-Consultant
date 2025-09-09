@@ -6,6 +6,6 @@
         "bash -c 'pnpm shared-tf-check'"
     ],
     "infrastructure/terraform/environments/development/*.tf": [
-        "bash -c 'pnpm development-tf-check'"
+        "bash -c 'pnpm dev-tf-check'"
     ]
 }

@@ -21,3 +21,15 @@ variable "environment" {
   description = "The name of the environment"
   default     = "dev"
 }
+
+variable "vpc_id" {
+  type        = string
+  description = "The ID of the VPC"
+  default     = "shared-ai-consultant-vpc"
+}
+
+variable "subnet_id" {
+  type        = string
+  description = "The ID of the subnet"
+  default     = "shared-ai-consultant-subnet"
+}

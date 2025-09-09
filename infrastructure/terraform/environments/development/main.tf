@@ -18,8 +18,8 @@ module "backend_admin_cloudrun" {
       value = "development"
     }
   ]
-  vpc_name             = module.network.vpc_id
-  subnet_name          = module.network.subnet_id
+  vpc_name             = var.vpc_id
+  subnet_name          = var.subnet_id
   enable_public_access = true
   environment          = var.environment
   service              = var.service
@@ -36,8 +36,8 @@ module "backend_agent_cloudrun" {
       value = "development"
     }
   ]
-  vpc_name             = module.network.vpc_id
-  subnet_name          = module.network.subnet_id
+  vpc_name             = var.vpc_id
+  subnet_name          = var.subnet_id
   enable_public_access = true
   environment          = var.environment
   service              = var.service
@@ -54,8 +54,8 @@ module "backend_vector_cloudrun" {
       value = "development"
     }
   ]
-  vpc_name             = module.network.vpc_id
-  subnet_name          = module.network.subnet_id
+  vpc_name             = var.vpc_id
+  subnet_name          = var.subnet_id
   enable_public_access = true
   environment          = var.environment
   service              = var.service
