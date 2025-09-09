@@ -27,3 +27,15 @@ module "network" {
   environment = var.environment
   service     = var.service
 }
+
+# Now all applications are running on the same database
+module "cloudsql" {
+  source = "../../modules/cloudsql"
+
+  name             = "${var.environment}-${var.service}-database"
+  region           = var.region
+  database_version = "POSTGRES_17"
+  tier             = "db-f1-micro"
+  vpc_id           = module.network.vpc_id
+  databases        = ["dev_app_db", "dev_vector_db"]
+}
