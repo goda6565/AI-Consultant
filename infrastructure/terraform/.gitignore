@@ -1,0 +1,32 @@
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+
+# Terraform configuration files
+.terraformrc
+terraform.rc
+
+# Terraform variable definitions files (if not intended for version control)
+*.tfvars
+*.tfvars.json
+
+# Terraform generated directories
+.terraform/
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Plan files
+*.tfplan
+*.plan
+
+# Local override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Workspace state dir and lock info
+terraform.tfstate.d/
+.terraform.tfstate.lock.info

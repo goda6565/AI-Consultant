@@ -1,5 +1,8 @@
 {
     "backend/**/*.go": [
-        "pnpm backend-check --"
+        "bash -c 'pnpm backend-check'"
+    ],
+    "infrastructure/terraform/environments/shared/*.tf": [
+        "bash -c 'pnpm shared-tf-check'"
     ]
 }
