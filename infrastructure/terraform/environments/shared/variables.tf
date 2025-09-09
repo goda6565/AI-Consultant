@@ -15,3 +15,15 @@ variable "backend_bucket_name" {
   description = "The name of the backend bucket"
   default     = "ai-consultant-tf-backend"
 }
+
+variable "service" {
+  type        = string
+  description = "The name of the service"
+  default     = "ai-consultant"
+}
+
+variable "environment" {
+  type        = string
+  description = "The name of the environment"
+  default     = "shared"
+}
