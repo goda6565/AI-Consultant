@@ -63,6 +63,34 @@ locals {
     {
       name  = "VERTEX_AI_LOCATION"
       value = "global"
+    },
+    {
+      name = "VECTOR_DB_USERNAME"
+      secret_key_ref = {
+        secret  = "development-ai-consultant-vector-db-username"
+        version = "latest"
+      }
+    },
+    {
+      name = "VECTOR_DB_PASSWORD"
+      secret_key_ref = {
+        secret  = "development-ai-consultant-vector-db-password"
+        version = "latest"
+      }
+    },
+    {
+      name = "APP_DB_USERNAME"
+      secret_key_ref = {
+        secret  = "development-ai-consultant-app-db-username"
+        version = "latest"
+      }
+    },
+    {
+      name = "APP_DB_PASSWORD"
+      secret_key_ref = {
+        secret  = "development-ai-consultant-app-db-password"
+        version = "latest"
+      }
     }
   ]
 }
