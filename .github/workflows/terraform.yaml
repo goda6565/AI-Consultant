@@ -3,13 +3,13 @@ name: "Terraform plan/apply"
 on:
   push:
     branches:
-      - main
+      - develop
     paths:
       - 'infrastructure/terraform/**'
       - '.github/workflows/terraform.yaml'
   pull_request:
     branches:
-      - main
+      - develop
     paths:
       - 'infrastructure/terraform/**'
       - '.github/workflows/terraform.yaml'
@@ -145,7 +145,7 @@ jobs:
         run: exit 1
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: tfcmt apply -- terraform apply -auto-approve -input=false
