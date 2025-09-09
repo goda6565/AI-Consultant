@@ -1,0 +1,31 @@
+FROM golang:1.25.1-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o admin ./main.go
+
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=builder /app/admin .
+
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -S appuser -u 1001 -G appgroup
+
+RUN chown appuser:appgroup admin && \
+    chmod +x admin
+
+USER appuser
+
+EXPOSE 8080
+
+CMD ["./admin", "admin", "run"]
