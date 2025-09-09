@@ -5,7 +5,7 @@ resource "google_sql_database_instance" "instance" {
   deletion_protection = false
 
   settings {
-    tier = var.tier
+    tier    = var.tier
     edition = "ENTERPRISE"
 
     ip_configuration {
