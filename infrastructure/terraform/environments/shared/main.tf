@@ -39,3 +39,20 @@ module "cloudsql" {
   vpc_id           = module.network.vpc_id
   databases        = ["dev_app_db", "dev_vector_db"]
 }
+
+module "cloudbuild-connection" {
+  source = "../../modules/cloudbuild-connection"
+
+  project_id                 = var.project_id
+  github_organization        = "goda6565"
+  github_repository_name     = "AI-Consultant"
+  github_app_installation_id = "58532167"
+  enable_roles = [
+    "roles/artifactregistry.writer",
+    "roles/cloudbuild.workerPoolUser",
+    "roles/run.admin",
+    "roles/secretmanager.secretAccessor",
+    "roles/iam.serviceAccountUser",
+    "roles/logging.logWriter",
+  ]
+}

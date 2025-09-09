@@ -38,11 +38,11 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            global:
+            shared:
               - 'infrastructure/terraform/environments/shared/**'
             development:
               - 'infrastructure/terraform/environments/development/**'
-            stage:
+            staging:
               - 'infrastructure/terraform/environments/staging/**'
             production:
               - 'infrastructure/terraform/environments/production/**'
@@ -65,9 +65,9 @@ jobs:
             add_dir "infrastructure/terraform/environments/staging"
             add_dir "infrastructure/terraform/environments/production"
           else
-            if [[ "${{ steps.changes.outputs.global }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/shared"; fi
+            if [[ "${{ steps.changes.outputs.shared }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/shared"; fi
             if [[ "${{ steps.changes.outputs.development }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/development"; fi
-            if [[ "${{ steps.changes.outputs.stage }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/staging"; fi
+            if [[ "${{ steps.changes.outputs.staging }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/staging"; fi
             if [[ "${{ steps.changes.outputs.production }}" == 'true' ]]; then add_dir "infrastructure/terraform/environments/production"; fi
           fi
           if [ ${#dirs[@]} -eq 0 ]; then
