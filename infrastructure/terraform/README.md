@@ -6,6 +6,7 @@ This directory manages the infrastructure for AI Consultant.
 - Google Cloud Project
 - Google Cloud API’s Enablement (Some APIs are managed by Terraform but not must)
 - Terraform backend bucket
+- Cloud Build Host Connection
 
 ## Backend Bucket
 Now, we use a single backend bucket for all environments.

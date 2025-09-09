@@ -6,7 +6,7 @@ resource "google_cloud_run_v2_service" "cloudrun_service" {
 
   template {
     containers {
-      image = "nginx:latest" # This is a dummy image to avoid terraform plan error. Cloud Build will override this.
+      image = "gcr.io/cloudrun/hello" # Using Cloud Run hello image that properly listens on PORT env var
       ports {
         container_port = 8080 # This is a dummy port to avoid terraform plan error. Cloud Build will override this.
       }
