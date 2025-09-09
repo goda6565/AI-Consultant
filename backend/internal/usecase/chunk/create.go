@@ -6,16 +6,17 @@ import (
 	"io"
 
 	chunkEntity "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/entity"
-	chunkRepository "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/repository"
 	chunkService "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	chunkValue "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/value"
+	documentEntity "github.com/goda6565/ai-consultant/backend/internal/domain/document/entity"
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/domain/document/repository"
 	documentValue "github.com/goda6565/ai-consultant/backend/internal/domain/document/value"
 	llm "github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
-	errors "github.com/goda6565/ai-consultant/backend/internal/usecase/error"
+	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
 	storagePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/storage"
+	transactionPorts "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/transaction"
 )
 
 type CreateChunkInputPort interface {
@@ -31,7 +32,7 @@ type CreateChunkOutput struct {
 }
 
 type CreateChunkInteractor struct {
-	chunkRepository    chunkRepository.ChunkRepository
+	vectorUnitOfWork   transactionPorts.VectorUnitOfWork
 	documentRepository documentRepository.DocumentRepository
 	pdfParser          chunkService.PdfParser
 	csvAnalyzer        chunkService.CsvAnalyzer
@@ -40,11 +41,19 @@ type CreateChunkInteractor struct {
 	llmClient          llm.LLMClient
 }
 
-func NewCreateChunkUseCase(chunkRepository chunkRepository.ChunkRepository, documentRepository documentRepository.DocumentRepository, pdfParser chunkService.PdfParser, csvAnalyzer chunkService.CsvAnalyzer, chunker chunkService.Chunker) CreateChunkInputPort {
-	return &CreateChunkInteractor{chunkRepository: chunkRepository, documentRepository: documentRepository, pdfParser: pdfParser, csvAnalyzer: csvAnalyzer, chunker: chunker}
+func NewCreateChunkUseCase(vectorUnitOfWork transactionPorts.VectorUnitOfWork, documentRepository documentRepository.DocumentRepository, pdfParser chunkService.PdfParser, csvAnalyzer chunkService.CsvAnalyzer, chunker chunkService.Chunker, storagePort storagePort.StoragePort, llmClient llm.LLMClient) CreateChunkInputPort {
+	return &CreateChunkInteractor{
+		vectorUnitOfWork:   vectorUnitOfWork,
+		documentRepository: documentRepository,
+		pdfParser:          pdfParser,
+		csvAnalyzer:        csvAnalyzer,
+		chunker:            chunker,
+		storagePort:        storagePort,
+		llmClient:          llmClient,
+	}
 }
 
-func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUseCaseInput) (*CreateChunkOutput, error) {
+func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUseCaseInput) (result *CreateChunkOutput, err error) {
 	// find document
 	documentID, err := sharedValue.NewID(input.DocumentID)
 	if err != nil {
@@ -57,6 +66,26 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 	if document == nil {
 		return nil, errors.NewUseCaseError(errors.NotFoundError, "document not found")
 	}
+
+	// panic recovery and error handling
+	defer func() {
+		if r := recover(); r != nil {
+			// panic detected
+			document.MarkAsFailed()
+			if updateErr := i.updateDocumentStatus(ctx, document); updateErr != nil {
+				// TODO: Log the error
+				fmt.Printf("failed to update document status: %v", updateErr)
+			}
+			err = fmt.Errorf("panic occurred during chunk creation: %v", r)
+		} else if err != nil {
+			// error detected
+			document.MarkAsFailed()
+			if updateErr := i.updateDocumentStatus(ctx, document); updateErr != nil {
+				// TODO: Log the error
+				fmt.Printf("failed to update document status: %v", updateErr)
+			}
+		}
+	}()
 
 	// download document
 	reader, err := i.storagePort.Download(ctx, document.GetStoragePath())
@@ -140,12 +169,37 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 	}
 
 	// create chunks
-	for _, chunk := range chunks {
-		err := i.chunkRepository.Create(ctx, chunk)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create chunk: %w", err)
+	err = i.vectorUnitOfWork.WithTx(ctx, func(ctx context.Context) error {
+		for _, chunk := range chunks {
+			err := i.vectorUnitOfWork.ChunkRepository(ctx).Create(ctx, chunk)
+			if err != nil {
+				return fmt.Errorf("failed to create chunk: %w", err)
+			}
 		}
+		return nil
+	})
+	if err != nil {
+		return nil, errors.NewUseCaseError(errors.InternalError, "failed to create chunks")
 	}
 
-	return &CreateChunkOutput{NumCreated: 1}, nil
+	// mark as sync done
+	document.MarkAsSyncDone()
+	err = i.updateDocumentStatus(ctx, document)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update document: %w", err)
+	}
+
+	return &CreateChunkOutput{NumCreated: len(chunks)}, nil
+}
+
+// updateDocumentStatus updates the document status in the repository
+func (i *CreateChunkInteractor) updateDocumentStatus(ctx context.Context, document *documentEntity.Document) error {
+	numUpdated, err := i.documentRepository.Update(ctx, document)
+	if err != nil {
+		return fmt.Errorf("failed to update document: %w", err)
+	}
+	if numUpdated != 1 {
+		return errors.NewUseCaseError(errors.InternalError, "failed to update document")
+	}
+	return nil
 }

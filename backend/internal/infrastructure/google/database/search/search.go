@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
-	errors "github.com/goda6565/ai-consultant/backend/internal/infrastructure/error"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/internal/gen/vector"
 	searchPort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/search"

@@ -12,7 +12,7 @@ import (
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
-	errors "github.com/goda6565/ai-consultant/backend/internal/usecase/error"
+	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
 	storagePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/storage"
 )
 

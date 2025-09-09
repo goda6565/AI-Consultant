@@ -19,7 +19,7 @@ type PdfParser struct {
 	ocrClient ocr.OcrClient
 }
 
-func NewPdfParser(ocrClient ocr.OcrClient) *PdfParser {
+func NewPdfParserService(ocrClient ocr.OcrClient) *PdfParser {
 	return &PdfParser{ocrClient: ocrClient}
 }
 

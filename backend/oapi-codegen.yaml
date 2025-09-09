@@ -1,0 +1,7 @@
+package: gen
+generate:
+  echo-server: true
+  models: true
+  embedded-spec: true
+  strict-server: true
+output: internal/infrastructure/http/echo/admin/internal/gen.go

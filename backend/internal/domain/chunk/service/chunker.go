@@ -27,7 +27,7 @@ type ChunkerOutput struct {
 type Chunker struct {
 }
 
-func NewChunker() *Chunker {
+func NewChunkService() *Chunker {
 	return &Chunker{}
 }
 

@@ -20,7 +20,7 @@ type CsvAnalyzer struct {
 	llmClient llm.LLMClient
 }
 
-func NewCsvAnalyzer(llmClient llm.LLMClient) *CsvAnalyzer {
+func NewCsvAnalyzerService(llmClient llm.LLMClient) *CsvAnalyzer {
 	return &CsvAnalyzer{llmClient: llmClient}
 }
 

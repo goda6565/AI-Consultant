@@ -12,7 +12,7 @@ type DuplicateChecker struct {
 	documentRepository repository.DocumentRepository
 }
 
-func NewDuplicateChecker(documentRepository repository.DocumentRepository) *DuplicateChecker {
+func NewDuplicateCheckService(documentRepository repository.DocumentRepository) *DuplicateChecker {
 	return &DuplicateChecker{
 		documentRepository: documentRepository,
 	}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
-	errors "github.com/goda6565/ai-consultant/backend/internal/infrastructure/error"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	"google.golang.org/genai"
 )
 

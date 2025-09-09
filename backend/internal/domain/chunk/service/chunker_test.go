@@ -9,7 +9,7 @@ import (
 
 func TestChunker_EmptyText(t *testing.T) {
 	// Empty text should return empty chunks
-	ch := NewChunker()
+	ch := NewChunkService()
 	out, err := ch.Execute(context.Background(), ChunkerInput{Text: ""})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -22,7 +22,7 @@ func TestChunker_EmptyText(t *testing.T) {
 func TestChunker_FixedWindow_WithUniformRunesSmall(t *testing.T) {
 	// 600 runes: centers at 0, 200, 400
 	text := strings.Repeat("あ", 600)
-	ch := NewChunker()
+	ch := NewChunkService()
 	out, err := ch.Execute(context.Background(), ChunkerInput{Text: text})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -99,7 +99,7 @@ func TestChunker_EdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ch := NewChunker()
+			ch := NewChunkService()
 			out, err := ch.Execute(context.Background(), ChunkerInput{Text: tt.text})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -115,7 +115,7 @@ func TestChunker_EdgeCases(t *testing.T) {
 func TestChunker_OverlapValidation(t *testing.T) {
 	// Test with 450 chars: centers at 0, 200, 400
 	text := strings.Repeat("X", 450)
-	ch := NewChunker()
+	ch := NewChunkService()
 	out, err := ch.Execute(context.Background(), ChunkerInput{Text: text})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -147,7 +147,7 @@ func TestChunker_OverlapValidation(t *testing.T) {
 func TestChunker_OverlapValidation_LongText(t *testing.T) {
 	// Test with 1500 chars: centers at 0, 200, 400, 600, 800, 1000, 1200, 1400
 	text := strings.Repeat("X", 1500)
-	ch := NewChunker()
+	ch := NewChunkService()
 	out, err := ch.Execute(context.Background(), ChunkerInput{Text: text})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

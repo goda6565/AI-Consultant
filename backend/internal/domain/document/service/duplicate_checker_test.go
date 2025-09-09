@@ -82,7 +82,7 @@ func TestDuplicateChecker_CheckDuplicateByTitle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockSetup()
-			checker := NewDuplicateChecker(mockRepo)
+			checker := NewDuplicateCheckService(mockRepo)
 
 			result, err := checker.CheckDuplicateByTitle(context.Background(), tt.title)
 

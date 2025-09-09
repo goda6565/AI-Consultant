@@ -2,8 +2,8 @@ package environment
 
 import (
 	"fmt"
-
 	"github.com/caarlos0/env/v11"
+	"time"
 )
 
 func ProvideEnvironment() *Environment {
@@ -17,12 +17,18 @@ func ProvideEnvironment() *Environment {
 
 type Environment struct {
 	Env string `env:"ENV" envDefault:"development"`
+	ServerEnvironment
 	VectorDatabaseEnvironment
 	AppDatabaseEnvironment
 	GoogleCloudEnvironment
 	CloudStorageEnvironment
 	DocumentAIEnvironment
 	VertexAIEnvironment
+}
+
+type ServerEnvironment struct {
+	ListenAddress   string        `env:"LISTEN_ADDRESS" envDefault:"localhost:8080"`
+	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"10s"`
 }
 
 type VectorDatabaseEnvironment struct {

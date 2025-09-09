@@ -8,7 +8,7 @@ import (
 	"cloud.google.com/go/storage"
 
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/value"
-	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/error"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	storagePorts "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/storage"
 )
 

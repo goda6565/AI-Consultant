@@ -8,9 +8,10 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/value"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
-	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/error"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/internal/gen/app"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/helper"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -46,6 +47,9 @@ func (r *DocumentRepository) FindById(ctx context.Context, id sharedValue.ID) (*
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
 	}
 	document, err := q.GetDocument(ctx, documentID)
+	if helper.IsNoRowsError(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get document: %v", err))
 	}
@@ -55,6 +59,9 @@ func (r *DocumentRepository) FindById(ctx context.Context, id sharedValue.ID) (*
 func (r *DocumentRepository) FindByTitle(ctx context.Context, title value.Title) (*entity.Document, error) {
 	q := app.New(r.pool)
 	document, err := q.GetDocumentByTitle(ctx, title.Value())
+	if helper.IsNoRowsError(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get document by title: %v", err))
 	}

@@ -7,23 +7,34 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/chunk/entity"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/chunk/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
-	errors "github.com/goda6565/ai-consultant/backend/internal/infrastructure/error"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/internal/gen/vector"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pgvector/pgvector-go"
 )
 
 type ChunkRepository struct {
+	tx   pgx.Tx
 	pool *database.VectorPool
 }
 
 func NewChunkRepository(pool *database.VectorPool) repository.ChunkRepository {
-	return &ChunkRepository{pool: pool}
+	return &ChunkRepository{tx: nil, pool: pool}
+}
+
+func (v *ChunkRepository) WithTx(tx pgx.Tx) *ChunkRepository {
+	return &ChunkRepository{tx: tx, pool: v.pool}
 }
 
 func (v *ChunkRepository) Create(ctx context.Context, chunk *entity.Chunk) error {
-	q := vector.New(v.pool)
+	var q *vector.Queries
+	if v.tx != nil {
+		q = vector.New(v.pool).WithTx(v.tx)
+	} else {
+		q = vector.New(v.pool)
+	}
 
 	pgVector := pgvector.NewVector(chunk.GetEmbedding().Value())
 	// pgtype.UUID is used to scan the UUID values from the input
@@ -49,7 +60,12 @@ func (v *ChunkRepository) Create(ctx context.Context, chunk *entity.Chunk) error
 }
 
 func (v *ChunkRepository) Delete(ctx context.Context, documentID value.ID) (numDeleted int64, err error) {
-	q := vector.New(v.pool)
+	var q *vector.Queries
+	if v.tx != nil {
+		q = vector.New(v.pool).WithTx(v.tx)
+	} else {
+		q = vector.New(v.pool)
+	}
 
 	var id pgtype.UUID
 	if err := id.Scan(documentID.Value()); err != nil {
