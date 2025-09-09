@@ -26,7 +26,7 @@ locals {
     },
     {
       name  = "VECTOR_DB_SSL_MODE"
-      value = "allow"
+      value = "disable"
     },
     {
       name  = "APP_DB_HOST"
@@ -42,7 +42,7 @@ locals {
     },
     {
       name  = "APP_DB_SSL_MODE"
-      value = "allow"
+      value = "disable"
     },
     {
       name  = "GOOGLE_CLOUD_PROJECT_ID"
@@ -67,28 +67,28 @@ locals {
     {
       name = "VECTOR_DB_USERNAME"
       secret_key_ref = {
-        secret  = "development-ai-consultant-vector-db-username"
+        secret  = "dev-ai-consultant-vector-db-username"
         version = "latest"
       }
     },
     {
       name = "VECTOR_DB_PASSWORD"
       secret_key_ref = {
-        secret  = "development-ai-consultant-vector-db-password"
+        secret  = "dev-ai-consultant-vector-db-password"
         version = "latest"
       }
     },
     {
       name = "APP_DB_USERNAME"
       secret_key_ref = {
-        secret  = "development-ai-consultant-app-db-username"
+        secret  = "dev-ai-consultant-app-db-username"
         version = "latest"
       }
     },
     {
       name = "APP_DB_PASSWORD"
       secret_key_ref = {
-        secret  = "development-ai-consultant-app-db-password"
+        secret  = "dev-ai-consultant-app-db-password"
         version = "latest"
       }
     }

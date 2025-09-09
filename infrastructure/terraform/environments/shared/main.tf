@@ -56,3 +56,10 @@ module "cloudbuild-connection" {
     "roles/logging.logWriter",
   ]
 }
+
+module "cloudbuild-pool" {
+  source = "../../modules/cloudbuild-pool"
+
+  name   = "${var.environment}-${var.service}-cloudbuild-pool"
+  vpc_id = module.network.vpc_id
+}
