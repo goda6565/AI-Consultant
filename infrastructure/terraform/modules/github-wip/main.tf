@@ -77,3 +77,17 @@ resource "google_service_account_iam_member" "terraform_workload_identity_user" 
   role               = "roles/iam.workloadIdentityUser"
   member             = local.github_oidc_workload_identity_user
 }
+
+# Enable services
+resource "google_project_service" "service" {
+  provider = google-beta
+  for_each = toset([
+    "iamcredentials.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "iam.googleapis.com",
+  ])
+
+  service                               = each.value
+  disable_on_destroy                    = false # Do not delete the service
+  check_if_service_has_usage_on_destroy = true  # Check if the service is being used
+}
