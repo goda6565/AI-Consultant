@@ -16,7 +16,7 @@ func ProvideEnvironment() *Environment {
 }
 
 type Environment struct {
-	Env string `env:"ENV" envDefault:"development"`
+	Env string `env:"ENV,required"`
 	ServerEnvironment
 	VectorDatabaseEnvironment
 	AppDatabaseEnvironment
@@ -27,17 +27,17 @@ type Environment struct {
 }
 
 type ServerEnvironment struct {
-	ListenAddress   string        `env:"LISTEN_ADDRESS" envDefault:"localhost:8080"`
-	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"10s"`
+	ListenAddress   string        `env:"LISTEN_ADDRESS,required"`
+	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT,required"`
 }
 
 type VectorDatabaseEnvironment struct {
-	Host     string `env:"VECTOR_DB_HOST" envDefault:"localhost"`
-	Port     int    `env:"VECTOR_DB_PORT" envDefault:"5432"`
-	Username string `env:"VECTOR_DB_USERNAME" envDefault:"postgres"`
-	Password string `env:"VECTOR_DB_PASSWORD" envDefault:"password"`
-	Database string `env:"VECTOR_DB_NAME" envDefault:"vector_db"`
-	SSLMode  string `env:"VECTOR_DB_SSL_MODE" envDefault:"disable"`
+	Host     string `env:"VECTOR_DB_HOST,required"`
+	Port     int    `env:"VECTOR_DB_PORT,required"`
+	Username string `env:"VECTOR_DB_USERNAME,required"`
+	Password string `env:"VECTOR_DB_PASSWORD,required"`
+	Database string `env:"VECTOR_DB_NAME,required"`
+	SSLMode  string `env:"VECTOR_DB_SSL_MODE,required"`
 }
 
 func (v *VectorDatabaseEnvironment) VectorDatabaseURL() string {
@@ -46,12 +46,12 @@ func (v *VectorDatabaseEnvironment) VectorDatabaseURL() string {
 }
 
 type AppDatabaseEnvironment struct {
-	Host     string `env:"APP_DB_HOST" envDefault:"localhost"`
-	Port     int    `env:"APP_DB_PORT" envDefault:"5432"`
-	Username string `env:"APP_DB_USERNAME" envDefault:"postgres"`
-	Password string `env:"APP_DB_PASSWORD" envDefault:"password"`
-	Database string `env:"APP_DB_NAME" envDefault:"app_db"`
-	SSLMode  string `env:"APP_DB_SSL_MODE" envDefault:"disable"`
+	Host     string `env:"APP_DB_HOST,required"`
+	Port     int    `env:"APP_DB_PORT,required"`
+	Username string `env:"APP_DB_USERNAME,required"`
+	Password string `env:"APP_DB_PASSWORD,required"`
+	Database string `env:"APP_DB_NAME,required"`
+	SSLMode  string `env:"APP_DB_SSL_MODE,required"`
 }
 
 func (a *AppDatabaseEnvironment) AppDatabaseURL() string {
@@ -68,10 +68,10 @@ type CloudStorageEnvironment struct {
 }
 
 type DocumentAIEnvironment struct {
-	DocumentAILocation string `env:"DOCUMENT_AI_LOCATION" envDefault:"us"`
+	DocumentAILocation string `env:"DOCUMENT_AI_LOCATION,required"`
 	ProcessorID        string `env:"DOCUMENT_AI_PROCESSOR_ID,required"`
 }
 
 type VertexAIEnvironment struct {
-	VertexAILocation string `env:"VERTEX_AI_LOCATION" envDefault:"global"`
+	VertexAILocation string `env:"VERTEX_AI_LOCATION,required"`
 }
