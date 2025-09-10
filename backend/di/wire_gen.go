@@ -8,17 +8,28 @@ package di
 
 import (
 	"context"
+	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/chunk"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/transaction"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/gemini"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/ocr"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/pubsub"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/pubsub/publish"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/storage"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
 	document3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector"
+	handler2 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler"
+	chunk3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler/chunk"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/zap"
+	chunk2 "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	document2 "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
 )
 
@@ -27,11 +38,14 @@ import (
 func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	environmentEnvironment := environment.ProvideEnvironment()
 	logger, cleanup := zap.ProvideZapLogger(environmentEnvironment)
+	authenticator := firebase.NewFirebaseClient()
 	appPool, cleanup2 := database.ProvideAppPool(ctx, environmentEnvironment)
 	documentRepository := document.NewDocumentRepository(appPool)
 	storagePort := storage.NewClient(ctx)
 	duplicateChecker := service.NewDuplicateCheckService(documentRepository)
-	createDocumentInputPort := document2.NewCreateDocumentUseCase(environmentEnvironment, documentRepository, storagePort, duplicateChecker)
+	client := pubsub.ProvidePubsubClient(ctx, environmentEnvironment)
+	publisher := publish.NewPublisher(client, environmentEnvironment)
+	createDocumentInputPort := document2.NewCreateDocumentUseCase(environmentEnvironment, documentRepository, storagePort, duplicateChecker, publisher)
 	createDocumentHandler := document3.NewCreateDocumentHandler(createDocumentInputPort)
 	vectorPool, cleanup3 := database.ProvideVectorPool(ctx, environmentEnvironment)
 	chunkRepository := chunk.NewChunkRepository(vectorPool)
@@ -42,7 +56,41 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	listDocumentInputPort := document2.NewListDocumentUseCase(documentRepository)
 	listDocumentHandler := document3.NewListDocumentHandler(listDocumentInputPort)
 	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler)
-	router := admin.NewAdminRouter(strictServerInterface, environmentEnvironment)
+	router := admin.NewAdminRouter(authenticator, strictServerInterface, environmentEnvironment, logger)
+	server := echo.NewBaseServer(environmentEnvironment, logger, router)
+	app := &App{
+		Server: server,
+	}
+	return app, func() {
+		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
+}
+
+func InitVectorApplication(ctx context.Context) (*App, func(), error) {
+	environmentEnvironment := environment.ProvideEnvironment()
+	logger, cleanup := zap.ProvideZapLogger(environmentEnvironment)
+	vectorPool, cleanup2 := database.ProvideVectorPool(ctx, environmentEnvironment)
+	chunkRepository := chunk.NewChunkRepository(vectorPool)
+	vectorUnitOfWork := transaction.NewVectorUnitOfWork(ctx, vectorPool, chunkRepository)
+	appPool, cleanup3 := database.ProvideAppPool(ctx, environmentEnvironment)
+	documentRepository := document.NewDocumentRepository(appPool)
+	ocrClient := ocr.NewDocumentAIClient(ctx, environmentEnvironment)
+	pdfParser := service2.NewPdfParserService(ocrClient)
+	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
+	csvAnalyzer := service2.NewCsvAnalyzerService(llmClient)
+	chunker := service2.NewChunkService()
+	storagePort := storage.NewClient(ctx)
+	createChunkInputPort := chunk2.NewCreateChunkUseCase(vectorUnitOfWork, documentRepository, pdfParser, csvAnalyzer, chunker, storagePort, llmClient)
+	createHandler := chunk3.NewCreateChunkHandler(createChunkInputPort, logger)
+	chunkHandlers := chunk3.ChunkHandlers{
+		Create: createHandler,
+	}
+	vectorHandlers := &handler2.VectorHandlers{
+		Chunk: chunkHandlers,
+	}
+	router := vector.NewVectorRouter(vectorHandlers)
 	server := echo.NewBaseServer(environmentEnvironment, logger, router)
 	app := &App{
 		Server: server,

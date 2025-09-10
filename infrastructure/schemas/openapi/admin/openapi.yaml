@@ -20,7 +20,7 @@ paths:
         - $ref: "#/components/parameters/DocumentIdPathParameter"
       responses:
         "200":
-          $ref: "#/components/responses/SingleDocument"
+          $ref: "#/components/responses/GetDocumentSuccess"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -65,7 +65,7 @@ paths:
         - BearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/MultipleDocuments"
+          $ref: "#/components/responses/ListDocumentsSuccess"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -86,7 +86,7 @@ paths:
         $ref: "#/components/requestBodies/CreateDocument"
       responses:
         "201":
-          $ref: "#/components/responses/SingleDocument"
+          $ref: "#/components/responses/CreateDocumentSuccess"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -219,15 +219,28 @@ components:
               - message
               - code
     
-    SingleDocument:
-      description: "Single document response"
+    CreateDocumentSuccess:
+      description: "Create document response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+            required:
+              - id
+
+    GetDocumentSuccess:
+      description: "Get document response"
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Document"
 
-    MultipleDocuments:
-      description: "Documents response"
+    ListDocumentsSuccess:
+      description: "List documents response"
       content:
         application/json:
           schema:

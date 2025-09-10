@@ -18,7 +18,7 @@ type DocumentAIClient struct {
 	env    *environment.Environment
 }
 
-func NewDocumentAIClient(ctx context.Context, env *environment.Environment) *DocumentAIClient {
+func NewDocumentAIClient(ctx context.Context, env *environment.Environment) ocr.OcrClient {
 	client, err := documentai.NewDocumentProcessorClient(ctx)
 	if err != nil {
 		panic(err)

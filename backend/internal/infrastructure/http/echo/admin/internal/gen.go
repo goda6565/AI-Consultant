@@ -86,19 +86,24 @@ type SyncStep string
 // DocumentIdPathParameter defines model for DocumentIdPathParameter.
 type DocumentIdPathParameter = openapi_types.UUID
 
+// CreateDocumentSuccess defines model for CreateDocumentSuccess.
+type CreateDocumentSuccess struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	Code    ErrorCode `json:"code"`
 	Message string    `json:"message"`
 }
 
-// MultipleDocuments defines model for MultipleDocuments.
-type MultipleDocuments struct {
+// GetDocumentSuccess defines model for GetDocumentSuccess.
+type GetDocumentSuccess = Document
+
+// ListDocumentsSuccess defines model for ListDocumentsSuccess.
+type ListDocumentsSuccess struct {
 	Documents []Document `json:"documents"`
 }
-
-// SingleDocument defines model for SingleDocument.
-type SingleDocument = Document
 
 // CreateDocument defines model for CreateDocument.
 type CreateDocument struct {
@@ -233,16 +238,20 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 }
 
+type CreateDocumentSuccessJSONResponse struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
 type ErrorJSONResponse struct {
 	Code    ErrorCode `json:"code"`
 	Message string    `json:"message"`
 }
 
-type MultipleDocumentsJSONResponse struct {
+type GetDocumentSuccessJSONResponse Document
+
+type ListDocumentsSuccessJSONResponse struct {
 	Documents []Document `json:"documents"`
 }
-
-type SingleDocumentJSONResponse Document
 
 type ListDocumentsRequestObject struct {
 }
@@ -251,7 +260,9 @@ type ListDocumentsResponseObject interface {
 	VisitListDocumentsResponse(w http.ResponseWriter) error
 }
 
-type ListDocuments200JSONResponse struct{ MultipleDocumentsJSONResponse }
+type ListDocuments200JSONResponse struct {
+	ListDocumentsSuccessJSONResponse
+}
 
 func (response ListDocuments200JSONResponse) VisitListDocumentsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -313,7 +324,9 @@ type CreateDocumentResponseObject interface {
 	VisitCreateDocumentResponse(w http.ResponseWriter) error
 }
 
-type CreateDocument201JSONResponse struct{ SingleDocumentJSONResponse }
+type CreateDocument201JSONResponse struct {
+	CreateDocumentSuccessJSONResponse
+}
 
 func (response CreateDocument201JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -460,7 +473,7 @@ type GetDocumentResponseObject interface {
 	VisitGetDocumentResponse(w http.ResponseWriter) error
 }
 
-type GetDocument200JSONResponse struct{ SingleDocumentJSONResponse }
+type GetDocument200JSONResponse struct{ GetDocumentSuccessJSONResponse }
 
 func (response GetDocument200JSONResponse) VisitGetDocumentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -659,22 +672,22 @@ func (sh *strictHandler) GetDocument(ctx echo.Context, documentId DocumentIdPath
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RX32/bNhD+V4TbHtlIWdQB9VuatIWHrQiQAXsI/ECLZ5utRHLkKZth6H8fKOqXJTux",
-	"V2xw32zyePd9990dqR1kujBaoSIHsx0YbnmBhLb+d6+zskBFc/HAafPQ7vktgS6z0pDUCmadYTS/BwbS",
-	"LxlOG2CgeIEwA9F5AgYW/yylRQEzsiUycNkGC+69rrQtOMEMylJ6S9oaf9qRlWoNVVWFw+jovRYSa5B3",
-	"Fjlhi8CvZFpR85Mbk8uMe5jxF+ex7gbhjNUGLTWOBCc+pfZR5hj5rUiqaMkd/pwC64Eut4RToKwj/OFv",
-	"QuVkiPyjxRXM4Ie4T3oc0Lh4eqBiQJJy9CfHiRgm8akxOxSUBVaLDqFefsGM+lT2OoQVZ7RyIR8frNX2",
-	"G/KZaYGvsUYf484bVgwKdI6vT+DbGrIQ4zC7fRkDmYrBb2VO0uRdwbhvqZihD0lYuNf4dmVadZi5tXw7",
-	"odi7PoVdRyZqFfQBHqVa5/+uM07jMAUSQkYt+gGcqu3zvckyzemyzL4ifa7Hxm7aV1nd7eKW9saF4IRv",
-	"SBb/YSu2i4/EqXSnumisKwZSnDDgWKPxUfpuq7JHQvNa/M7uhSHCoDTivGSOijRQeGH4DMTcozZJ54DZ",
-	"UOMhxGkfHJEWVVl4dEasgEHB7Veh//JoMvc88DItkF7azoXVGTrn7byZ8shXXOYoDjrqp1nvI00SlibX",
-	"LE1uWJqkLE3esbdJ0h+XinCNdqxuBwGVCPGfMSNtWyCLQ+I4zEorafvoyyD003vkFu1tSZu6u+p/H1up",
-	"f/njd2j60nsKu73sGyITulyqlZ7ejbfzN3dauTInrii6FYVU0e3DvCuKlyye0QbB4PoquUrq2jeouJEw",
-	"g5ur5OoGWP2IqFnE3Mh4b9yusa5aPzrqITYXMINfpaN+sI/us5+S5FjbdHbx9HqoGKSnnOxumDS5Psv6",
-	"5gzrt2cgGdQDzJ72K+FpUS0YuLIouN02iYvEIHPE1250D1UMjHYHsj56gQ3faNvjaAfPuHjkoZood0JG",
-	"R7fdRcmWJu8uQOSQ5Yh3Qh/RuWKjfot3/fu9CmMgR8JpJdzX64NKGH5PPB2m1JvEx743PI1RQaTTafRZ",
-	"R837Jgr4IldmfnyvyjzfXlpBpBdQEEGuQUFEy23/O9zuB+fAweH7Cen/UD753kfBJSj/Cels2X2AZn03",
-	"/q53UC2qfwIAAP//f/Oqfk0QAAA=",
+	"H4sIAAAAAAAC/+xY32/bNhD+V4TbHtlIWdQB9ZubtIWHoQiQAXsI/ECLZ5utRXLkKZth6H8fKOqXLTmV",
+	"EQTIQ98s6nj33X13HykfINO50QoVOZgdwHDLcyS01dOdzoocFS3EPaftffPOvxLoMisNSa1g1hpGiztg",
+	"IP2S4bQFBornCDMQrSdgYPGfQloUMCNbIAOXbTHn3uta25wTzKAopLekvfG7HVmpNlCWZdiMjj5qIbEC",
+	"eWuREzYI/EqmFdU/uTE7mXEPM/7mPNZDL5yx2qCl2pHgxIepfZY7jPyrSKpoxR3+ngLrgK72hEOgrE34",
+	"03+EyskQ+VeLa5jBL3FX9DigcfFwQ8mAJO3Q7zwtRL+Ij7XZWFAWslq2CPXqG2bUlbLjIaw4o5UbK+xD",
+	"kWXo3AvqK8UUio8zk+IM9mOSAtSoyT9q8vA1/GStti+AnWmBPyIPfYxbb1gyyNE5vplAW2PIQowpiYZk",
+	"SgZfkF7CzHPJtKM0Ev8L0niV/5SuBeRe3itNjNA4hLmbjrotI7eW7wdV71xPKbjPq83Y9VIuG906Usph",
+	"Jqsi+470tZLBw1AnsqpzxZyOZkNwwnck81eUlmbxgTgVbqqL2rpk06aZ1ZU9m77bq+yB0Pwofmv3jCgy",
+	"KIy4rJhDtWHPimmPzKPUBuXsZdbnuA9x2H1nqEVV5B6dEWtgkHP7Xeh/PZrMPfW8DBuko7Z1YbUfTG/n",
+	"zZRHvuZyh2LUUSdrnY80SViaXLM0uWFpkrI0+cDeJ0m3XSrCDdpTdlsIqESI/4QZadsAWY6R4zArrKT9",
+	"g2+DME8fkVu084K21XRVT58bqv/4+y+o59J7Cm872rdEJgy5VGs9POvni3e3WrliR1xRNBe5VNH8ftE2",
+	"xXMWT2gDYXB9lVwlVe8bVNxImMHNVXJ1A6y6FFVZxNzI+EjkNlh1rZeOSiIXolafVlXh5Hz+LUnOjU1r",
+	"F4/qcskgnbK5PW3S5Poi65sLrN9fgKTXEjB7PG6Gx2W5ZOCKPOd2P1BuzyHfuJMDoGRgtBsp/Mmlsn/t",
+	"3J9H27uZxiceygF5Eyo6fgN7U+ylyYc3wHV9/+Mt32foLtnJ5MWH7sukDIKwQ8JhQ9xV672G6H8pPY6n",
+	"1JnE576kfBonfZEOdemrjup7VBTwRS70wrrY7fZvrSHSN9AQga5eQ0Srffc7nPOjcjAqw73L9msyP6EU",
+	"I9f+n+wP2PdfKZdS7wPU64fTfy0clMvy/wAAAP//rvZ0/isRAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

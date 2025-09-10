@@ -28,7 +28,7 @@ func (h *GetDocumentHandler) GetDocument(ctx context.Context, request gen.GetDoc
 
 func toDocumentJSONResponse(document *entity.Document) gen.GetDocumentResponseObject {
 	return gen.GetDocument200JSONResponse{
-		SingleDocumentJSONResponse: gen.SingleDocumentJSONResponse{
+		GetDocumentSuccessJSONResponse: gen.GetDocumentSuccessJSONResponse{
 			BucketName:        document.GetStoragePath().BucketName(),
 			CreatedAt:         *document.GetCreatedAt(),
 			DocumentExtension: gen.DocumentExtension(document.GetDocumentExtension()),

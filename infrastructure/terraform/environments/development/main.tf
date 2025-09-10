@@ -64,6 +64,18 @@ module "backend_admin_cloudbuild_trigger" {
   branch_pattern                = "^develop$"
 }
 
+module "backend_vector_cloudbuild_trigger" {
+  source = "../../modules/cloudbuild-trigger-branch"
+
+  trigger_name                  = "${var.environment}-${var.service}-backend-vector-cloudbuild-trigger"
+  trigger_description           = "Cloud Build trigger for backend vector development"
+  file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/backend-vector.yaml"
+  included_files                = ["backend/**", "infrastructure/deployments/cloudbuild/${var.environment}/backend-vector.yaml"]
+  cloudbuild_service_account_id = var.cloudbuild_service_account_id
+  github_repository_id          = var.github_repository_id
+  branch_pattern                = "^develop$"
+}
+
 # Secret Manager
 module "secret_manage_vector_db_password" {
   source      = "../../modules/secret-manager"
@@ -87,4 +99,16 @@ module "secret_manage_app_db_username" {
   source      = "../../modules/secret-manager"
   secret_name = "${var.environment}-${var.service}-app-db-username"
   region      = var.region
+}
+
+# Pub/Sub
+module "document_processing_pubsub" {
+  source = "../../modules/pubsub"
+
+  topic_name        = "${var.environment}-${var.service}-document-processing"
+  subscription_name = "${var.environment}-${var.service}-document-processing-sub"
+  project_id        = var.project_id
+  environment       = var.environment
+  service           = var.service
+  push_endpoint     = "${module.backend_vector_cloudrun.cloudrun_service_url}/webhook"
 }
