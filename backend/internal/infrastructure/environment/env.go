@@ -24,6 +24,7 @@ type Environment struct {
 	CloudStorageEnvironment
 	DocumentAIEnvironment
 	VertexAIEnvironment
+	PubsubEnvironment
 }
 
 type ServerEnvironment struct {
@@ -74,4 +75,8 @@ type DocumentAIEnvironment struct {
 
 type VertexAIEnvironment struct {
 	VertexAILocation string `env:"VERTEX_AI_LOCATION,required"`
+}
+
+type PubsubEnvironment struct {
+	TopicName string `env:"PUBSUB_TOPIC_NAME,required"`
 }

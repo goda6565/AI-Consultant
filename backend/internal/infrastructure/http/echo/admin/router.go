@@ -2,23 +2,29 @@ package admin
 
 import (
 	"encoding/json"
-
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	echoRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/middleware"
+	"github.com/goda6565/ai-consultant/backend/internal/pkg/auth"
+	"github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	"github.com/labstack/echo/v4"
+	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/swaggo/swag"
 )
 
 type AdminRouter struct {
-	handlers    gen.StrictServerInterface
-	environment *environment.Environment
+	authenticator auth.Authenticator
+	handlers      gen.StrictServerInterface
+	environment   *environment.Environment
+	logger        logger.Logger
 }
 
-func NewAdminRouter(handlers gen.StrictServerInterface, environment *environment.Environment) echoRouter.Router {
-	return &AdminRouter{handlers: handlers, environment: environment}
+func NewAdminRouter(authenticator auth.Authenticator, handlers gen.StrictServerInterface, environment *environment.Environment, logger logger.Logger) echoRouter.Router {
+	return &AdminRouter{authenticator: authenticator, handlers: handlers, environment: environment, logger: logger}
 }
 
 func setUpSwagger(e *echo.Echo, environment *environment.Environment) (*openapi3.T, error) {
@@ -40,10 +46,17 @@ func setUpSwagger(e *echo.Echo, environment *environment.Environment) (*openapi3
 }
 
 func (r *AdminRouter) RegisterRoutes(e *echo.Echo) *echo.Echo {
-	_, err := setUpSwagger(e, r.environment)
+	swagger, err := setUpSwagger(e, r.environment)
 	if err != nil {
 		panic(err)
 	}
-	gen.RegisterHandlers(e, gen.NewStrictHandler(r.handlers, nil))
+	subGroup := e.Group("")
+
+	subGroup.Use(oapiMiddleware.OapiRequestValidatorWithOptions(swagger, &oapiMiddleware.Options{
+		Options: openapi3filter.Options{
+			AuthenticationFunc: middleware.AuthMiddlewareFunc(r.authenticator),
+		},
+	}))
+	gen.RegisterHandlers(subGroup, gen.NewStrictHandler(r.handlers, nil))
 	return e
 }

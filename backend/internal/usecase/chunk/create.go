@@ -34,14 +34,14 @@ type CreateChunkOutput struct {
 type CreateChunkInteractor struct {
 	vectorUnitOfWork   transactionPorts.VectorUnitOfWork
 	documentRepository documentRepository.DocumentRepository
-	pdfParser          chunkService.PdfParser
-	csvAnalyzer        chunkService.CsvAnalyzer
-	chunker            chunkService.Chunker
+	pdfParser          *chunkService.PdfParser
+	csvAnalyzer        *chunkService.CsvAnalyzer
+	chunker            *chunkService.Chunker
 	storagePort        storagePort.StoragePort
 	llmClient          llm.LLMClient
 }
 
-func NewCreateChunkUseCase(vectorUnitOfWork transactionPorts.VectorUnitOfWork, documentRepository documentRepository.DocumentRepository, pdfParser chunkService.PdfParser, csvAnalyzer chunkService.CsvAnalyzer, chunker chunkService.Chunker, storagePort storagePort.StoragePort, llmClient llm.LLMClient) CreateChunkInputPort {
+func NewCreateChunkUseCase(vectorUnitOfWork transactionPorts.VectorUnitOfWork, documentRepository documentRepository.DocumentRepository, pdfParser *chunkService.PdfParser, csvAnalyzer *chunkService.CsvAnalyzer, chunker *chunkService.Chunker, storagePort storagePort.StoragePort, llmClient llm.LLMClient) CreateChunkInputPort {
 	return &CreateChunkInteractor{
 		vectorUnitOfWork:   vectorUnitOfWork,
 		documentRepository: documentRepository,

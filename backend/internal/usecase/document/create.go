@@ -13,6 +13,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
+	pubsubPort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/pubsub"
 	storagePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/storage"
 )
 
@@ -27,7 +28,7 @@ type CreateDocumentUseCaseInput struct {
 }
 
 type CreateDocumentOutput struct {
-	DocumentID string
+	Document *entity.Document
 }
 
 type CreateDocumentInteractor struct {
@@ -35,14 +36,16 @@ type CreateDocumentInteractor struct {
 	storagePort        storagePort.StoragePort
 	documentRepository repository.DocumentRepository
 	duplicateChecker   *documentService.DuplicateChecker
+	publisher          pubsubPort.Publisher
 }
 
-func NewCreateDocumentUseCase(env *environment.Environment, documentRepository repository.DocumentRepository, storagePort storagePort.StoragePort, duplicateChecker *documentService.DuplicateChecker) CreateDocumentInputPort {
+func NewCreateDocumentUseCase(env *environment.Environment, documentRepository repository.DocumentRepository, storagePort storagePort.StoragePort, duplicateChecker *documentService.DuplicateChecker, publisher pubsubPort.Publisher) CreateDocumentInputPort {
 	return &CreateDocumentInteractor{
 		env:                env,
 		documentRepository: documentRepository,
 		storagePort:        storagePort,
 		duplicateChecker:   duplicateChecker,
+		publisher:          publisher,
 	}
 }
 
@@ -63,8 +66,12 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 
 	// upload file to storage
 	bucketName := i.env.BucketName
-	storagePath := value.NewStorageInfo(bucketName, input.Title)
-	err = i.storagePort.Upload(ctx, bucketName, input.Title, input.File)
+	rawStoragePath, err := i.createStoragePath(input.Title, input.DocumentExtension)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create storage path: %w", err)
+	}
+	storagePath := value.NewStorageInfo(bucketName, rawStoragePath)
+	err = i.storagePort.Upload(ctx, storagePath, input.File)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file to storage: %w", err)
 	}
@@ -98,7 +105,22 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 		return nil, fmt.Errorf("failed to save document: %w", err)
 	}
 
-	//TODO: create vector by async
+	if err := i.publisher.Publish(ctx, pubsubPort.PubsubMessage{DocumentID: document.GetID().Value()}); err != nil {
+		return nil, fmt.Errorf("failed to publish pubsub message: %w", err)
+	}
 
-	return &CreateDocumentOutput{DocumentID: document.GetID().Value()}, nil
+	return &CreateDocumentOutput{Document: document}, nil
+}
+
+func (i *CreateDocumentInteractor) createStoragePath(title string, documentExtension string) (string, error) {
+	switch documentExtension {
+	case "pdf":
+		return fmt.Sprintf("%s.pdf", title), nil
+	case "markdown":
+		return fmt.Sprintf("%s.md", title), nil
+	case "csv":
+		return fmt.Sprintf("%s.csv", title), nil
+	default:
+		return "", errors.NewUseCaseError(errors.InternalError, "invalid document extension")
+	}
 }

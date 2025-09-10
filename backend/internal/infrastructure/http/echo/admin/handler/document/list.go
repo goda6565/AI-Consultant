@@ -32,7 +32,7 @@ func toDocumentsJSONResponse(documents []entity.Document) gen.ListDocumentsRespo
 		documentsJSON[i] = toSingleDocumentJSON(&document)
 	}
 	return gen.ListDocuments200JSONResponse{
-		MultipleDocumentsJSONResponse: gen.MultipleDocumentsJSONResponse{
+		ListDocumentsSuccessJSONResponse: gen.ListDocumentsSuccessJSONResponse{
 			Documents: documentsJSON,
 		},
 	}

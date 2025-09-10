@@ -4,6 +4,7 @@ go 1.25.1
 
 require (
 	cloud.google.com/go/documentai v1.37.0
+	cloud.google.com/go/pubsub v1.49.0
 	cloud.google.com/go/storage v1.56.1
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/getkin/kin-openapi v0.132.0
@@ -11,6 +12,7 @@ require (
 	github.com/google/wire v0.7.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/labstack/echo/v4 v4.13.4
+	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/pgvector/pgvector-go v0.3.0
 	github.com/spf13/cobra v1.9.1
@@ -116,6 +118,7 @@ require (
 	github.com/google/subcommands v1.2.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect

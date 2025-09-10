@@ -27,7 +27,9 @@ func NewClient(ctx context.Context) storagePorts.StoragePort {
 	}
 }
 
-func (c *StorageClient) Upload(ctx context.Context, bucketName string, objectName string, reader io.Reader) error {
+func (c *StorageClient) Upload(ctx context.Context, path value.StorageInfo, reader io.Reader) error {
+	bucketName := path.BucketName()
+	objectName := path.ObjectName()
 	bucket := c.client.Bucket(bucketName)
 	object := bucket.Object(objectName)
 	writer := object.If(storage.Conditions{DoesNotExist: true}).NewWriter(ctx)

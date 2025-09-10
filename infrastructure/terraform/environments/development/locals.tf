@@ -65,6 +65,10 @@ locals {
       value = "global"
     },
     {
+      name  = "PUBSUB_TOPIC_NAME"
+      value = "${var.environment}-${var.service}-document-processing"
+    },
+    {
       name = "VECTOR_DB_USERNAME"
       secret_key_ref = {
         secret  = "dev-ai-consultant-vector-db-username"

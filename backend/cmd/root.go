@@ -13,5 +13,6 @@ func NewRootCommand() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(newAdminCommand())
+	cmd.AddCommand(newVectorCommand())
 	return cmd
 }
