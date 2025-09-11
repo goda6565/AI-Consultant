@@ -47,6 +47,16 @@ run: ## Run the application
 	make migrate-app-up
 	make migrate-vector-up
 
+# run-admin
+.PHONY: run-admin
+run-admin: ## Run the application
+	set -a && . .env.admin && set +a && go run main.go admin run
+
+# run-vector
+.PHONY: run-vector
+run-vector: ## Run the application
+	set -a && . .env.vector && set +a && go run main.go vector run
+
 # stop
 .PHONY: stop
 stop: ## Stop the application

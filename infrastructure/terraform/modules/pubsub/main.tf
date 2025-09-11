@@ -19,6 +19,12 @@ resource "google_pubsub_subscription" "subscription" {
     }
   }
 
+  retry_policy {
+    minimum_backoff = var.retry_minimum_backoff
+    maximum_backoff = var.retry_maximum_backoff
+  }
+
+  message_retention_duration = var.message_retention_duration
 
   labels = {
     environment = var.environment

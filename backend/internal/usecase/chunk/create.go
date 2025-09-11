@@ -87,6 +87,13 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 		}
 	}()
 
+	// update sync step
+	document.MarkAsSyncStart()
+	err = i.updateDocumentStatus(ctx, document)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update document sync step: %w", err)
+	}
+
 	// download document
 	reader, err := i.storagePort.Download(ctx, document.GetStoragePath())
 	if err != nil {
@@ -131,24 +138,40 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 		return nil, fmt.Errorf("failed to chunk document: %w", err)
 	}
 
-	// create embeddings
+	// create embeddings with batch processing
 	contents := make([]string, len(chunkerOutput.Chunks))
 	for i, chunk := range chunkerOutput.Chunks {
 		contents[i] = chunk.Content
 	}
-	embeddingInput := llm.GenerateEmbeddingBatchInput{
-		Texts:  contents,
-		Config: llm.EmbeddingConfig{Provider: llm.OpenAI, Model: llm.EmbeddingModelOpenAIEmbeddings},
-	}
-	embeddingOutput, err := i.llmClient.GenerateEmbeddingBatch(ctx, embeddingInput)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate embeddings: %w", err)
+
+	// Process embeddings in batches to respect Vertex AI limits (max 250 per batch)
+	const maxBatchSize = 100
+	var allEmbeddings [][]float32
+
+	for start := 0; start < len(contents); start += maxBatchSize {
+		end := start + maxBatchSize
+		if end > len(contents) {
+			end = len(contents)
+		}
+
+		batchContents := contents[start:end]
+		embeddingInput := llm.GenerateEmbeddingBatchInput{
+			Texts: batchContents,
+			// TODO: select model by user setting
+			Config: llm.EmbeddingConfig{Provider: llm.VertexAI, Model: llm.GeminiEmbedding001},
+		}
+		embeddingOutput, err := i.llmClient.GenerateEmbeddingBatch(ctx, embeddingInput)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate embeddings for batch %d-%d: %w", start, end-1, err)
+		}
+
+		allEmbeddings = append(allEmbeddings, embeddingOutput.Embeddings...)
 	}
 
 	// create chunks
 	chunks := make([]*chunkEntity.Chunk, len(chunkerOutput.Chunks))
 	for i, chunk := range chunkerOutput.Chunks {
-		embedding := embeddingOutput.Embeddings[i]
+		embedding := allEmbeddings[i]
 		id, err := sharedValue.NewID(uuid.NewUUID())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create id: %w", err)

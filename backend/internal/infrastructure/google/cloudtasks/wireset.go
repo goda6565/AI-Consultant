@@ -1,7 +1,7 @@
-package publish
+package cloudtasks
 
 import "github.com/google/wire"
 
 var Set = wire.NewSet(
-	NewPublisher,
+	NewCloudTasksClient,
 )

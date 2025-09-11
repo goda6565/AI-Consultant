@@ -46,7 +46,7 @@ locals {
     },
     {
       name  = "GOOGLE_CLOUD_PROJECT_ID"
-      value = "165573575904"
+      value = "${var.project_id}"
     },
     {
       name  = "CLOUD_STORAGE_BUCKET_NAME"
@@ -65,8 +65,12 @@ locals {
       value = "global"
     },
     {
-      name  = "PUBSUB_TOPIC_NAME"
+      name  = "SYNC_QUEUE_NAME"
       value = "${var.environment}-${var.service}-document-processing"
+    },
+    {
+      name  = "SYNC_QUEUE_LOCATION"
+      value = "${var.region}"
     },
     {
       name = "VECTOR_DB_USERNAME"
