@@ -11,6 +11,7 @@ import (
 	chunkService "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	documentService "github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
+	cloudtasksClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	chunkRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/chunk"
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
@@ -18,8 +19,6 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/gemini"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/ocr"
-	pubsubClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/pubsub"
-	pubsubPublisher "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/pubsub/publish"
 	storageClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/storage"
 	baseServer "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
 	adminRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
@@ -37,12 +36,11 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		environment.Set,
 		zap.Set,
 		firebase.Set,
-		pubsubClient.Set,
-		pubsubPublisher.Set,
 		database.Set,
 		chunkRepository.Set,
 		documentRepository.Set,
 		storageClient.Set,
+		cloudtasksClient.Set,
 		documentService.Set,
 		documentUseCase.Set,
 		documentHandler.Set,

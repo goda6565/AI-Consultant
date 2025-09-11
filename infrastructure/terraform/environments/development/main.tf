@@ -16,12 +16,20 @@ module "backend_admin_cloudrun" {
 
   cloudrun_service_name = "${var.environment}-${var.service}-backend-admin"
   region                = var.region
-  env_vars              = local.common_env_vars
-  vpc_name              = var.vpc_id
-  subnet_name           = var.subnet_id
-  enable_public_access  = true
-  environment           = var.environment
-  service               = var.service
+  env_vars = concat(
+    local.common_env_vars,
+    [
+      {
+        name  = "SYNC_TARGET_URL"
+        value = "${module.backend_vector_cloudrun.cloudrun_service_url}/webhook"
+      }
+    ]
+  )
+  vpc_name             = var.vpc_id
+  subnet_name          = var.subnet_id
+  enable_public_access = true
+  environment          = var.environment
+  service              = var.service
 }
 
 module "backend_agent_cloudrun" {
@@ -101,14 +109,27 @@ module "secret_manage_app_db_username" {
   region      = var.region
 }
 
-# Pub/Sub
-module "document_processing_pubsub" {
-  source = "../../modules/pubsub"
+# Cloud Tasks
+module "document_processing_cloudtasks" {
+  source = "../../modules/cloudtasks"
 
-  topic_name        = "${var.environment}-${var.service}-document-processing"
-  subscription_name = "${var.environment}-${var.service}-document-processing-sub"
-  project_id        = var.project_id
-  environment       = var.environment
-  service           = var.service
-  push_endpoint     = "${module.backend_vector_cloudrun.cloudrun_service_url}/webhook"
+  name                      = "${var.environment}-${var.service}-document-processing"
+  location                  = var.region
+  project_id                = var.project_id
+  environment               = var.environment
+  service                   = var.service
+  max_dispatches_per_second = 5
+  max_concurrent_dispatches = 2
+  max_attempts              = 10
+  min_backoff               = "1s"
+  max_backoff               = "10s"
+}
+
+# Grant Cloud Tasks enqueuer to Cloud Run default service account
+data "google_project" "current" {}
+
+resource "google_project_iam_member" "cloudtasks_enqueuer_cloudrun_default_sa" {
+  project = var.project_id
+  role    = "roles/cloudtasks.enqueuer"
+  member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }

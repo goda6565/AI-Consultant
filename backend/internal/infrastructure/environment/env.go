@@ -24,7 +24,7 @@ type Environment struct {
 	CloudStorageEnvironment
 	DocumentAIEnvironment
 	VertexAIEnvironment
-	PubsubEnvironment
+	SyncQueueEnvironment
 }
 
 type ServerEnvironment struct {
@@ -77,6 +77,8 @@ type VertexAIEnvironment struct {
 	VertexAILocation string `env:"VERTEX_AI_LOCATION,required"`
 }
 
-type PubsubEnvironment struct {
-	TopicName string `env:"PUBSUB_TOPIC_NAME,required"`
+type SyncQueueEnvironment struct {
+	QueueName     string `env:"SYNC_QUEUE_NAME"`
+	QueueLocation string `env:"SYNC_QUEUE_LOCATION"`
+	TargetURL     string `env:"SYNC_TARGET_URL"`
 }

@@ -3,8 +3,8 @@ module github.com/goda6565/ai-consultant/backend
 go 1.25.1
 
 require (
+	cloud.google.com/go/cloudtasks v1.13.6
 	cloud.google.com/go/documentai v1.37.0
-	cloud.google.com/go/pubsub v1.49.0
 	cloud.google.com/go/storage v1.56.1
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/getkin/kin-openapi v0.132.0

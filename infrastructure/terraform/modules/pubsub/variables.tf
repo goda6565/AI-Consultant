@@ -27,3 +27,21 @@ variable "push_endpoint" {
   description = "Push endpoint URL for Cloud Run service"
   type        = string
 }
+
+variable "retry_minimum_backoff" {
+  description = "Minimum retry backoff duration (e.g., '1s', '10s')"
+  type        = string
+  default     = "10s"
+}
+
+variable "retry_maximum_backoff" {
+  description = "Maximum retry backoff duration (e.g., '10s', '600s')"
+  type        = string
+  default     = "600s"
+}
+
+variable "message_retention_duration" {
+  description = "Message retention duration (minimum 10m, maximum 744h)"
+  type        = string
+  default     = "10m"
+}

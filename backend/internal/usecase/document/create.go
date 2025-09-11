@@ -13,7 +13,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
-	pubsubPort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/pubsub"
+	syncQueuePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/queue"
 	storagePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/storage"
 )
 
@@ -36,16 +36,16 @@ type CreateDocumentInteractor struct {
 	storagePort        storagePort.StoragePort
 	documentRepository repository.DocumentRepository
 	duplicateChecker   *documentService.DuplicateChecker
-	publisher          pubsubPort.Publisher
+	syncQueue          syncQueuePort.SyncQueue
 }
 
-func NewCreateDocumentUseCase(env *environment.Environment, documentRepository repository.DocumentRepository, storagePort storagePort.StoragePort, duplicateChecker *documentService.DuplicateChecker, publisher pubsubPort.Publisher) CreateDocumentInputPort {
+func NewCreateDocumentUseCase(env *environment.Environment, documentRepository repository.DocumentRepository, storagePort storagePort.StoragePort, duplicateChecker *documentService.DuplicateChecker, syncQueue syncQueuePort.SyncQueue) CreateDocumentInputPort {
 	return &CreateDocumentInteractor{
 		env:                env,
 		documentRepository: documentRepository,
 		storagePort:        storagePort,
 		duplicateChecker:   duplicateChecker,
-		publisher:          publisher,
+		syncQueue:          syncQueue,
 	}
 }
 
@@ -105,8 +105,8 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 		return nil, fmt.Errorf("failed to save document: %w", err)
 	}
 
-	if err := i.publisher.Publish(ctx, pubsubPort.PubsubMessage{DocumentID: document.GetID().Value()}); err != nil {
-		return nil, fmt.Errorf("failed to publish pubsub message: %w", err)
+	if err := i.syncQueue.Enqueue(ctx, syncQueuePort.SyncQueueMessage{DocumentID: document.GetID().Value()}); err != nil {
+		return nil, fmt.Errorf("failed to publish sync queue message: %w", err)
 	}
 
 	return &CreateDocumentOutput{Document: document}, nil

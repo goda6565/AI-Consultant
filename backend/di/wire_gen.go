@@ -11,6 +11,7 @@ import (
 	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/chunk"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
@@ -18,8 +19,6 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/gemini"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/ocr"
-	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/pubsub"
-	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/pubsub/publish"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/storage"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
@@ -43,11 +42,10 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	documentRepository := document.NewDocumentRepository(appPool)
 	storagePort := storage.NewClient(ctx)
 	duplicateChecker := service.NewDuplicateCheckService(documentRepository)
-	client := pubsub.ProvidePubsubClient(ctx, environmentEnvironment)
-	publisher := publish.NewPublisher(client, environmentEnvironment)
-	createDocumentInputPort := document2.NewCreateDocumentUseCase(environmentEnvironment, documentRepository, storagePort, duplicateChecker, publisher)
+	syncQueue, cleanup3 := cloudtasks.NewCloudTasksClient(ctx, environmentEnvironment)
+	createDocumentInputPort := document2.NewCreateDocumentUseCase(environmentEnvironment, documentRepository, storagePort, duplicateChecker, syncQueue)
 	createDocumentHandler := document3.NewCreateDocumentHandler(createDocumentInputPort)
-	vectorPool, cleanup3 := database.ProvideVectorPool(ctx, environmentEnvironment)
+	vectorPool, cleanup4 := database.ProvideVectorPool(ctx, environmentEnvironment)
 	chunkRepository := chunk.NewChunkRepository(vectorPool)
 	deleteDocumentInputPort := document2.NewDeleteDocumentUseCase(documentRepository, chunkRepository)
 	deleteDocumentHandler := document3.NewDeleteDocumentHandler(deleteDocumentInputPort)
@@ -62,6 +60,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		Server: server,
 	}
 	return app, func() {
+		cleanup4()
 		cleanup3()
 		cleanup2()
 		cleanup()
@@ -83,7 +82,7 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 	chunker := service2.NewChunkService()
 	storagePort := storage.NewClient(ctx)
 	createChunkInputPort := chunk2.NewCreateChunkUseCase(vectorUnitOfWork, documentRepository, pdfParser, csvAnalyzer, chunker, storagePort, llmClient)
-	createHandler := chunk3.NewCreateChunkHandler(createChunkInputPort, logger)
+	createHandler := chunk3.NewCreateChunkHandler(createChunkInputPort)
 	chunkHandlers := chunk3.ChunkHandlers{
 		Create: createHandler,
 	}

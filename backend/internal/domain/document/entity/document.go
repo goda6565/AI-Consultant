@@ -18,6 +18,10 @@ type Document struct {
 	updatedAt         *time.Time
 }
 
+func (d *Document) MarkAsSyncStart() {
+	d.syncStep = value.SyncStepVector
+}
+
 func (d *Document) MarkAsSyncDone() {
 	d.syncStep = value.SyncStepDone
 	d.status = value.DocumentStatusDone
