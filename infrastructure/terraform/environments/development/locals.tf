@@ -22,7 +22,7 @@ locals {
     },
     {
       name  = "VECTOR_DB_NAME"
-      value = "${var.environment}-vector-db"
+      value = "${var.environment}_vector_db"
     },
     {
       name  = "VECTOR_DB_SSL_MODE"
@@ -38,7 +38,7 @@ locals {
     },
     {
       name  = "APP_DB_NAME"
-      value = "${var.environment}-app-db"
+      value = "${var.environment}_app_db"
     },
     {
       name  = "APP_DB_SSL_MODE"
