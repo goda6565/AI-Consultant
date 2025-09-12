@@ -1,0 +1,41 @@
+availableSecrets:
+  secretManager:
+    - versionName: projects/ai-consultant-471305/secrets/dev-ai-consultant-app-db-username/versions/latest
+      env: DB_USER
+    - versionName: projects/ai-consultant-471305/secrets/dev-ai-consultant-app-db-password/versions/latest
+      env: DB_PASSWORD
+
+steps:
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        version=v4.19.0
+        os=linux
+        arch=amd64
+        curl -sSL https://github.com/golang-migrate/migrate/releases/download/$$version/migrate.$$os-$$arch.tar.gz | tar xz
+        chmod +x migrate.$$os-$$arch
+        mv migrate.$$os-$$arch /workspace/migrate
+    
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: '/workspace/migrate'
+    args:
+      - '-path'
+      - '/workspace/infrastructure/schemas/migrations/app'
+      - '-database'
+      - 'postgres://$$DB_USER:$$DB_PASSWORD@${_APP_DB_HOST}:5432/${_APP_DB_NAME}?sslmode=disable'
+      - 'up'
+    secretEnv: ['DB_USER', 'DB_PASSWORD']
+
+
+images: []
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  workerPool: 'projects/ai-consultant-471305/locations/us-west2/workerPools/shared-ai-consultant-private-pool'
+
+substitutions:
+  _APP_DB_HOST: '10.18.208.3'
+  _APP_DB_NAME: 'dev-app-db'

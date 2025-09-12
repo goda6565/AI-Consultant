@@ -106,7 +106,7 @@ components:
       bearerFormat: JWT
 
   schemas:
-    documentExtension:
+    documentType:
       type: string
       enum:
         - pdf
@@ -119,13 +119,6 @@ components:
         - processing
         - done
         - failed
-
-    syncStep:
-      type: string
-      enum:
-        - pending
-        - vector
-        - done
 
     errorCode:
       type: integer
@@ -145,16 +138,16 @@ components:
           format: uuid
         title:
           type: string
-        documentExtension:
-          $ref: "#/components/schemas/documentExtension"
+        documentType:
+          $ref: "#/components/schemas/documentType"
         bucketName:
           type: string
         objectName:
           type: string
         documentStatus:
           $ref: "#/components/schemas/documentStatus"
-        syncStep:
-          $ref: "#/components/schemas/syncStep"
+        retryCount:
+          type: integer
         createdAt:
           type: string
           format: date-time
@@ -164,11 +157,11 @@ components:
       required:
         - id
         - title
-        - documentExtension
+        - documentType
         - bucketName
         - objectName
         - documentStatus
-        - syncStep
+        - retryCount
         - createdAt
         - updatedAt
 
@@ -192,15 +185,15 @@ components:
             properties:
               title:
                 type: string
-              documentExtension:
-                $ref: "#/components/schemas/documentExtension"
+              documentType:
+                $ref: "#/components/schemas/documentType"
               data:
                 type: string
                 format: byte
                 description: "File data in base64"
             required:
               - title
-              - documentExtension
+              - documentType
               - data
   
   responses:

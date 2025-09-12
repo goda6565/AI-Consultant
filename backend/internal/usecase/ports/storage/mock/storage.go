@@ -43,44 +43,44 @@ func (m *MockStoragePort) EXPECT() *MockStoragePortMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockStoragePort) Delete(ctx context.Context, path value.StorageInfo) error {
+func (m *MockStoragePort) Delete(ctx context.Context, info value.StorageInfo) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, path)
+	ret := m.ctrl.Call(m, "Delete", ctx, info)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockStoragePortMockRecorder) Delete(ctx, path any) *gomock.Call {
+func (mr *MockStoragePortMockRecorder) Delete(ctx, info any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStoragePort)(nil).Delete), ctx, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStoragePort)(nil).Delete), ctx, info)
 }
 
 // Download mocks base method.
-func (m *MockStoragePort) Download(ctx context.Context, path value.StorageInfo) (io.ReadCloser, error) {
+func (m *MockStoragePort) Download(ctx context.Context, info value.StorageInfo) (io.ReadCloser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Download", ctx, path)
+	ret := m.ctrl.Call(m, "Download", ctx, info)
 	ret0, _ := ret[0].(io.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Download indicates an expected call of Download.
-func (mr *MockStoragePortMockRecorder) Download(ctx, path any) *gomock.Call {
+func (mr *MockStoragePortMockRecorder) Download(ctx, info any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockStoragePort)(nil).Download), ctx, path)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockStoragePort)(nil).Download), ctx, info)
 }
 
 // Upload mocks base method.
-func (m *MockStoragePort) Upload(ctx context.Context, bucketName, objectName string, reader io.Reader) error {
+func (m *MockStoragePort) Upload(ctx context.Context, info value.StorageInfo, reader io.Reader) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upload", ctx, bucketName, objectName, reader)
+	ret := m.ctrl.Call(m, "Upload", ctx, info, reader)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Upload indicates an expected call of Upload.
-func (mr *MockStoragePortMockRecorder) Upload(ctx, bucketName, objectName, reader any) *gomock.Call {
+func (mr *MockStoragePortMockRecorder) Upload(ctx, info, reader any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockStoragePort)(nil).Upload), ctx, bucketName, objectName, reader)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockStoragePort)(nil).Upload), ctx, info, reader)
 }

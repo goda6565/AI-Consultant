@@ -50,7 +50,7 @@ func (i *DeleteDocumentInteractor) Execute(ctx context.Context, input DeleteDocu
 	}
 
 	// delete document from storage
-	err = i.storagePort.Delete(ctx, document.GetStoragePath())
+	err = i.storagePort.Delete(ctx, document.GetStorageInfo())
 	if err != nil {
 		return fmt.Errorf("failed to delete document from storage: %w", err)
 	}

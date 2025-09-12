@@ -27,18 +27,18 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// Defines values for DocumentExtension.
-const (
-	Csv      DocumentExtension = "csv"
-	Markdown DocumentExtension = "markdown"
-	Pdf      DocumentExtension = "pdf"
-)
-
 // Defines values for DocumentStatus.
 const (
-	DocumentStatusDone       DocumentStatus = "done"
-	DocumentStatusFailed     DocumentStatus = "failed"
-	DocumentStatusProcessing DocumentStatus = "processing"
+	Done       DocumentStatus = "done"
+	Failed     DocumentStatus = "failed"
+	Processing DocumentStatus = "processing"
+)
+
+// Defines values for DocumentType.
+const (
+	Csv      DocumentType = "csv"
+	Markdown DocumentType = "markdown"
+	Pdf      DocumentType = "pdf"
 )
 
 // Defines values for ErrorCode.
@@ -51,37 +51,27 @@ const (
 	N500 ErrorCode = 500
 )
 
-// Defines values for SyncStep.
-const (
-	SyncStepDone    SyncStep = "done"
-	SyncStepPending SyncStep = "pending"
-	SyncStepVector  SyncStep = "vector"
-)
-
 // Document defines model for Document.
 type Document struct {
-	BucketName        string             `json:"bucketName"`
-	CreatedAt         time.Time          `json:"createdAt"`
-	DocumentExtension DocumentExtension  `json:"documentExtension"`
-	DocumentStatus    DocumentStatus     `json:"documentStatus"`
-	Id                openapi_types.UUID `json:"id"`
-	ObjectName        string             `json:"objectName"`
-	SyncStep          SyncStep           `json:"syncStep"`
-	Title             string             `json:"title"`
-	UpdatedAt         time.Time          `json:"updatedAt"`
+	BucketName     string             `json:"bucketName"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	DocumentStatus DocumentStatus     `json:"documentStatus"`
+	DocumentType   DocumentType       `json:"documentType"`
+	Id             openapi_types.UUID `json:"id"`
+	ObjectName     string             `json:"objectName"`
+	RetryCount     int                `json:"retryCount"`
+	Title          string             `json:"title"`
+	UpdatedAt      time.Time          `json:"updatedAt"`
 }
-
-// DocumentExtension defines model for documentExtension.
-type DocumentExtension string
 
 // DocumentStatus defines model for documentStatus.
 type DocumentStatus string
 
+// DocumentType defines model for documentType.
+type DocumentType string
+
 // ErrorCode defines model for errorCode.
 type ErrorCode int
-
-// SyncStep defines model for syncStep.
-type SyncStep string
 
 // DocumentIdPathParameter defines model for DocumentIdPathParameter.
 type DocumentIdPathParameter = openapi_types.UUID
@@ -108,17 +98,17 @@ type ListDocumentsSuccess struct {
 // CreateDocument defines model for CreateDocument.
 type CreateDocument struct {
 	// Data File data in base64
-	Data              []byte            `json:"data"`
-	DocumentExtension DocumentExtension `json:"documentExtension"`
-	Title             string            `json:"title"`
+	Data         []byte       `json:"data"`
+	DocumentType DocumentType `json:"documentType"`
+	Title        string       `json:"title"`
 }
 
 // CreateDocumentJSONBody defines parameters for CreateDocument.
 type CreateDocumentJSONBody struct {
 	// Data File data in base64
-	Data              []byte            `json:"data"`
-	DocumentExtension DocumentExtension `json:"documentExtension"`
-	Title             string            `json:"title"`
+	Data         []byte       `json:"data"`
+	DocumentType DocumentType `json:"documentType"`
+	Title        string       `json:"title"`
 }
 
 // CreateDocumentJSONRequestBody defines body for CreateDocument for application/json ContentType.
@@ -672,22 +662,22 @@ func (sh *strictHandler) GetDocument(ctx echo.Context, documentId DocumentIdPath
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+xYXW/bNhT9K8LdHtlIWdQB9ZubrIWHoQiQAnsI8kBL1zZbi+TIqw6Cof8+UJT1rUyG",
+	"MSAPe4vFS/Kcew6PqJwgUZlWEiVZWJ1Ac8MzJDTVrweV5BlK2qSPnA6P5zE3lKJNjNAklIRVUxhsHoCB",
+	"cI80pwMwkDxDWEHarAQMDP6VC4MprMjkyMAmB8y4W3WnTMYJVpDnwlVSod1sS0bIPZRl6SejpY8qFViB",
+	"vDfICc8I3JNESar/5FofRcIdzPCbdVhPne20URoN1QulnPiY2idxxMANBUIGW27x1xhYC3RbEI6Bsobw",
+	"12rgBD8b3MEKfgrbfoceiA17tSUDEnSsJg3pd1v3XJcNtmKexksDSW2/YUJt79rG+ydWK2mnOvmUJwla",
+	"e0VDRbpE0z4pkc5g76vioQZn6sGZh2vfb8YocwXsRKX/Khm6Pe5dYckgQ2v5foFi50Lm91hC1JMpGXxG",
+	"ukaZ18g0Z2di/89I013+Q9gGkL3eK+c9vHEIM7scddNGbgwvRl1vl17ScMerYWw7lMtzUPWiccxkmyff",
+	"kb5UuXcaB0NSOTddU+9spJzwHYns1Sx5Ik65XZomdfWVWbToDLO6n7OkDZIp7lXu+1UPC0m4R/Na4jHI",
+	"dXpZu8Z5wuaSsqNUj8Go4z0CXQm7+MbmmlIOZZ45XNood2IcZFcm3a47Lo7Yzb/510mzTLoDBhk331P1",
+	"t3TY7I/JBdrAamfHUcTi6JbF0R2Lo5jF0Qf2Pora6Y1CzvuY5EZQ8eSM4p3+EblBs87pUPm++vXpLNHv",
+	"f36F+sS4pfxoK9eBSPvjJ+ROjV+76827eyVtfiQuKVinmZDB+nHTiPlaxQ801q9yexPdRJU/NUquBazg",
+	"7ia6uQNW3U8qFiHXIuzFzx4rt7lDXYXXJq1zock7GLw5f4miuYPV1IWTiVkyiJdMbt4DcXR7UfXdBdXv",
+	"L0DSsQSsnvtmeH4pXxjYPMu4KUaZ6jTkezuI5pKBVnai8YP7XfcGWMyj7VwSw8EK5Ui8BR2dvhu9KfXi",
+	"6MMb0Lq+mfFG7xm5SzY4eeGp/UgofSAckXBsiIfqeccQ3Y+W52lKbUk491HjaAx8EY9z6YsK6htO4PEF",
+	"1nthlx+PxVszRPwGDOHl6hgi2Bbt3/79PBkHkzHcuQb/l8ovaMXEhfx/9Ufqu++HS6V3G9TPT8N/IFgo",
+	"X8p/AgAA//8LRf1DthAAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
