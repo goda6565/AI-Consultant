@@ -32,7 +32,7 @@ func (h *createChunkHandler) Handle(c echo.Context) error {
 		return errors.NewInfrastructureError(errors.BadRequestError, "failed to bind body")
 	}
 
-	if _, err := h.createChunkUseCase.Execute(ctx, chunk.CreateChunkUseCaseInput{DocumentID: req.DocumentID}); err != nil {
+	if _, err := h.createChunkUseCase.Execute(ctx, chunk.CreateChunkUseCaseInput{DocumentID: req.DocumentID}, logger); err != nil {
 		logger.Error("failed to create chunk", "error", err)
 		return fmt.Errorf("failed to create chunk: %w", err)
 	}

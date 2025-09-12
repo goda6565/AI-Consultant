@@ -21,9 +21,9 @@ func NewCreateDocumentHandler(createDocumentUseCase document.CreateDocumentInput
 
 func (h *CreateDocumentHandler) CreateDocument(ctx context.Context, request gen.CreateDocumentRequestObject) (gen.CreateDocumentResponseObject, error) {
 	createDocumentOutput, err := h.createDocumentUseCase.Execute(ctx, document.CreateDocumentUseCaseInput{
-		Title:             request.Body.Title,
-		DocumentExtension: string(request.Body.DocumentExtension),
-		File:              bytes.NewReader(request.Body.Data),
+		Title:        request.Body.Title,
+		DocumentType: string(request.Body.DocumentType),
+		File:         bytes.NewReader(request.Body.Data),
 	})
 	if err != nil {
 		return nil, err

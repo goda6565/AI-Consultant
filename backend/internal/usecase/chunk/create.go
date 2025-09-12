@@ -13,6 +13,7 @@ import (
 	documentValue "github.com/goda6565/ai-consultant/backend/internal/domain/document/value"
 	llm "github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
+	logger "github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
 	storagePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/storage"
@@ -20,7 +21,7 @@ import (
 )
 
 type CreateChunkInputPort interface {
-	Execute(ctx context.Context, input CreateChunkUseCaseInput) (*CreateChunkOutput, error)
+	Execute(ctx context.Context, input CreateChunkUseCaseInput, logger logger.Logger) (*CreateChunkOutput, error)
 }
 
 type CreateChunkUseCaseInput struct {
@@ -53,7 +54,9 @@ func NewCreateChunkUseCase(vectorUnitOfWork transactionPorts.VectorUnitOfWork, d
 	}
 }
 
-func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUseCaseInput) (result *CreateChunkOutput, err error) {
+const maxRetryCount = 3
+
+func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUseCaseInput, logger logger.Logger) (result *CreateChunkOutput, err error) {
 	// find document
 	documentID, err := sharedValue.NewID(input.DocumentID)
 	if err != nil {
@@ -67,35 +70,29 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 		return nil, errors.NewUseCaseError(errors.NotFoundError, "document not found")
 	}
 
-	// panic recovery and error handling
-	defer func() {
-		if r := recover(); r != nil {
-			// panic detected
-			document.MarkAsFailed()
-			if updateErr := i.updateDocumentStatus(ctx, document); updateErr != nil {
-				// TODO: Log the error
-				fmt.Printf("failed to update document status: %v", updateErr)
-			}
-			err = fmt.Errorf("panic occurred during chunk creation: %v", r)
-		} else if err != nil {
-			// error detected
-			document.MarkAsFailed()
-			if updateErr := i.updateDocumentStatus(ctx, document); updateErr != nil {
-				// TODO: Log the error
-				fmt.Printf("failed to update document status: %v", updateErr)
-			}
-		}
-	}()
-
-	// update sync step
+	// mark as sync start
 	document.MarkAsSyncStart()
-	err = i.updateDocumentStatus(ctx, document)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update document sync step: %w", err)
+
+	currentRetryCount := document.GetRetryCount()
+	switch {
+	case currentRetryCount > maxRetryCount: // retry count is less than max retry count
+		document.MarkAsSyncFailed()
+		if updateErr := i.updateDocument(ctx, document); updateErr != nil {
+			logger.Error("failed to update document status", "error", updateErr)
+			return nil, fmt.Errorf("failed to update document status: %w", updateErr)
+		}
+		return nil, errors.NewUseCaseError(errors.InternalError, "failed to create chunks: max retry count reached")
+	default:
+		// increment retry count
+		document.IncrementRetryCount()
+		if updateErr := i.updateDocument(ctx, document); updateErr != nil {
+			logger.Error("failed to update document status", "error", updateErr)
+			return nil, fmt.Errorf("failed to update document status: %w", updateErr)
+		}
 	}
 
 	// download document
-	reader, err := i.storagePort.Download(ctx, document.GetStoragePath())
+	reader, err := i.storagePort.Download(ctx, document.GetStorageInfo())
 	if err != nil {
 		return nil, fmt.Errorf("failed to download document: %w", err)
 	}
@@ -106,8 +103,9 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 	}()
 
 	// process document
+	logger.Info("processing document", "document_id", document.GetID().Value())
 	var text string
-	switch document.GetDocumentExtension() {
+	switch document.GetDocumentType() {
 	case documentValue.DocumentExtensionPDF:
 		// parsed by ocr
 		pdfParserOutput, err := i.pdfParser.Execute(ctx, chunkService.PdfParserInput{Reader: reader})
@@ -133,12 +131,14 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 	}
 
 	// chunk document
+	logger.Info("chunking start", "document_id", document.GetID().Value())
 	chunkerOutput, err := i.chunker.Execute(ctx, chunkService.ChunkerInput{Text: text})
 	if err != nil {
 		return nil, fmt.Errorf("failed to chunk document: %w", err)
 	}
 
 	// create embeddings with batch processing
+	logger.Info("creating embeddings number", "number", len(chunkerOutput.Chunks), "document_id", document.GetID().Value())
 	contents := make([]string, len(chunkerOutput.Chunks))
 	for i, chunk := range chunkerOutput.Chunks {
 		contents[i] = chunk.Content
@@ -202,21 +202,22 @@ func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUs
 		return nil
 	})
 	if err != nil {
+		logger.Error("failed to create chunks", "error", err)
 		return nil, errors.NewUseCaseError(errors.InternalError, "failed to create chunks")
 	}
 
 	// mark as sync done
 	document.MarkAsSyncDone()
-	err = i.updateDocumentStatus(ctx, document)
+	err = i.updateDocument(ctx, document)
 	if err != nil {
+		logger.Error("failed to update document status", "error", err)
 		return nil, fmt.Errorf("failed to update document: %w", err)
 	}
 
 	return &CreateChunkOutput{NumCreated: len(chunks)}, nil
 }
 
-// updateDocumentStatus updates the document status in the repository
-func (i *CreateChunkInteractor) updateDocumentStatus(ctx context.Context, document *documentEntity.Document) error {
+func (i *CreateChunkInteractor) updateDocument(ctx context.Context, document *documentEntity.Document) error {
 	numUpdated, err := i.documentRepository.Update(ctx, document)
 	if err != nil {
 		return fmt.Errorf("failed to update document: %w", err)

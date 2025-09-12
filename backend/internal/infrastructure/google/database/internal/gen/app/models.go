@@ -9,13 +9,13 @@ import (
 )
 
 type Document struct {
-	ID                pgtype.UUID
-	Title             string
-	DocumentExtension string
-	BucketName        string
-	ObjectName        string
-	DocumentStatus    string
-	SyncStep          string
-	CreatedAt         pgtype.Timestamptz
-	UpdatedAt         pgtype.Timestamptz
+	ID             pgtype.UUID
+	Title          string
+	DocumentType   string
+	BucketName     string
+	ObjectName     string
+	DocumentStatus string
+	RetryCount     int32
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
 }

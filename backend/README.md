@@ -10,9 +10,15 @@ There are 3 services in the backend.
 
 - Admin: Document Management (rest)
 - Agent: AI Consultant Agent (websocket)
-- Vector: Sync Document to Vector Database (pubsub)
+- Vector: Sync Document to Vector Database (cloud tasks)
 
 All services are running on the cloud run.
+
+### Database
+
+There are 2 databases in the backend.
+- App: Document Management (postgres)
+- Vector: Vector Database (postgres with pgvector extension)
 
 ## Run Application
 

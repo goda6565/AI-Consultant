@@ -27,9 +27,9 @@ func NewClient(ctx context.Context) storagePorts.StoragePort {
 	}
 }
 
-func (c *StorageClient) Upload(ctx context.Context, path value.StorageInfo, reader io.Reader) error {
-	bucketName := path.BucketName()
-	objectName := path.ObjectName()
+func (c *StorageClient) Upload(ctx context.Context, info value.StorageInfo, reader io.Reader) error {
+	bucketName := info.BucketName()
+	objectName := info.ObjectName()
 	bucket := c.client.Bucket(bucketName)
 	object := bucket.Object(objectName)
 	writer := object.If(storage.Conditions{DoesNotExist: true}).NewWriter(ctx)
@@ -44,9 +44,9 @@ func (c *StorageClient) Upload(ctx context.Context, path value.StorageInfo, read
 	return nil
 }
 
-func (c *StorageClient) Download(ctx context.Context, path value.StorageInfo) (io.ReadCloser, error) {
-	bucketName := path.BucketName()
-	objectName := path.ObjectName()
+func (c *StorageClient) Download(ctx context.Context, info value.StorageInfo) (io.ReadCloser, error) {
+	bucketName := info.BucketName()
+	objectName := info.ObjectName()
 	bucket := c.client.Bucket(bucketName)
 	object := bucket.Object(objectName)
 	reader, err := object.NewReader(ctx)
@@ -56,9 +56,9 @@ func (c *StorageClient) Download(ctx context.Context, path value.StorageInfo) (i
 	return reader, nil
 }
 
-func (c *StorageClient) Delete(ctx context.Context, path value.StorageInfo) error {
-	bucketName := path.BucketName()
-	objectName := path.ObjectName()
+func (c *StorageClient) Delete(ctx context.Context, info value.StorageInfo) error {
+	bucketName := info.BucketName()
+	objectName := info.ObjectName()
 	bucket := c.client.Bucket(bucketName)
 	object := bucket.Object(objectName)
 	err := object.Delete(ctx)

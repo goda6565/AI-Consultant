@@ -22,9 +22,9 @@ type CreateDocumentInputPort interface {
 }
 
 type CreateDocumentUseCaseInput struct {
-	Title             string
-	DocumentExtension string
-	File              io.Reader
+	Title        string
+	DocumentType string
+	File         io.Reader
 }
 
 type CreateDocumentOutput struct {
@@ -54,6 +54,10 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 	if err != nil {
 		return nil, fmt.Errorf("failed to create title: %w", err)
 	}
+	documentType, err := value.NewDocumentType(input.DocumentType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create document type: %w", err)
+	}
 
 	// check duplicate
 	isDuplicate, err := i.duplicateChecker.CheckDuplicateByTitle(ctx, title)
@@ -66,11 +70,8 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 
 	// upload file to storage
 	bucketName := i.env.BucketName
-	rawStoragePath, err := i.createStoragePath(input.Title, input.DocumentExtension)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create storage path: %w", err)
-	}
-	storagePath := value.NewStorageInfo(bucketName, rawStoragePath)
+	objectName := fmt.Sprintf("%s.%s", input.Title, documentType.GetExtension())
+	storagePath := value.NewStorageInfo(bucketName, objectName)
 	err = i.storagePort.Upload(ctx, storagePath, input.File)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file to storage: %w", err)
@@ -82,19 +83,15 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 	if err != nil {
 		return nil, fmt.Errorf("failed to create id: %w", err)
 	}
-	documentExtension, err := value.NewDocumentExtension(input.DocumentExtension)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create document extension: %w", err)
-	}
 
 	// create document
 	document := entity.NewDocument(
 		id,
 		title,
-		documentExtension,
+		documentType,
 		storagePath,
-		value.DocumentStatusProcessing,
-		value.SyncStepPending,
+		value.DocumentStatusPending, // initial document status is pending
+		value.NewRetryCount(0),      // initial retry count is 0
 		nil,
 		nil,
 	)
@@ -102,25 +99,18 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 	// save document
 	err = i.documentRepository.Create(ctx, document)
 	if err != nil {
+		// delete document from storage
+		err = i.storagePort.Delete(ctx, storagePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete document from storage after failed to save document: %w", err)
+		}
 		return nil, fmt.Errorf("failed to save document: %w", err)
 	}
 
+	// publish sync queue message to vector service
 	if err := i.syncQueue.Enqueue(ctx, syncQueuePort.SyncQueueMessage{DocumentID: document.GetID().Value()}); err != nil {
-		return nil, fmt.Errorf("failed to publish sync queue message: %w", err)
+		return nil, fmt.Errorf("failed to publish sync queue message to vector service: %w", err)
 	}
 
 	return &CreateDocumentOutput{Document: document}, nil
-}
-
-func (i *CreateDocumentInteractor) createStoragePath(title string, documentExtension string) (string, error) {
-	switch documentExtension {
-	case "pdf":
-		return fmt.Sprintf("%s.pdf", title), nil
-	case "markdown":
-		return fmt.Sprintf("%s.md", title), nil
-	case "csv":
-		return fmt.Sprintf("%s.csv", title), nil
-	default:
-		return "", errors.NewUseCaseError(errors.InternalError, "invalid document extension")
-	}
 }

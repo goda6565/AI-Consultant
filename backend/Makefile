@@ -82,9 +82,9 @@ migrate-app-down: ## Run the migrations app down
 migrate-vector-down: ## Run the migrations vector down
 	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/vector -database postgres://postgres:password@localhost:5432/vector_db?sslmode=disable down -all
 
-# oapi-codegen
-.PHONY: oapi-codegen
-oapi-codegen: ## generate oapi-codegen
+# codegen
+.PHONY: code_gen
+code_gen: ## generate oapi-codegen
 	go tool oapi-codegen --config=./oapi-codegen.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml
 
 # wire_gen
