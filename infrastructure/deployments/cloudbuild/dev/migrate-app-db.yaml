@@ -15,18 +15,23 @@ steps:
         version=v4.19.0
         os=linux
         arch=amd64
-        curl -sSL https://github.com/golang-migrate/migrate/releases/download/$$version/migrate.$$os-$$arch.tar.gz | tar xz
-        chmod +x migrate.$$os-$$arch
-        mv migrate.$$os-$$arch /workspace/migrate
+        tmpdir=$(mktemp -d)
+        curl -sSL -o "$tmpdir/migrate.tar.gz" https://github.com/golang-migrate/migrate/releases/download/$$version/migrate.$$os-$$arch.tar.gz
+        tar -xzf "$tmpdir/migrate.tar.gz" -C "$tmpdir"
+        bin=$(find "$tmpdir" -maxdepth 1 -type f -name 'migrate*' | head -n1)
+        chmod +x "$bin"
+        mv "$bin" /workspace/migrate
     
   - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: '/workspace/migrate'
+    entrypoint: 'bash'
     args:
-      - '-path'
-      - '/workspace/infrastructure/schemas/migrations/app'
-      - '-database'
-      - 'postgres://$$DB_USER:$$DB_PASSWORD@${_APP_DB_HOST}:5432/${_APP_DB_NAME}?sslmode=disable'
-      - 'up'
+      - '-c'
+      - |
+        set -euo pipefail
+        /workspace/migrate \
+          -path /workspace/infrastructure/schemas/migrations/app \
+          -database "postgres://$$DB_USER:$$DB_PASSWORD@${_APP_DB_HOST}:5432/${_APP_DB_NAME}?sslmode=disable" \
+          up
     secretEnv: ['DB_USER', 'DB_PASSWORD']
 
 
