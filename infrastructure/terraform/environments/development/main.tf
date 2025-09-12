@@ -84,6 +84,31 @@ module "backend_vector_cloudbuild_trigger" {
   branch_pattern                = "^develop$"
 }
 
+module "migrate_app_db_cloudbuild_trigger" {
+  source = "../../modules/cloudbuild-trigger-branch"
+
+  trigger_name                  = "${var.environment}-${var.service}-migrate-app-db-cloudbuild-trigger"
+  trigger_description           = "Cloud Build trigger for migrate app db development"
+  file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/migrate-app-db.yaml"
+  included_files                = ["infrastructure/schemas/migrations/app/**", "infrastructure/deployments/cloudbuild/${var.environment}/migrate-app-db.yaml"]
+  cloudbuild_service_account_id = var.cloudbuild_service_account_id
+  github_repository_id          = var.github_repository_id
+  branch_pattern                = "^develop$"
+}
+
+module "migrate_vector_db_cloudbuild_trigger" {
+  source = "../../modules/cloudbuild-trigger-branch"
+
+  trigger_name                  = "${var.environment}-${var.service}-migrate-vector-db-cloudbuild-trigger"
+  trigger_description           = "Cloud Build trigger for migrate vector db development"
+  file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/migrate-vector-db.yaml"
+  included_files                = ["infrastructure/schemas/migrations/vector/**", "infrastructure/deployments/cloudbuild/${var.environment}/migrate-vector-db.yaml"]
+  cloudbuild_service_account_id = var.cloudbuild_service_account_id
+  github_repository_id          = var.github_repository_id
+  branch_pattern                = "^develop$"
+}
+
+
 # Secret Manager
 module "secret_manage_vector_db_password" {
   source      = "../../modules/secret-manager"
