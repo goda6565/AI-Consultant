@@ -34,7 +34,7 @@ images: []
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  workerPool: 'projects/ai-consultant-471305/locations/us-west2/workerPools/shared-ai-consultant-private-pool'
+  workerPool: 'projects/ai-consultant-471305/locations/us-west2/workerPools/shared-ai-consultant-cloudbuild-pool'
 
 substitutions:
   _APP_DB_HOST: '10.18.208.3'
