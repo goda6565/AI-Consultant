@@ -43,4 +43,4 @@ options:
 
 substitutions:
   _VECTOR_DB_HOST: '10.18.208.3'
-  _VECTOR_DB_NAME: 'dev-vector-db'
+  _VECTOR_DB_NAME: 'dev_vector_db'

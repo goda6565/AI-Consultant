@@ -43,4 +43,4 @@ options:
 
 substitutions:
   _APP_DB_HOST: '10.18.208.3'
-  _APP_DB_NAME: 'dev-app-db'
+  _APP_DB_NAME: 'dev_app_db'
