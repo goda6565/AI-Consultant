@@ -25,8 +25,16 @@ type DeleteDocumentInteractor struct {
 	storagePort        storagePort.StoragePort
 }
 
-func NewDeleteDocumentUseCase(documentRepository documentRepository.DocumentRepository, chunkRepository chunkRepository.ChunkRepository) DeleteDocumentInputPort {
-	return &DeleteDocumentInteractor{documentRepository: documentRepository}
+func NewDeleteDocumentUseCase(
+	documentRepository documentRepository.DocumentRepository,
+	chunkRepository chunkRepository.ChunkRepository,
+	storagePort storagePort.StoragePort,
+) DeleteDocumentInputPort {
+	return &DeleteDocumentInteractor{
+		documentRepository: documentRepository,
+		chunkRepository:    chunkRepository,
+		storagePort:        storagePort,
+	}
 }
 
 func (i *DeleteDocumentInteractor) Execute(ctx context.Context, input DeleteDocumentUseCaseInput) error {

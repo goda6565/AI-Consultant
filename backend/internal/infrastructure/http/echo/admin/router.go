@@ -46,6 +46,7 @@ func setUpSwagger(e *echo.Echo, environment *environment.Environment) (*openapi3
 }
 
 func (r *AdminRouter) RegisterRoutes(e *echo.Echo) *echo.Echo {
+	e.Use(middleware.CORSMiddleware())
 	swagger, err := setUpSwagger(e, r.environment)
 	if err != nil {
 		panic(err)
