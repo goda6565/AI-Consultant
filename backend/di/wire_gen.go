@@ -47,7 +47,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	createDocumentHandler := document3.NewCreateDocumentHandler(createDocumentInputPort)
 	vectorPool, cleanup4 := database.ProvideVectorPool(ctx, environmentEnvironment)
 	chunkRepository := chunk.NewChunkRepository(vectorPool)
-	deleteDocumentInputPort := document2.NewDeleteDocumentUseCase(documentRepository, chunkRepository)
+	deleteDocumentInputPort := document2.NewDeleteDocumentUseCase(documentRepository, chunkRepository, storagePort)
 	deleteDocumentHandler := document3.NewDeleteDocumentHandler(deleteDocumentInputPort)
 	getDocumentInputPort := document2.NewGetDocumentUseCase(documentRepository)
 	getDocumentHandler := document3.NewGetDocumentHandler(getDocumentInputPort)
