@@ -58,6 +58,24 @@ module "backend_vector_cloudrun" {
   service               = var.service
 }
 
+module "frontend_cloudrun" {
+  source = "../../modules/cloudrun"
+
+  cloudrun_service_name = "${var.environment}-${var.service}-frontend"
+  region                = var.region
+  env_vars = [
+    {
+      name  = "ENV"
+      value = "development"
+    }
+  ]
+  vpc_name             = var.vpc_id
+  subnet_name          = var.subnet_id
+  enable_public_access = true
+  environment          = var.environment
+  service              = var.service
+}
+
 # Cloud Build
 
 module "backend_admin_cloudbuild_trigger" {
