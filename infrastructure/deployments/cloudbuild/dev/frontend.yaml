@@ -26,9 +26,9 @@ steps:
     - -c
     - |
       touch frontend/.env.production
-      echo 'NEXT_PUBLIC_ADMIN_API_URL=$$ADMIN_API_URL' >> frontend/.env.production
-      echo 'NEXT_PUBLIC_IDENTITY_PLATFORM_API_KEY=$$IDENTITY_PLATFORM_API_KEY' >> frontend/.env.production
-      echo 'NEXT_PUBLIC_IDENTITY_PLATFORM_AUTH_DOMAIN=$$IDENTITY_PLATFORM_AUTH_DOMAIN' >> frontend/.env.production
+      echo "NEXT_PUBLIC_ADMIN_API_URL=$$ADMIN_API_URL" >> frontend/.env.production
+      echo "NEXT_PUBLIC_IDENTITY_PLATFORM_API_KEY=$$IDENTITY_PLATFORM_API_KEY" >> frontend/.env.production
+      echo "NEXT_PUBLIC_IDENTITY_PLATFORM_AUTH_DOMAIN=$$IDENTITY_PLATFORM_AUTH_DOMAIN" >> frontend/.env.production
   
   secretEnv: ['ADMIN_API_URL', 'IDENTITY_PLATFORM_API_KEY', 'IDENTITY_PLATFORM_AUTH_DOMAIN']
 
