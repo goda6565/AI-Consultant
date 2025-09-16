@@ -63,3 +63,18 @@ module "cloudbuild-pool" {
   name   = "${var.environment}-${var.service}-cloudbuild-pool"
   vpc_id = module.network.vpc_id
 }
+
+# secret manager
+module "secret_manager_identity_platform_api_key" {
+  source = "../../modules/secret-manager"
+
+  secret_name = "${var.environment}-${var.service}-identity-platform-api-key"
+  region      = var.region
+}
+
+module "secret_manager_identity_platform_auth_domain" {
+  source = "../../modules/secret-manager"
+
+  secret_name = "${var.environment}-${var.service}-identity-platform-auth-domain"
+  region      = var.region
+}

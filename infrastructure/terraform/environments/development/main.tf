@@ -126,6 +126,17 @@ module "migrate_vector_db_cloudbuild_trigger" {
   branch_pattern                = "^develop$"
 }
 
+module "frontend_cloudbuild_trigger" {
+  source = "../../modules/cloudbuild-trigger-branch"
+
+  trigger_name                  = "${var.environment}-${var.service}-frontend-cloudbuild-trigger"
+  trigger_description           = "Cloud Build trigger for frontend development"
+  file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/frontend.yaml"
+  included_files                = ["frontend/**", "infrastructure/deployments/cloudbuild/${var.environment}/frontend.yaml"]
+  cloudbuild_service_account_id = var.cloudbuild_service_account_id
+  github_repository_id          = var.github_repository_id
+  branch_pattern                = "^develop$"
+}
 
 # Secret Manager
 module "secret_manage_vector_db_password" {
@@ -149,6 +160,12 @@ module "secret_manage_app_db_password" {
 module "secret_manage_app_db_username" {
   source      = "../../modules/secret-manager"
   secret_name = "${var.environment}-${var.service}-app-db-username"
+  region      = var.region
+}
+
+module "secret_manage_admin_api_url" {
+  source      = "../../modules/secret-manager"
+  secret_name = "${var.environment}-${var.service}-admin-api-url"
   region      = var.region
 }
 
