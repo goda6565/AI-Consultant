@@ -12,19 +12,30 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/internal/gen/app"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/helper"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type DocumentRepository struct {
+	tx   pgx.Tx
 	pool *database.AppPool
 }
 
 func NewDocumentRepository(pool *database.AppPool) repository.DocumentRepository {
-	return &DocumentRepository{pool: pool}
+	return &DocumentRepository{tx: nil, pool: pool}
+}
+
+func (r *DocumentRepository) WithTx(tx pgx.Tx) *DocumentRepository {
+	return &DocumentRepository{tx: tx, pool: r.pool}
 }
 
 func (r *DocumentRepository) FindAll(ctx context.Context) ([]entity.Document, error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	documents, err := q.GetAllDocuments(ctx)
 	if err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get all documents: %v", err))

@@ -84,7 +84,7 @@ func TestDuplicateChecker_CheckDuplicateByTitle(t *testing.T) {
 			tt.mockSetup()
 			checker := NewDuplicateCheckService(mockRepo)
 
-			result, err := checker.CheckDuplicateByTitle(context.Background(), tt.title)
+			result, err := checker.Execute(context.Background(), tt.title)
 
 			if tt.expectedError && err == nil {
 				t.Errorf("expected error but no error occurred")

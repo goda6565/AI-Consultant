@@ -99,6 +99,13 @@ locals {
         secret  = "dev-ai-consultant-app-db-password"
         version = "latest"
       }
+    },
+    {
+      name = "REDIS_URL"
+      secret_key_ref = {
+        secret  = "shared-ai-consultant-redis-url"
+        version = "latest"
+      }
     }
   ]
 }

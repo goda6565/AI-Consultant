@@ -18,7 +18,7 @@ func NewDuplicateCheckService(documentRepository repository.DocumentRepository) 
 	}
 }
 
-func (dc *DuplicateChecker) CheckDuplicateByTitle(ctx context.Context, title value.Title) (bool, error) {
+func (dc *DuplicateChecker) Execute(ctx context.Context, title value.Title) (bool, error) {
 	existingDoc, err := dc.documentRepository.FindByTitle(ctx, title)
 	if err != nil {
 		return false, fmt.Errorf("failed to find document by title: %w", err)

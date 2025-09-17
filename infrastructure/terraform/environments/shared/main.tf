@@ -78,3 +78,10 @@ module "secret_manager_identity_platform_auth_domain" {
   secret_name = "${var.environment}-${var.service}-identity-platform-auth-domain"
   region      = var.region
 }
+
+module "secret_manager_redis_url" {
+  source = "../../modules/secret-manager"
+
+  secret_name = "${var.environment}-${var.service}-redis-url"
+  region      = var.region
+}

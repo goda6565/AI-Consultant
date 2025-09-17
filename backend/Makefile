@@ -57,6 +57,11 @@ run-admin: ## Run the application
 run-vector: ## Run the application
 	set -a && . .env.vector && set +a && go run main.go vector run
 
+# run-agent
+.PHONY: run-agent
+run-agent: ## Run the application
+	set -a && . .env.agent && set +a && go run main.go agent run
+
 # stop
 .PHONY: stop
 stop: ## Stop the application
@@ -82,7 +87,7 @@ migrate-app-down: ## Run the migrations app down
 migrate-vector-down: ## Run the migrations vector down
 	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/vector -database postgres://postgres:password@localhost:5432/vector_db?sslmode=disable down -all
 
-# codegen
+# code_gen
 .PHONY: code_gen
 code_gen: ## generate oapi-codegen
 	go tool oapi-codegen --config=./oapi-codegen.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml

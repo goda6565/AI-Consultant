@@ -1,0 +1,113 @@
+package transaction
+
+import (
+	"context"
+
+	documentRepository "github.com/goda6565/ai-consultant/backend/internal/domain/document/repository"
+	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
+	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
+	problemRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
+	documentRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
+	hearingRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
+	hearingMessageRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
+	problemRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
+	transaction "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/transaction"
+	"github.com/jackc/pgx/v5"
+)
+
+type AdminUnitOfWork struct {
+	pool                     *database.AppPool
+	documentRepository       documentRepository.DocumentRepository
+	problemRepository        problemRepository.ProblemRepository
+	hearingRepository        hearingRepository.HearingRepository
+	hearingMessageRepository hearingMessageRepository.HearingMessageRepository
+}
+
+func NewAdminUnitOfWork(
+	ctx context.Context,
+	pool *database.AppPool,
+	documentRepository documentRepository.DocumentRepository,
+	problemRepository problemRepository.ProblemRepository,
+	hearingRepository hearingRepository.HearingRepository,
+	hearingMessageRepository hearingMessageRepository.HearingMessageRepository,
+) transaction.AdminUnitOfWork {
+	return &AdminUnitOfWork{
+		pool:                     pool,
+		documentRepository:       documentRepository,
+		problemRepository:        problemRepository,
+		hearingRepository:        hearingRepository,
+		hearingMessageRepository: hearingMessageRepository,
+	}
+}
+
+func (u *AdminUnitOfWork) WithTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	tx, err := u.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+
+	ctx = context.WithValue(ctx, transaction.AdminTxKey, tx)
+
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	if err := fn(ctx); err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (u *AdminUnitOfWork) DocumentRepository(ctx context.Context) documentRepository.DocumentRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.documentRepository.(*documentRepositoryImpl.DocumentRepository)
+	if impl == nil {
+		panic("documentRepository is not a documentRepositoryImpl.DocumentRepository")
+	}
+	return impl.WithTx(tx)
+}
+
+func (u *AdminUnitOfWork) ProblemRepository(ctx context.Context) problemRepository.ProblemRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.problemRepository.(*problemRepositoryImpl.ProblemRepository)
+	if impl == nil {
+		panic("problemRepository is not a problemRepositoryImpl.ProblemRepository")
+	}
+	return impl.WithTx(tx)
+}
+
+func (u *AdminUnitOfWork) HearingRepository(ctx context.Context) hearingRepository.HearingRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.hearingRepository.(*hearingRepositoryImpl.HearingRepository)
+	if impl == nil {
+		panic("hearingRepository is not a hearingRepositoryImpl.HearingRepository")
+	}
+	return impl.WithTx(tx)
+}
+
+func (u *AdminUnitOfWork) HearingMessageRepository(ctx context.Context) hearingMessageRepository.HearingMessageRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.hearingMessageRepository.(*hearingMessageRepositoryImpl.HearingMessageRepository)
+	if impl == nil {
+		panic("hearingMessageRepository is not a hearingMessageRepositoryImpl.HearingMessageRepository")
+	}
+	return impl.WithTx(tx)
+}

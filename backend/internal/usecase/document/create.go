@@ -60,7 +60,7 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 	}
 
 	// check duplicate
-	isDuplicate, err := i.duplicateChecker.CheckDuplicateByTitle(ctx, title)
+	isDuplicate, err := i.duplicateChecker.Execute(ctx, title)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check duplicate: %w", err)
 	}
