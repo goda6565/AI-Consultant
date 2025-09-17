@@ -25,6 +25,7 @@ type Environment struct {
 	DocumentAIEnvironment
 	VertexAIEnvironment
 	SyncQueueEnvironment
+	RedisEnvironment
 }
 
 type ServerEnvironment struct {
@@ -81,4 +82,8 @@ type SyncQueueEnvironment struct {
 	QueueName     string `env:"SYNC_QUEUE_NAME"`
 	QueueLocation string `env:"SYNC_QUEUE_LOCATION"`
 	TargetURL     string `env:"SYNC_TARGET_URL"`
+}
+
+type RedisEnvironment struct {
+	RedisURL string `env:"REDIS_URL,required"`
 }

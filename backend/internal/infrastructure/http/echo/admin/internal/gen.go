@@ -29,9 +29,9 @@ const (
 
 // Defines values for DocumentStatus.
 const (
-	Done       DocumentStatus = "done"
-	Failed     DocumentStatus = "failed"
-	Processing DocumentStatus = "processing"
+	DocumentStatusDone       DocumentStatus = "done"
+	DocumentStatusFailed     DocumentStatus = "failed"
+	DocumentStatusProcessing DocumentStatus = "processing"
 )
 
 // Defines values for DocumentType.
@@ -51,6 +51,15 @@ const (
 	N500 ErrorCode = 500
 )
 
+// Defines values for ProblemStatus.
+const (
+	ProblemStatusDone       ProblemStatus = "done"
+	ProblemStatusFailed     ProblemStatus = "failed"
+	ProblemStatusHearing    ProblemStatus = "hearing"
+	ProblemStatusPending    ProblemStatus = "pending"
+	ProblemStatusProcessing ProblemStatus = "processing"
+)
+
 // Document defines model for Document.
 type Document struct {
 	BucketName     string             `json:"bucketName"`
@@ -64,6 +73,15 @@ type Document struct {
 	UpdatedAt      time.Time          `json:"updatedAt"`
 }
 
+// Problem defines model for Problem.
+type Problem struct {
+	CreatedAt   time.Time          `json:"createdAt"`
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Status      ProblemStatus      `json:"status"`
+	Title       string             `json:"title"`
+}
+
 // DocumentStatus defines model for documentStatus.
 type DocumentStatus string
 
@@ -73,11 +91,22 @@ type DocumentType string
 // ErrorCode defines model for errorCode.
 type ErrorCode int
 
+// ProblemStatus defines model for problemStatus.
+type ProblemStatus string
+
 // DocumentIdPathParameter defines model for DocumentIdPathParameter.
 type DocumentIdPathParameter = openapi_types.UUID
 
+// ProblemIdPathParameter defines model for ProblemIdPathParameter.
+type ProblemIdPathParameter = openapi_types.UUID
+
 // CreateDocumentSuccess defines model for CreateDocumentSuccess.
 type CreateDocumentSuccess struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+// CreateProblemSuccess defines model for CreateProblemSuccess.
+type CreateProblemSuccess struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
@@ -90,9 +119,17 @@ type Error struct {
 // GetDocumentSuccess defines model for GetDocumentSuccess.
 type GetDocumentSuccess = Document
 
+// GetProblemSuccess defines model for GetProblemSuccess.
+type GetProblemSuccess = Problem
+
 // ListDocumentsSuccess defines model for ListDocumentsSuccess.
 type ListDocumentsSuccess struct {
 	Documents []Document `json:"documents"`
+}
+
+// ListProblemsSuccess defines model for ListProblemsSuccess.
+type ListProblemsSuccess struct {
+	Problems []Problem `json:"problems"`
 }
 
 // CreateDocument defines model for CreateDocument.
@@ -103,6 +140,11 @@ type CreateDocument struct {
 	Title        string       `json:"title"`
 }
 
+// CreateProblem defines model for CreateProblem.
+type CreateProblem struct {
+	Description string `json:"description"`
+}
+
 // CreateDocumentJSONBody defines parameters for CreateDocument.
 type CreateDocumentJSONBody struct {
 	// Data File data in base64
@@ -111,8 +153,16 @@ type CreateDocumentJSONBody struct {
 	Title        string       `json:"title"`
 }
 
+// CreateProblemJSONBody defines parameters for CreateProblem.
+type CreateProblemJSONBody struct {
+	Description string `json:"description"`
+}
+
 // CreateDocumentJSONRequestBody defines body for CreateDocument for application/json ContentType.
 type CreateDocumentJSONRequestBody CreateDocumentJSONBody
+
+// CreateProblemJSONRequestBody defines body for CreateProblem for application/json ContentType.
+type CreateProblemJSONRequestBody CreateProblemJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -128,6 +178,18 @@ type ServerInterface interface {
 	// Get a document by document id
 	// (GET /api/documents/{documentId})
 	GetDocument(ctx echo.Context, documentId DocumentIdPathParameter) error
+	// List problems
+	// (GET /api/problems)
+	ListProblems(ctx echo.Context) error
+	// Create a problem
+	// (POST /api/problems)
+	CreateProblem(ctx echo.Context) error
+	// Delete a problem by problem id
+	// (DELETE /api/problems/{problemId})
+	DeleteProblem(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Get a problem by problem id
+	// (GET /api/problems/{problemId})
+	GetProblem(ctx echo.Context, problemId ProblemIdPathParameter) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -193,6 +255,64 @@ func (w *ServerInterfaceWrapper) GetDocument(ctx echo.Context) error {
 	return err
 }
 
+// ListProblems converts echo context to params.
+func (w *ServerInterfaceWrapper) ListProblems(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListProblems(ctx)
+	return err
+}
+
+// CreateProblem converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateProblem(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreateProblem(ctx)
+	return err
+}
+
+// DeleteProblem converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteProblem(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteProblem(ctx, problemId)
+	return err
+}
+
+// GetProblem converts echo context to params.
+func (w *ServerInterfaceWrapper) GetProblem(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetProblem(ctx, problemId)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -225,10 +345,18 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/api/documents", wrapper.CreateDocument)
 	router.DELETE(baseURL+"/api/documents/:documentId", wrapper.DeleteDocument)
 	router.GET(baseURL+"/api/documents/:documentId", wrapper.GetDocument)
+	router.GET(baseURL+"/api/problems", wrapper.ListProblems)
+	router.POST(baseURL+"/api/problems", wrapper.CreateProblem)
+	router.DELETE(baseURL+"/api/problems/:problemId", wrapper.DeleteProblem)
+	router.GET(baseURL+"/api/problems/:problemId", wrapper.GetProblem)
 
 }
 
 type CreateDocumentSuccessJSONResponse struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type CreateProblemSuccessJSONResponse struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
@@ -239,8 +367,14 @@ type ErrorJSONResponse struct {
 
 type GetDocumentSuccessJSONResponse Document
 
+type GetProblemSuccessJSONResponse Problem
+
 type ListDocumentsSuccessJSONResponse struct {
 	Documents []Document `json:"documents"`
+}
+
+type ListProblemsSuccessJSONResponse struct {
+	Problems []Problem `json:"problems"`
 }
 
 type ListDocumentsRequestObject struct {
@@ -529,6 +663,292 @@ func (response GetDocument500JSONResponse) VisitGetDocumentResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListProblemsRequestObject struct {
+}
+
+type ListProblemsResponseObject interface {
+	VisitListProblemsResponse(w http.ResponseWriter) error
+}
+
+type ListProblems200JSONResponse struct {
+	ListProblemsSuccessJSONResponse
+}
+
+func (response ListProblems200JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems400JSONResponse struct{ ErrorJSONResponse }
+
+func (response ListProblems400JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListProblems401JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListProblems403JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListProblems500JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblemRequestObject struct {
+	Body *CreateProblemJSONRequestBody
+}
+
+type CreateProblemResponseObject interface {
+	VisitCreateProblemResponse(w http.ResponseWriter) error
+}
+
+type CreateProblem201JSONResponse struct {
+	CreateProblemSuccessJSONResponse
+}
+
+func (response CreateProblem201JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem400JSONResponse struct{ ErrorJSONResponse }
+
+func (response CreateProblem400JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem401JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem403JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem409JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem409JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem500JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblemRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type DeleteProblemResponseObject interface {
+	VisitDeleteProblemResponse(w http.ResponseWriter) error
+}
+
+type DeleteProblem204Response struct {
+}
+
+func (response DeleteProblem204Response) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteProblem400JSONResponse struct{ ErrorJSONResponse }
+
+func (response DeleteProblem400JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem401JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem403JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem404JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem500JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblemRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type GetProblemResponseObject interface {
+	VisitGetProblemResponse(w http.ResponseWriter) error
+}
+
+type GetProblem200JSONResponse struct{ GetProblemSuccessJSONResponse }
+
+func (response GetProblem200JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem400JSONResponse struct{ ErrorJSONResponse }
+
+func (response GetProblem400JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem401JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem403JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem404JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem500JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// List documents
@@ -543,6 +963,18 @@ type StrictServerInterface interface {
 	// Get a document by document id
 	// (GET /api/documents/{documentId})
 	GetDocument(ctx context.Context, request GetDocumentRequestObject) (GetDocumentResponseObject, error)
+	// List problems
+	// (GET /api/problems)
+	ListProblems(ctx context.Context, request ListProblemsRequestObject) (ListProblemsResponseObject, error)
+	// Create a problem
+	// (POST /api/problems)
+	CreateProblem(ctx context.Context, request CreateProblemRequestObject) (CreateProblemResponseObject, error)
+	// Delete a problem by problem id
+	// (DELETE /api/problems/{problemId})
+	DeleteProblem(ctx context.Context, request DeleteProblemRequestObject) (DeleteProblemResponseObject, error)
+	// Get a problem by problem id
+	// (GET /api/problems/{problemId})
+	GetProblem(ctx context.Context, request GetProblemRequestObject) (GetProblemResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -659,25 +1091,131 @@ func (sh *strictHandler) GetDocument(ctx echo.Context, documentId DocumentIdPath
 	return nil
 }
 
+// ListProblems operation middleware
+func (sh *strictHandler) ListProblems(ctx echo.Context) error {
+	var request ListProblemsRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProblems(ctx.Request().Context(), request.(ListProblemsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProblems")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ListProblemsResponseObject); ok {
+		return validResponse.VisitListProblemsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// CreateProblem operation middleware
+func (sh *strictHandler) CreateProblem(ctx echo.Context) error {
+	var request CreateProblemRequestObject
+
+	var body CreateProblemJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateProblem(ctx.Request().Context(), request.(CreateProblemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateProblem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(CreateProblemResponseObject); ok {
+		return validResponse.VisitCreateProblemResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeleteProblem operation middleware
+func (sh *strictHandler) DeleteProblem(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request DeleteProblemRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteProblem(ctx.Request().Context(), request.(DeleteProblemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteProblem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeleteProblemResponseObject); ok {
+		return validResponse.VisitDeleteProblemResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetProblem operation middleware
+func (sh *strictHandler) GetProblem(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request GetProblemRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetProblem(ctx.Request().Context(), request.(GetProblemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetProblem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetProblemResponseObject); ok {
+		return validResponse.VisitGetProblemResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYXW/bNhT9K8LdHtlIWdQB9ZubrIWHoQiQAnsI8kBL1zZbi+TIqw6Cof8+UJT1rUyG",
-	"MSAPe4vFS/Kcew6PqJwgUZlWEiVZWJ1Ac8MzJDTVrweV5BlK2qSPnA6P5zE3lKJNjNAklIRVUxhsHoCB",
-	"cI80pwMwkDxDWEHarAQMDP6VC4MprMjkyMAmB8y4W3WnTMYJVpDnwlVSod1sS0bIPZRl6SejpY8qFViB",
-	"vDfICc8I3JNESar/5FofRcIdzPCbdVhPne20URoN1QulnPiY2idxxMANBUIGW27x1xhYC3RbEI6Bsobw",
-	"12rgBD8b3MEKfgrbfoceiA17tSUDEnSsJg3pd1v3XJcNtmKexksDSW2/YUJt79rG+ydWK2mnOvmUJwla",
-	"e0VDRbpE0z4pkc5g76vioQZn6sGZh2vfb8YocwXsRKX/Khm6Pe5dYckgQ2v5foFi50Lm91hC1JMpGXxG",
-	"ukaZ18g0Z2di/89I013+Q9gGkL3eK+c9vHEIM7scddNGbgwvRl1vl17ScMerYWw7lMtzUPWiccxkmyff",
-	"kb5UuXcaB0NSOTddU+9spJzwHYns1Sx5Ik65XZomdfWVWbToDLO6n7OkDZIp7lXu+1UPC0m4R/Na4jHI",
-	"dXpZu8Z5wuaSsqNUj8Go4z0CXQm7+MbmmlIOZZ45XNood2IcZFcm3a47Lo7Yzb/510mzTLoDBhk331P1",
-	"t3TY7I/JBdrAamfHUcTi6JbF0R2Lo5jF0Qf2Pora6Y1CzvuY5EZQ8eSM4p3+EblBs87pUPm++vXpLNHv",
-	"f36F+sS4pfxoK9eBSPvjJ+ROjV+76827eyVtfiQuKVinmZDB+nHTiPlaxQ801q9yexPdRJU/NUquBazg",
-	"7ia6uQNW3U8qFiHXIuzFzx4rt7lDXYXXJq1zock7GLw5f4miuYPV1IWTiVkyiJdMbt4DcXR7UfXdBdXv",
-	"L0DSsQSsnvtmeH4pXxjYPMu4KUaZ6jTkezuI5pKBVnai8YP7XfcGWMyj7VwSw8EK5Ui8BR2dvhu9KfXi",
-	"6MMb0Lq+mfFG7xm5SzY4eeGp/UgofSAckXBsiIfqeccQ3Y+W52lKbUk491HjaAx8EY9z6YsK6htO4PEF",
-	"1nthlx+PxVszRPwGDOHl6hgi2Bbt3/79PBkHkzHcuQb/l8ovaMXEhfx/9Ufqu++HS6V3G9TPT8N/IFgo",
-	"X8p/AgAA//8LRf1DthAAAA==",
+	"H4sIAAAAAAAC/+xZXW/bNhT9KwK3RzZSF3VA/ZYma+BhKAKkwB6CPNDStc3W+hh51UEw9N8HihRFfdly",
+	"vAAeljdbuiLvPefwHlLakyhL8iyFFCVZ7EnOBEsAQdT/7rKoSCDFZfzAcPvQ3FO3YpCR4DnyLCULG+gt",
+	"7wglXF3KGW4JJSlLgCxIbEcilAj4q+ACYrJAUQAlMtpCwtSo60wkDMmCFAVXkVjm6mmJgqcbUlWUPIhs",
+	"tYPkaEYmbjKhvBnnrHwq/TBI/JTFHGrQbgUwhAYRdSXKUjQ/WZ7veMRUkv43qTLdO9PlIstBoBkoZsiG",
+	"hX3mO/DULY+n3opJ+DUktE10VSIME6WWgK/1jT35WcCaLMhPfsu/rxORfie2ogQ57uqHhnS00D2ZsN5U",
+	"VJfxbFPKVt8gwha7FviKGuwMd+dA50J2LG83eFae9RWZZ6kcY/yxiCKQ8ozseTxvLbhF8Hgi9656dKpe",
+	"Q5HX1EH64P8XqjBruFPEb0Jk4oysoyw+uj5AzXGrAitKEpCSbWYsjyaQ6jnm1KmLqSi5BzxHXoeKsY1q",
+	"ZP57wHGp3AOeoZND6TRrfyKbMcr/4NKiI8/XbVOwFjFCIudDaDllQrBy2Gns0HPYV3VZ+OWgZIPUv1Cx",
+	"AXV+wZakI/XagWeX2zzhVFs1htzZkgyrWBXRd8Avtb3vhwYY1T0jvsFOV4oZwjvkyUHPfESGhZzrmib6",
+	"TM+d1T2pgXOyaAEoytus0HiZ2zxF2IA45OyUFHl8GlzDTk6ndgQOU50KBoh3CnApdPMbasvuEkfa+wtU",
+	"cHAvMZspOUtERv+thmbuvbpwOxnbiV34xiAbih3SIjGrWDUYNa0KS9UUa8Z34Jr19E7TDhOvCSUJE9/j",
+	"7G+VWCR/jA7Q2mv7dBgENAze0zC4pmEQ0jD4SD8EQfu4I+ouhm4GkMa6ii0woX+dVJyiEaJCcCwfFWFa",
+	"U5+ACRA3BW7rNlT/+9zI4fc/vxLTwNRI+m6rjy1irpshT9fZcLd/s3x3m6Wy2CFL0buJE556Nw9LS/ah",
+	"iB8gpB7l/VVwFdTtIoeU5ZwsyPVVcHWt6me4ravwWc79jvdtoF4lavnUPrKMTZe2Zkt6G+FfgmBK4DbO",
+	"H7XripJwzsN2RxQG70+Kvj4h+sMJmTiSIIunrhienqtnSmSRJEyUA0NXHLKN7O0LlH4zOQJ871jpHjzL",
+	"6Wyds6nfG6EakDcD0fGjzkWxFwYfL4Brc0Rhlu8JuivaW3n+vn1XUumGsAOEoSDu6uuOINx3N0/jJbUh",
+	"/tS7HVVGTxfhsC99yTyz2fR0fp7UWlgXu115aYIIL0AQmi5HEN6qbH9r/x5tB6Nt2DkQvibzM6AYOZq+",
+	"sT9gX51dT6W+aQ3u8WzSk5vT4IstuX+c/P84ct5C19DQHlyP+HFz0HixHTtH6Ze6ce9NzJsZT5txbuka",
+	"Ybq/3vy9/Ugww4hbJZzWjSc+aLzZ8CvbcPMmcVXan51O3GkBUx78+qTPc+DLbgGXY8AnkK5GN5f3/a+Y",
+	"CuF970uiJNVz9U8AAAD//5LjButPHQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

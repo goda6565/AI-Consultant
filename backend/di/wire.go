@@ -10,11 +10,15 @@ import (
 
 	chunkService "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	documentService "github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
+	problemService "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	cloudtasksClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	chunkRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/chunk"
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
+	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
+	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
+	problemRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/transaction"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/gemini"
@@ -24,11 +28,13 @@ import (
 	adminRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
 	adminHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
 	documentHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
+	problemHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	vectorRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector"
 	vectorHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler"
 	zap "github.com/goda6565/ai-consultant/backend/internal/infrastructure/zap"
 	chunkUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	documentUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
+	problemUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 )
 
 func InitAdminApplication(ctx context.Context) (*App, func(), error) {
@@ -36,14 +42,22 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		environment.Set,
 		zap.Set,
 		firebase.Set,
+		gemini.Set,
 		database.Set,
 		chunkRepository.Set,
 		documentRepository.Set,
+		hearingRepository.Set,
+		hearingMessageRepository.Set,
+		problemRepository.Set,
+		transaction.Set,
 		storageClient.Set,
 		cloudtasksClient.Set,
 		documentService.Set,
+		problemService.Set,
 		documentUseCase.Set,
+		problemUseCase.Set,
 		documentHandler.Set,
+		problemHandler.Set,
 		adminHandler.Set,
 		adminRouter.Set,
 		baseServer.Set,
@@ -70,3 +84,17 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 		wire.Struct(new(App), "*"),
 	))
 }
+
+// func InitAgentApplication(ctx context.Context) (*App, func(), error) {
+// 	panic(wire.Build(
+// 		environment.Set,
+// 		zap.Set,
+// 		gemini.Set,
+// 		memoryStateRepository.Set,
+// 		agentUseCase.Set,
+// 		agentHandler.Set,
+// 		agentRouter.Set,
+// 		baseServer.Set,
+// 		wire.Struct(new(App), "*"),
+// 	))
+// }

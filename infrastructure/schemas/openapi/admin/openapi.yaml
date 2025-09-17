@@ -6,6 +6,7 @@ info:
 
 tags:
   - name: documents
+  - name: problems
 
 paths:
   /api/documents/{documentId}:
@@ -98,6 +99,96 @@ paths:
         "500":
           $ref: "#/components/responses/Error"
 
+  /api/problems:
+    get:
+      tags:
+        - problems
+      summary: "List problems"
+      operationId: "ListProblems"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ListProblemsSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+    post:
+      tags:
+        - problems
+      summary: "Create a problem"
+      operationId: "CreateProblem"
+      security:
+        - BearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProblem"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateProblemSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+  
+  /api/problems/{problemId}:
+    get:
+      tags:
+        - problems
+      summary: "Get a problem by problem id"
+      operationId: "GetProblem"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetProblemSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+    delete:
+      tags:
+        - problems
+      summary: "Delete a problem by problem id"
+      operationId: "DeleteProblem"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "204":
+          description: "No content delete successfully"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -116,6 +207,15 @@ components:
     documentStatus:
       type: string
       enum:
+        - processing
+        - done
+        - failed
+
+    problemStatus:
+      type: string
+      enum:
+        - pending
+        - hearing
         - processing
         - done
         - failed
@@ -165,12 +265,43 @@ components:
         - createdAt
         - updatedAt
 
+    Problem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/problemStatus"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - status
+        - createdAt
+
   parameters:
     DocumentIdPathParameter:
       name: documentId
       in: path
       required: true
       description: "Document ID"
+      schema:
+        type: string
+        format: uuid
+
+    ProblemIdPathParameter:
+      name: problemId
+      in: path
+      required: true
+      description: "Problem ID"
       schema:
         type: string
         format: uuid
@@ -195,7 +326,19 @@ components:
               - title
               - documentType
               - data
-  
+
+    CreateProblem:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+            required:
+              - description
+
   responses:
     Error:
       description: "Error"
@@ -245,3 +388,37 @@ components:
                   $ref: "#/components/schemas/Document"
             required:
               - documents
+
+    CreateProblemSuccess:
+      description: "Create problem response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+            required:
+              - id
+
+    GetProblemSuccess:
+      description: "Get problem response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+    ListProblemsSuccess:
+      description: "List problems response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              problems:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Problem"
+            required:
+              - problems

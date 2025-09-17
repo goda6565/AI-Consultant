@@ -19,3 +19,25 @@ type Document struct {
 	CreatedAt      pgtype.Timestamptz
 	UpdatedAt      pgtype.Timestamptz
 }
+
+type Hearing struct {
+	ID        pgtype.UUID
+	ProblemID pgtype.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type HearingMessage struct {
+	ID        pgtype.UUID
+	HearingID pgtype.UUID
+	Role      string
+	Message   string
+	CreatedAt pgtype.Timestamptz
+}
+
+type Problem struct {
+	ID          pgtype.UUID
+	Title       string
+	Description string
+	Status      string
+	CreatedAt   pgtype.Timestamptz
+}

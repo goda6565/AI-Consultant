@@ -8,13 +8,17 @@ package di
 
 import (
 	"context"
-	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
+	service3 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
+	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/chunk"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/transaction"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/gemini"
@@ -24,12 +28,14 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
 	document3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
+	problem3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector"
 	handler2 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler"
 	chunk3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler/chunk"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/zap"
 	chunk2 "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	document2 "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
+	problem2 "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 )
 
 // Injectors from wire.go:
@@ -53,7 +59,21 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	getDocumentHandler := document3.NewGetDocumentHandler(getDocumentInputPort)
 	listDocumentInputPort := document2.NewListDocumentUseCase(documentRepository)
 	listDocumentHandler := document3.NewListDocumentHandler(listDocumentInputPort)
-	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler)
+	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
+	generateTitleService := service2.NewGenerateTitleService(llmClient)
+	problemRepository := problem.NewProblemRepository(appPool)
+	createProblemInputPort := problem2.NewCreateProblemUseCase(generateTitleService, problemRepository)
+	createProblemHandler := problem3.NewCreateProblemHandler(createProblemInputPort)
+	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
+	hearingRepository := hearing.NewHearingRepository(appPool)
+	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository)
+	deleteProblemInputPort := problem2.NewDeleteProblemUseCase(problemRepository, hearingMessageRepository, hearingRepository, adminUnitOfWork)
+	deleteProblemHandler := problem3.NewDeleteProblemHandler(deleteProblemInputPort)
+	getProblemInputPort := problem2.NewGetProblemUseCase(problemRepository)
+	getProblemHandler := problem3.NewGetProblemHandler(getProblemInputPort)
+	listProblemInputPort := problem2.NewListProblemUseCase(problemRepository)
+	listProblemHandler := problem3.NewListProblemHandler(listProblemInputPort)
+	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler)
 	router := admin.NewAdminRouter(authenticator, strictServerInterface, environmentEnvironment, logger)
 	server := echo.NewBaseServer(environmentEnvironment, logger, router)
 	app := &App{
@@ -76,10 +96,10 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 	appPool, cleanup3 := database.ProvideAppPool(ctx, environmentEnvironment)
 	documentRepository := document.NewDocumentRepository(appPool)
 	ocrClient := ocr.NewDocumentAIClient(ctx, environmentEnvironment)
-	pdfParser := service2.NewPdfParserService(ocrClient)
+	pdfParser := service3.NewPdfParserService(ocrClient)
 	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
-	csvAnalyzer := service2.NewCsvAnalyzerService(llmClient)
-	chunker := service2.NewChunkService()
+	csvAnalyzer := service3.NewCsvAnalyzerService(llmClient)
+	chunker := service3.NewChunkService()
 	storagePort := storage.NewClient(ctx)
 	createChunkInputPort := chunk2.NewCreateChunkUseCase(vectorUnitOfWork, documentRepository, pdfParser, csvAnalyzer, chunker, storagePort, llmClient)
 	createHandler := chunk3.NewCreateChunkHandler(createChunkInputPort)

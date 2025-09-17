@@ -28,7 +28,7 @@ func (cs *CsvAnalyzer) Execute(ctx context.Context, input CsvAnalyzerInput) (*Cs
 	llmInput := llm.GenerateTextInput{
 		SystemPrompt: cs.createSystemPrompt(),
 		UserPrompt:   cs.createUserPrompt(input.Reader),
-		Config:       llm.LLMConfig{Provider: llm.OpenAI, Model: llm.GPT4o},
+		Config:       llm.LLMConfig{Provider: llm.VertexAI, Model: llm.Gemini25Flash},
 	}
 
 	llmOutput, err := cs.llmClient.GenerateText(ctx, llmInput)

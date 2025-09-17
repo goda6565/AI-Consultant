@@ -30,6 +30,7 @@ const (
 	GeminiEmbedding001             EmbeddingModel = "gemini-embedding-001"
 )
 
+//go:generate go tool mockgen -source=$GOFILE -destination=mock/$GOFILE -package=mock
 type LLMClient interface {
 	GenerateText(ctx context.Context, input GenerateTextInput) (*GenerateTextOutput, error)
 	GenerateStructuredText(ctx context.Context, input GenerateStructuredTextInput) (*GenerateStructuredTextOutput, error)
