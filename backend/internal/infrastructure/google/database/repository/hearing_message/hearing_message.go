@@ -59,12 +59,17 @@ func (r *HearingMessageRepository) Create(ctx context.Context, hearingMessage *e
 	if err := hearingID.Scan(hearingMessage.GetHearingID().Value()); err != nil {
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan hearing id: %v", err))
 	}
+	var problemFieldID pgtype.UUID
+	if err := problemFieldID.Scan(hearingMessage.GetProblemFieldID().Value()); err != nil {
+		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan problem field id: %v", err))
+	}
 	hearingMessageValue := hearingMessage.GetMessage()
 	err := q.CreateHearingMessage(ctx, app.CreateHearingMessageParams{
-		ID:        id,
-		HearingID: hearingID,
-		Role:      hearingMessage.GetRole().Value(),
-		Message:   hearingMessageValue.Value(),
+		ID:             id,
+		HearingID:      hearingID,
+		ProblemFieldID: problemFieldID,
+		Role:           hearingMessage.GetRole().Value(),
+		Message:        hearingMessageValue.Value(),
 	})
 	if err != nil {
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to create hearing message: %v", err))
@@ -85,6 +90,27 @@ func (r *HearingMessageRepository) DeleteByHearingID(ctx context.Context, hearin
 	return numDeleted, nil
 }
 
+func (r *HearingMessageRepository) FindByProblemFieldID(ctx context.Context, problemFieldID sharedValue.ID) ([]entity.HearingMessage, error) {
+	q := app.New(r.pool)
+	var pID pgtype.UUID
+	if err := pID.Scan(problemFieldID.Value()); err != nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan problem field id: %v", err))
+	}
+	hearingMessages, err := q.GetHearingMessageByProblemFieldID(ctx, pID)
+	if err != nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get hearing messages by problem field id: %v", err))
+	}
+	entities := make([]entity.HearingMessage, len(hearingMessages))
+	for i, hearingMessage := range hearingMessages {
+		entity, err := toEntity(hearingMessage)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert hearing message to entity: %v", err)
+		}
+		entities[i] = *entity
+	}
+	return entities, nil
+}
+
 func toEntity(hearingMessage app.HearingMessage) (*entity.HearingMessage, error) {
 	id, err := sharedValue.NewID(hearingMessage.ID.String())
 	if err != nil {
@@ -93,6 +119,10 @@ func toEntity(hearingMessage app.HearingMessage) (*entity.HearingMessage, error)
 	hearingID, err := sharedValue.NewID(hearingMessage.HearingID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hearing id: %w", err)
+	}
+	problemFieldID, err := sharedValue.NewID(hearingMessage.ProblemFieldID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create problem field id: %w", err)
 	}
 	role, err := value.NewRole(hearingMessage.Role)
 	if err != nil {
@@ -104,5 +134,5 @@ func toEntity(hearingMessage app.HearingMessage) (*entity.HearingMessage, error)
 	}
 	createdAt := hearingMessage.CreatedAt.Time
 
-	return entity.NewHearingMessage(id, hearingID, role, *message, &createdAt), nil
+	return entity.NewHearingMessage(id, hearingID, problemFieldID, role, *message, &createdAt), nil
 }

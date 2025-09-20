@@ -9,3 +9,6 @@ SELECT * FROM problems WHERE id = $1;
 
 -- name: GetAllProblems :many
 SELECT * FROM problems ORDER BY created_at DESC;
+
+-- name: UpdateProblemStatus :execrows
+UPDATE problems SET status = $2 WHERE id = $1;

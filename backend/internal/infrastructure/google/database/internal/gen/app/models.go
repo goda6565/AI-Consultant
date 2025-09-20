@@ -27,11 +27,12 @@ type Hearing struct {
 }
 
 type HearingMessage struct {
-	ID        pgtype.UUID
-	HearingID pgtype.UUID
-	Role      string
-	Message   string
-	CreatedAt pgtype.Timestamptz
+	ID             pgtype.UUID
+	HearingID      pgtype.UUID
+	Role           string
+	Message        string
+	CreatedAt      pgtype.Timestamptz
+	ProblemFieldID pgtype.UUID
 }
 
 type Problem struct {
@@ -40,4 +41,12 @@ type Problem struct {
 	Description string
 	Status      string
 	CreatedAt   pgtype.Timestamptz
+}
+
+type ProblemField struct {
+	ID        pgtype.UUID
+	ProblemID pgtype.UUID
+	Field     string
+	Answered  bool
+	CreatedAt pgtype.Timestamptz
 }

@@ -14,7 +14,8 @@ import (
 	reflect "reflect"
 
 	entity "github.com/goda6565/ai-consultant/backend/internal/domain/problem/entity"
-	value "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
+	value "github.com/goda6565/ai-consultant/backend/internal/domain/problem/value"
+	value0 "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -57,7 +58,7 @@ func (mr *MockProblemRepositoryMockRecorder) Create(ctx, problem any) *gomock.Ca
 }
 
 // Delete mocks base method.
-func (m *MockProblemRepository) Delete(ctx context.Context, id value.ID) (int64, error) {
+func (m *MockProblemRepository) Delete(ctx context.Context, id value0.ID) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, id)
 	ret0, _ := ret[0].(int64)
@@ -87,7 +88,7 @@ func (mr *MockProblemRepositoryMockRecorder) FindAll(ctx any) *gomock.Call {
 }
 
 // FindById mocks base method.
-func (m *MockProblemRepository) FindById(ctx context.Context, id value.ID) (*entity.Problem, error) {
+func (m *MockProblemRepository) FindById(ctx context.Context, id value0.ID) (*entity.Problem, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindById", ctx, id)
 	ret0, _ := ret[0].(*entity.Problem)
@@ -99,4 +100,18 @@ func (m *MockProblemRepository) FindById(ctx context.Context, id value.ID) (*ent
 func (mr *MockProblemRepositoryMockRecorder) FindById(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockProblemRepository)(nil).FindById), ctx, id)
+}
+
+// UpdateStatus mocks base method.
+func (m *MockProblemRepository) UpdateStatus(ctx context.Context, id value0.ID, status value.Status) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateStatus", ctx, id, status)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateStatus indicates an expected call of UpdateStatus.
+func (mr *MockProblemRepositoryMockRecorder) UpdateStatus(ctx, id, status any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateStatus", reflect.TypeOf((*MockProblemRepository)(nil).UpdateStatus), ctx, id, status)
 }

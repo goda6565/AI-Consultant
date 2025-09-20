@@ -12,20 +12,22 @@ import (
 )
 
 const createHearingMessage = `-- name: CreateHearingMessage :exec
-INSERT INTO hearing_messages (id, hearing_id, role, message) VALUES ($1, $2, $3, $4)
+INSERT INTO hearing_messages (id, hearing_id, problem_field_id, role, message) VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateHearingMessageParams struct {
-	ID        pgtype.UUID
-	HearingID pgtype.UUID
-	Role      string
-	Message   string
+	ID             pgtype.UUID
+	HearingID      pgtype.UUID
+	ProblemFieldID pgtype.UUID
+	Role           string
+	Message        string
 }
 
 func (q *Queries) CreateHearingMessage(ctx context.Context, arg CreateHearingMessageParams) error {
 	_, err := q.db.Exec(ctx, createHearingMessage,
 		arg.ID,
 		arg.HearingID,
+		arg.ProblemFieldID,
 		arg.Role,
 		arg.Message,
 	)
@@ -45,7 +47,10 @@ func (q *Queries) DeleteHearingMessageByHearingID(ctx context.Context, hearingID
 }
 
 const getHearingMessageByHearingID = `-- name: GetHearingMessageByHearingID :many
-SELECT id, hearing_id, role, message, created_at FROM hearing_messages WHERE hearing_id = $1
+SELECT id, hearing_id, role, message, created_at, problem_field_id
+FROM hearing_messages
+WHERE hearing_id = $1
+ORDER BY created_at ASC, id ASC
 `
 
 func (q *Queries) GetHearingMessageByHearingID(ctx context.Context, hearingID pgtype.UUID) ([]HearingMessage, error) {
@@ -63,6 +68,41 @@ func (q *Queries) GetHearingMessageByHearingID(ctx context.Context, hearingID pg
 			&i.Role,
 			&i.Message,
 			&i.CreatedAt,
+			&i.ProblemFieldID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getHearingMessageByProblemFieldID = `-- name: GetHearingMessageByProblemFieldID :many
+SELECT id, hearing_id, role, message, created_at, problem_field_id
+FROM hearing_messages
+WHERE problem_field_id = $1
+ORDER BY created_at ASC, id ASC
+`
+
+func (q *Queries) GetHearingMessageByProblemFieldID(ctx context.Context, problemFieldID pgtype.UUID) ([]HearingMessage, error) {
+	rows, err := q.db.Query(ctx, getHearingMessageByProblemFieldID, problemFieldID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []HearingMessage
+	for rows.Next() {
+		var i HearingMessage
+		if err := rows.Scan(
+			&i.ID,
+			&i.HearingID,
+			&i.Role,
+			&i.Message,
+			&i.CreatedAt,
+			&i.ProblemFieldID,
 		); err != nil {
 			return nil, err
 		}

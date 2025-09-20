@@ -69,6 +69,22 @@ func (r *ProblemRepository) Create(ctx context.Context, problem *entity.Problem)
 	return nil
 }
 
+func (r *ProblemRepository) UpdateStatus(ctx context.Context, id sharedValue.ID, status value.Status) error {
+	q := app.New(r.pool)
+	var problemID pgtype.UUID
+	if err := problemID.Scan(id.Value()); err != nil {
+		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
+	}
+	_, err := q.UpdateProblemStatus(ctx, app.UpdateProblemStatusParams{
+		ID:     problemID,
+		Status: status.Value(),
+	})
+	if err != nil {
+		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to update problem status: %v", err))
+	}
+	return nil
+}
+
 func (r *ProblemRepository) Delete(ctx context.Context, id sharedValue.ID) (numDeleted int64, err error) {
 	q := app.New(r.pool)
 	var problemID pgtype.UUID

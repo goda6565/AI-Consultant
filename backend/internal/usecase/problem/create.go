@@ -8,8 +8,13 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/value"
+	problemFieldEntity "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/entity"
+	problemFieldRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/repository"
+	problemFieldService "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
+	problemFieldValue "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/value"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
+	transaction "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/transaction"
 )
 
 type CreateProblemInputPort interface {
@@ -25,12 +30,15 @@ type CreateProblemOutput struct {
 }
 
 type CreateProblemInteractor struct {
-	generateTitleService *service.GenerateTitleService
-	problemRepository    repository.ProblemRepository
+	generateTitleService   *service.GenerateTitleService
+	problemRepository      repository.ProblemRepository
+	problemFieldRepository problemFieldRepository.ProblemFieldRepository
+	problemFieldService    *problemFieldService.GenerateProblemFieldService
+	adminUnitOfWork        transaction.AdminUnitOfWork
 }
 
-func NewCreateProblemUseCase(generateTitleService *service.GenerateTitleService, problemRepository repository.ProblemRepository) CreateProblemInputPort {
-	return &CreateProblemInteractor{generateTitleService: generateTitleService, problemRepository: problemRepository}
+func NewCreateProblemUseCase(generateTitleService *service.GenerateTitleService, problemRepository repository.ProblemRepository, problemFieldRepository problemFieldRepository.ProblemFieldRepository, problemFieldService *problemFieldService.GenerateProblemFieldService, adminUnitOfWork transaction.AdminUnitOfWork) CreateProblemInputPort {
+	return &CreateProblemInteractor{generateTitleService: generateTitleService, problemRepository: problemRepository, problemFieldRepository: problemFieldRepository, problemFieldService: problemFieldService, adminUnitOfWork: adminUnitOfWork}
 }
 
 func (i *CreateProblemInteractor) Execute(ctx context.Context, input CreateProblemUseCaseInput) (*CreateProblemOutput, error) {
@@ -58,10 +66,44 @@ func (i *CreateProblemInteractor) Execute(ctx context.Context, input CreateProbl
 	// create problem
 	problem := entity.NewProblem(id, *titleValue, *description, value.StatusPending, nil)
 
-	// save problem
-	err = i.problemRepository.Create(ctx, problem)
+	// generate problem fields
+	problemFields, err := i.problemFieldService.Execute(ctx, problemFieldService.GenerateProblemFieldServiceInput{Problem: problem})
 	if err != nil {
-		return nil, fmt.Errorf("failed to save problem: %w", err)
+		return nil, fmt.Errorf("failed to generate problem fields: %w", err)
+	}
+
+	// create problem fields
+	problemFieldsEntities := make([]*problemFieldEntity.ProblemField, len(problemFields.Fields))
+	for i, problemField := range problemFields.Fields {
+		id, err := sharedValue.NewID(uuid.NewUUID())
+		if err != nil {
+			return nil, fmt.Errorf("failed to create id: %w", err)
+		}
+		field, err := problemFieldValue.NewField(problemField)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create field: %w", err)
+		}
+		problemFieldsEntities[i] = problemFieldEntity.NewProblemField(id, problem.GetID(), *field, *problemFieldValue.NewAnswered(false), nil)
+	}
+
+	// save problem and problem fields in transaction
+	err = i.adminUnitOfWork.WithTx(ctx, func(ctx context.Context) error {
+		// save problem first (parent)
+		if err := i.problemRepository.Create(ctx, problem); err != nil {
+			return fmt.Errorf("failed to save problem: %w", err)
+		}
+
+		// then save problem fields (children)
+		for _, problemField := range problemFieldsEntities {
+			if err := i.problemFieldRepository.Create(ctx, problemField); err != nil {
+				return fmt.Errorf("failed to save problem field: %w", err)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to save problem and problem fields: %w", err)
 	}
 
 	return &CreateProblemOutput{Problem: problem}, nil

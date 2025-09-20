@@ -8,9 +8,12 @@ package di
 
 import (
 	"context"
-	service3 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
+	service4 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
+	service5 "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/service"
+	service6 "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/service"
 	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
+	service3 "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
@@ -19,6 +22,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/transaction"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/gemini"
@@ -29,12 +33,16 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
 	document3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
 	problem3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent"
+	handler3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler"
+	hearing3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector"
 	handler2 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler"
 	chunk3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler/chunk"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/zap"
 	chunk2 "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	document2 "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
+	hearing2 "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing"
 	problem2 "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 )
 
@@ -62,11 +70,13 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
 	generateTitleService := service2.NewGenerateTitleService(llmClient)
 	problemRepository := problem.NewProblemRepository(appPool)
-	createProblemInputPort := problem2.NewCreateProblemUseCase(generateTitleService, problemRepository)
-	createProblemHandler := problem3.NewCreateProblemHandler(createProblemInputPort)
-	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
+	problemFieldRepository := problemfield.NewProblemFieldRepository(appPool)
+	generateProblemFieldService := service3.NewGenerateProblemFieldService(llmClient)
 	hearingRepository := hearing.NewHearingRepository(appPool)
-	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository)
+	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
+	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository)
+	createProblemInputPort := problem2.NewCreateProblemUseCase(generateTitleService, problemRepository, problemFieldRepository, generateProblemFieldService, adminUnitOfWork)
+	createProblemHandler := problem3.NewCreateProblemHandler(createProblemInputPort)
 	deleteProblemInputPort := problem2.NewDeleteProblemUseCase(problemRepository, hearingMessageRepository, hearingRepository, adminUnitOfWork)
 	deleteProblemHandler := problem3.NewDeleteProblemHandler(deleteProblemInputPort)
 	getProblemInputPort := problem2.NewGetProblemUseCase(problemRepository)
@@ -96,10 +106,10 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 	appPool, cleanup3 := database.ProvideAppPool(ctx, environmentEnvironment)
 	documentRepository := document.NewDocumentRepository(appPool)
 	ocrClient := ocr.NewDocumentAIClient(ctx, environmentEnvironment)
-	pdfParser := service3.NewPdfParserService(ocrClient)
+	pdfParser := service4.NewPdfParserService(ocrClient)
 	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
-	csvAnalyzer := service3.NewCsvAnalyzerService(llmClient)
-	chunker := service3.NewChunkService()
+	csvAnalyzer := service4.NewCsvAnalyzerService(llmClient)
+	chunker := service4.NewChunkService()
 	storagePort := storage.NewClient(ctx)
 	createChunkInputPort := chunk2.NewCreateChunkUseCase(vectorUnitOfWork, documentRepository, pdfParser, csvAnalyzer, chunker, storagePort, llmClient)
 	createHandler := chunk3.NewCreateChunkHandler(createChunkInputPort)
@@ -116,6 +126,40 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 	}
 	return app, func() {
 		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
+}
+
+func InitAgentApplication(ctx context.Context) (*App, func(), error) {
+	environmentEnvironment := environment.ProvideEnvironment()
+	logger, cleanup := zap.ProvideZapLogger(environmentEnvironment)
+	appPool, cleanup2 := database.ProvideAppPool(ctx, environmentEnvironment)
+	hearingRepository := hearing.NewHearingRepository(appPool)
+	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
+	problemRepository := problem.NewProblemRepository(appPool)
+	problemFieldRepository := problemfield.NewProblemFieldRepository(appPool)
+	duplicateCheckerService := service5.NewDuplicateCheckerService(hearingRepository)
+	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
+	generateHearingMessageService := service6.NewGenerateHearingMessageService(llmClient)
+	judgeProblemFieldCompletionService := service3.NewJudgeProblemFieldCompletionService(llmClient)
+	documentRepository := document.NewDocumentRepository(appPool)
+	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository)
+	executeHearingInputPort := hearing2.NewExecuteHearingUseCase(hearingRepository, hearingMessageRepository, problemRepository, problemFieldRepository, duplicateCheckerService, generateHearingMessageService, judgeProblemFieldCompletionService, adminUnitOfWork)
+	getProblemInputPort := problem2.NewGetProblemUseCase(problemRepository)
+	executeHearingHandler := hearing3.NewExecuteHearingHandler(executeHearingInputPort, getProblemInputPort)
+	hearingHandlers := hearing3.HearingHandlers{
+		Execute: executeHearingHandler,
+	}
+	agentHandlers := &handler3.AgentHandlers{
+		Hearing: hearingHandlers,
+	}
+	router := agent.NewAgentRouter(agentHandlers)
+	server := echo.NewBaseServer(environmentEnvironment, logger, router)
+	app := &App{
+		Server: server,
+	}
+	return app, func() {
 		cleanup2()
 		cleanup()
 	}, nil
