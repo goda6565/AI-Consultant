@@ -8,15 +8,16 @@ import (
 )
 
 type HearingMessage struct {
-	id        sharedValue.ID
-	hearingID sharedValue.ID
-	role      value.Role
-	message   value.Message
-	createdAt *time.Time
+	id             sharedValue.ID
+	hearingID      sharedValue.ID
+	problemFieldID sharedValue.ID
+	role           value.Role
+	message        value.Message
+	createdAt      *time.Time
 }
 
-func NewHearingMessage(id sharedValue.ID, hearingID sharedValue.ID, role value.Role, message value.Message, createdAt *time.Time) *HearingMessage {
-	return &HearingMessage{id: id, hearingID: hearingID, role: role, message: message, createdAt: createdAt}
+func NewHearingMessage(id sharedValue.ID, hearingID sharedValue.ID, problemFieldID sharedValue.ID, role value.Role, message value.Message, createdAt *time.Time) *HearingMessage {
+	return &HearingMessage{id: id, hearingID: hearingID, problemFieldID: problemFieldID, role: role, message: message, createdAt: createdAt}
 }
 
 func (h *HearingMessage) GetID() sharedValue.ID {
@@ -25,6 +26,10 @@ func (h *HearingMessage) GetID() sharedValue.ID {
 
 func (h *HearingMessage) GetHearingID() sharedValue.ID {
 	return h.hearingID
+}
+
+func (h *HearingMessage) GetProblemFieldID() sharedValue.ID {
+	return h.problemFieldID
 }
 
 func (h *HearingMessage) GetRole() value.Role {

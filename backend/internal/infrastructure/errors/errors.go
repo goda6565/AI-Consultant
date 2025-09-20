@@ -7,6 +7,7 @@ const (
 	UnauthorizedError    InfrastructureErrorType = "unauthorized_error"
 	ForbiddenError       InfrastructureErrorType = "forbidden_error"
 	BadRequestError      InfrastructureErrorType = "bad_request_error"
+	BadResponseError     InfrastructureErrorType = "bad_response_error"
 )
 
 type InfrastructureError struct {

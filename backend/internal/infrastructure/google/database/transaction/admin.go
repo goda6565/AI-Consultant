@@ -7,11 +7,13 @@ import (
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
+	problemFieldRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	documentRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
 	hearingRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
 	hearingMessageRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
 	problemRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
+	problemFieldRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
 	transaction "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/transaction"
 	"github.com/jackc/pgx/v5"
 )
@@ -22,6 +24,7 @@ type AdminUnitOfWork struct {
 	problemRepository        problemRepository.ProblemRepository
 	hearingRepository        hearingRepository.HearingRepository
 	hearingMessageRepository hearingMessageRepository.HearingMessageRepository
+	problemFieldRepository   problemFieldRepository.ProblemFieldRepository
 }
 
 func NewAdminUnitOfWork(
@@ -31,6 +34,7 @@ func NewAdminUnitOfWork(
 	problemRepository problemRepository.ProblemRepository,
 	hearingRepository hearingRepository.HearingRepository,
 	hearingMessageRepository hearingMessageRepository.HearingMessageRepository,
+	problemFieldRepository problemFieldRepository.ProblemFieldRepository,
 ) transaction.AdminUnitOfWork {
 	return &AdminUnitOfWork{
 		pool:                     pool,
@@ -38,6 +42,7 @@ func NewAdminUnitOfWork(
 		problemRepository:        problemRepository,
 		hearingRepository:        hearingRepository,
 		hearingMessageRepository: hearingMessageRepository,
+		problemFieldRepository:   problemFieldRepository,
 	}
 }
 
@@ -108,6 +113,18 @@ func (u *AdminUnitOfWork) HearingMessageRepository(ctx context.Context) hearingM
 	impl := u.hearingMessageRepository.(*hearingMessageRepositoryImpl.HearingMessageRepository)
 	if impl == nil {
 		panic("hearingMessageRepository is not a hearingMessageRepositoryImpl.HearingMessageRepository")
+	}
+	return impl.WithTx(tx)
+}
+
+func (u *AdminUnitOfWork) ProblemFieldRepository(ctx context.Context) problemFieldRepository.ProblemFieldRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.problemFieldRepository.(*problemFieldRepositoryImpl.ProblemFieldRepository)
+	if impl == nil {
+		panic("problemFieldRepository is not a problemFieldRepositoryImpl.ProblemFieldRepository")
 	}
 	return impl.WithTx(tx)
 }

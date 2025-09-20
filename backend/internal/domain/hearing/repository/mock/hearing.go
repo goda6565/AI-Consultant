@@ -56,19 +56,19 @@ func (mr *MockHearingRepositoryMockRecorder) Create(ctx, hearing any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockHearingRepository)(nil).Create), ctx, hearing)
 }
 
-// Delete mocks base method.
-func (m *MockHearingRepository) Delete(ctx context.Context, id value.ID) (int64, error) {
+// DeleteByProblemID mocks base method.
+func (m *MockHearingRepository) DeleteByProblemID(ctx context.Context, problemID value.ID) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteByProblemID", ctx, problemID)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Delete indicates an expected call of Delete.
-func (mr *MockHearingRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
+// DeleteByProblemID indicates an expected call of DeleteByProblemID.
+func (mr *MockHearingRepositoryMockRecorder) DeleteByProblemID(ctx, problemID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockHearingRepository)(nil).Delete), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByProblemID", reflect.TypeOf((*MockHearingRepository)(nil).DeleteByProblemID), ctx, problemID)
 }
 
 // FindById mocks base method.
@@ -86,32 +86,17 @@ func (mr *MockHearingRepositoryMockRecorder) FindById(ctx, id any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockHearingRepository)(nil).FindById), ctx, id)
 }
 
-// FindByProblemID mocks base method.
-func (m *MockHearingRepository) FindByProblemID(ctx context.Context, problemID value.ID) (*entity.Hearing, error) {
+// FindByProblemId mocks base method.
+func (m *MockHearingRepository) FindByProblemId(ctx context.Context, problemID value.ID) (*entity.Hearing, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByProblemID", ctx, problemID)
+	ret := m.ctrl.Call(m, "FindByProblemId", ctx, problemID)
 	ret0, _ := ret[0].(*entity.Hearing)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FindByProblemID indicates an expected call of FindByProblemID.
-func (mr *MockHearingRepositoryMockRecorder) FindByProblemID(ctx, problemID any) *gomock.Call {
+// FindByProblemId indicates an expected call of FindByProblemId.
+func (mr *MockHearingRepositoryMockRecorder) FindByProblemId(ctx, problemID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByProblemID", reflect.TypeOf((*MockHearingRepository)(nil).FindByProblemID), ctx, problemID)
-}
-
-// Update mocks base method.
-func (m *MockHearingRepository) Update(ctx context.Context, hearing *entity.Hearing) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, hearing)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Update indicates an expected call of Update.
-func (mr *MockHearingRepositoryMockRecorder) Update(ctx, hearing any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockHearingRepository)(nil).Update), ctx, hearing)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByProblemId", reflect.TypeOf((*MockHearingRepository)(nil).FindByProblemId), ctx, problemID)
 }

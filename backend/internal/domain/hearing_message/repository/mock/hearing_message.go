@@ -85,3 +85,18 @@ func (mr *MockHearingMessageRepositoryMockRecorder) FindByHearingID(ctx, hearing
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByHearingID", reflect.TypeOf((*MockHearingMessageRepository)(nil).FindByHearingID), ctx, hearingID)
 }
+
+// FindByProblemFieldID mocks base method.
+func (m *MockHearingMessageRepository) FindByProblemFieldID(ctx context.Context, problemFieldID value.ID) ([]entity.HearingMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByProblemFieldID", ctx, problemFieldID)
+	ret0, _ := ret[0].([]entity.HearingMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByProblemFieldID indicates an expected call of FindByProblemFieldID.
+func (mr *MockHearingMessageRepositoryMockRecorder) FindByProblemFieldID(ctx, problemFieldID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByProblemFieldID", reflect.TypeOf((*MockHearingMessageRepository)(nil).FindByProblemFieldID), ctx, problemFieldID)
+}

@@ -90,3 +90,20 @@ func (q *Queries) GetProblemById(ctx context.Context, id pgtype.UUID) (Problem, 
 	)
 	return i, err
 }
+
+const updateProblemStatus = `-- name: UpdateProblemStatus :execrows
+UPDATE problems SET status = $2 WHERE id = $1
+`
+
+type UpdateProblemStatusParams struct {
+	ID     pgtype.UUID
+	Status string
+}
+
+func (q *Queries) UpdateProblemStatus(ctx context.Context, arg UpdateProblemStatusParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateProblemStatus, arg.ID, arg.Status)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
