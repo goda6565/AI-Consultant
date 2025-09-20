@@ -102,6 +102,18 @@ module "backend_vector_cloudbuild_trigger" {
   branch_pattern                = "^develop$"
 }
 
+module "backend_agent_cloudbuild_trigger" {
+  source = "../../modules/cloudbuild-trigger-branch"
+
+  trigger_name                  = "${var.environment}-${var.service}-backend-agent-cloudbuild-trigger"
+  trigger_description           = "Cloud Build trigger for backend agent development"
+  file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/backend-agent.yaml"
+  included_files                = ["backend/**", "infrastructure/deployments/cloudbuild/${var.environment}/backend-agent.yaml"]
+  cloudbuild_service_account_id = var.cloudbuild_service_account_id
+  github_repository_id          = var.github_repository_id
+  branch_pattern                = "^develop$"
+}
+
 module "migrate_app_db_cloudbuild_trigger" {
   source = "../../modules/cloudbuild-trigger-branch"
 
