@@ -52,7 +52,12 @@ func (r *ProblemRepository) FindAll(ctx context.Context) ([]entity.Problem, erro
 }
 
 func (r *ProblemRepository) Create(ctx context.Context, problem *entity.Problem) error {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var id pgtype.UUID
 	if err := id.Scan(problem.GetID().Value()); err != nil {
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
@@ -70,7 +75,12 @@ func (r *ProblemRepository) Create(ctx context.Context, problem *entity.Problem)
 }
 
 func (r *ProblemRepository) UpdateStatus(ctx context.Context, id sharedValue.ID, status value.Status) error {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var problemID pgtype.UUID
 	if err := problemID.Scan(id.Value()); err != nil {
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
@@ -86,7 +96,12 @@ func (r *ProblemRepository) UpdateStatus(ctx context.Context, id sharedValue.ID,
 }
 
 func (r *ProblemRepository) Delete(ctx context.Context, id sharedValue.ID) (numDeleted int64, err error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var problemID pgtype.UUID
 	if err := problemID.Scan(id.Value()); err != nil {
 		return 0, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
@@ -99,7 +114,12 @@ func (r *ProblemRepository) Delete(ctx context.Context, id sharedValue.ID) (numD
 }
 
 func (r *ProblemRepository) FindById(ctx context.Context, id sharedValue.ID) (*entity.Problem, error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var problemID pgtype.UUID
 	if err := problemID.Scan(id.Value()); err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))

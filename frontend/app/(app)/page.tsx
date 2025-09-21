@@ -1,7 +1,1 @@
-export default function Home() {
-  return (
-    <div>
-      <h1>Home</h1>
-    </div>
-  );
-}
+export { HomePage as default } from "@/pages/home/ui/page";

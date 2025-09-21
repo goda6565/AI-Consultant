@@ -90,7 +90,8 @@ migrate-vector-down: ## Run the migrations vector down
 # code_gen
 .PHONY: code_gen
 code_gen: ## generate oapi-codegen
-	go tool oapi-codegen --config=./oapi-codegen.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml
+	go tool oapi-codegen --config=./oapi-codegen.admin.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml
+	go tool oapi-codegen --config=./oapi-codegen.agent.yaml ../infrastructure/schemas/openapi/agent/openapi.yaml
 
 # wire_gen
 .PHONY: wire_gen

@@ -13,5 +13,5 @@ type ProblemFieldRepository interface {
 	FindByProblemID(ctx context.Context, problemID sharedValue.ID) ([]problemFieldEntity.ProblemField, error)
 	Create(ctx context.Context, problemField *problemFieldEntity.ProblemField) error
 	UpdateAnswered(ctx context.Context, id sharedValue.ID, answered problemFieldValue.Answered) error
-	Delete(ctx context.Context, id sharedValue.ID) (numDeleted int64, err error)
+	DeleteByProblemID(ctx context.Context, problemID sharedValue.ID) (numDeleted int64, err error)
 }

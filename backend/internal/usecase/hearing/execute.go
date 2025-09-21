@@ -151,8 +151,29 @@ func (i *ExecuteHearingInteractor) Execute(ctx context.Context, input ExecuteHea
 			}
 		}
 		if len(notAnsweredFields) == 0 {
+			id, err := sharedValue.NewID(uuid.NewUUID())
+			if err != nil {
+				return nil, fmt.Errorf("failed to create id: %w", err)
+			}
+			messageValue, err := value.NewMessage(IsCompletedMessage)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create message: %w", err)
+			}
+			hearingMessage := hearingMessageEntity.NewHearingMessage(id, hearing.GetID(), targetProblemFieldID, value.RoleAssistant, *messageValue, nil)
 			// update problem status
-			err = i.problemRepository.UpdateStatus(ctx, problemID, problemValue.StatusProcessing)
+			err = i.adminUnitOfWork.WithTx(ctx, func(txCtx context.Context) error {
+				// save hearing message
+				err = i.adminUnitOfWork.HearingMessageRepository(txCtx).Create(txCtx, hearingMessage)
+				if err != nil {
+					return fmt.Errorf("failed to save hearing message: %w", err)
+				}
+				// update problem status
+				err = i.adminUnitOfWork.ProblemRepository(txCtx).UpdateStatus(txCtx, problemID, problemValue.StatusProcessing)
+				if err != nil {
+					return fmt.Errorf("failed to update problem status: %w", err)
+				}
+				return nil
+			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to update problem status: %w", err)
 			}

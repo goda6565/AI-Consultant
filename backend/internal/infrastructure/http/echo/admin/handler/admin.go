@@ -2,6 +2,8 @@ package handler
 
 import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	gen "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
 )
@@ -15,6 +17,8 @@ type AdminHandlers struct {
 	*problem.DeleteProblemHandler
 	*problem.GetProblemHandler
 	*problem.ListProblemHandler
+	*hearing.GetHearingHandler
+	*hearingmessage.ListHearingMessageHandler
 }
 
 func NewAdminHandlers(
@@ -25,7 +29,9 @@ func NewAdminHandlers(
 	createProblemHandler *problem.CreateProblemHandler,
 	deleteProblemHandler *problem.DeleteProblemHandler,
 	getProblemHandler *problem.GetProblemHandler,
-	listProblemHandler *problem.ListProblemHandler) gen.StrictServerInterface {
+	listProblemHandler *problem.ListProblemHandler,
+	getHearingHandler *hearing.GetHearingHandler,
+	listHearingMessageHandler *hearingmessage.ListHearingMessageHandler) gen.StrictServerInterface {
 	return &AdminHandlers{
 		createDocumentHandler,
 		deleteDocumentHandler,
@@ -35,5 +41,7 @@ func NewAdminHandlers(
 		deleteProblemHandler,
 		getProblemHandler,
 		listProblemHandler,
+		getHearingHandler,
+		listHearingMessageHandler,
 	}
 }

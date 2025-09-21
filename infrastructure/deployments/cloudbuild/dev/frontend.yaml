@@ -14,6 +14,8 @@ availableSecrets:
   secretManager:
     - versionName: projects/ai-consultant-471305/secrets/dev-ai-consultant-admin-api-url/versions/latest
       env: ADMIN_API_URL
+    - versionName: projects/ai-consultant-471305/secrets/dev-ai-consultant-agent-api-url/versions/latest
+      env: AGENT_API_URL
     - versionName: projects/ai-consultant-471305/secrets/shared-ai-consultant-identity-platform-api-key/versions/latest
       env: IDENTITY_PLATFORM_API_KEY
     - versionName: projects/ai-consultant-471305/secrets/shared-ai-consultant-identity-platform-auth-domain/versions/latest
@@ -27,10 +29,11 @@ steps:
     - |
       touch frontend/.env.production
       echo "NEXT_PUBLIC_ADMIN_API_URL=$$ADMIN_API_URL" >> frontend/.env.production
+      echo "NEXT_PUBLIC_AGENT_API_URL=$$AGENT_API_URL" >> frontend/.env.production
       echo "NEXT_PUBLIC_IDENTITY_PLATFORM_API_KEY=$$IDENTITY_PLATFORM_API_KEY" >> frontend/.env.production
       echo "NEXT_PUBLIC_IDENTITY_PLATFORM_AUTH_DOMAIN=$$IDENTITY_PLATFORM_AUTH_DOMAIN" >> frontend/.env.production
   
-  secretEnv: ['ADMIN_API_URL', 'IDENTITY_PLATFORM_API_KEY', 'IDENTITY_PLATFORM_AUTH_DOMAIN']
+  secretEnv: ['ADMIN_API_URL', 'AGENT_API_URL', 'IDENTITY_PLATFORM_API_KEY', 'IDENTITY_PLATFORM_AUTH_DOMAIN']
 
 - name: 'gcr.io/kaniko-project/executor:latest'
   args:

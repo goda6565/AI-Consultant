@@ -57,19 +57,19 @@ func (mr *MockProblemFieldRepositoryMockRecorder) Create(ctx, problemField any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProblemFieldRepository)(nil).Create), ctx, problemField)
 }
 
-// Delete mocks base method.
-func (m *MockProblemFieldRepository) Delete(ctx context.Context, id value0.ID) (int64, error) {
+// DeleteByProblemID mocks base method.
+func (m *MockProblemFieldRepository) DeleteByProblemID(ctx context.Context, problemID value0.ID) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteByProblemID", ctx, problemID)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Delete indicates an expected call of Delete.
-func (mr *MockProblemFieldRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
+// DeleteByProblemID indicates an expected call of DeleteByProblemID.
+func (mr *MockProblemFieldRepositoryMockRecorder) DeleteByProblemID(ctx, problemID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProblemFieldRepository)(nil).Delete), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByProblemID", reflect.TypeOf((*MockProblemFieldRepository)(nil).DeleteByProblemID), ctx, problemID)
 }
 
 // FindByProblemID mocks base method.

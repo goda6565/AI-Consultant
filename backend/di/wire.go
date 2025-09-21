@@ -32,15 +32,19 @@ import (
 	adminRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
 	adminHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
 	documentHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
+	hearingHandlerAdmin "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
+	hearingMessageHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	problemHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	agentRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent"
 	agentHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler"
+	hearingHandlerAgent "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler/hearing"
 	vectorRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector"
 	vectorHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler"
 	zap "github.com/goda6565/ai-consultant/backend/internal/infrastructure/zap"
 	chunkUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	documentUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
 	hearingUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing"
+	hearingMessageUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_message"
 	problemUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 )
 
@@ -65,8 +69,12 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		problemFieldService.Set,
 		documentUseCase.Set,
 		problemUseCase.Set,
+		hearingUseCase.Set,
+		hearingMessageUseCase.Set,
 		documentHandler.Set,
 		problemHandler.Set,
+		hearingHandlerAdmin.Set,
+		hearingMessageHandler.Set,
 		adminHandler.Set,
 		adminRouter.Set,
 		baseServer.Set,
@@ -98,6 +106,7 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 	panic(wire.Build(
 		environment.Set,
 		zap.Set,
+		firebase.Set,
 		gemini.Set,
 		database.Set,
 		transaction.Set,
@@ -111,6 +120,7 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 		hearingMessageService.Set,
 		hearingUseCase.Set,
 		problemUseCase.Set,
+		hearingHandlerAgent.Set,
 		agentHandler.Set,
 		agentRouter.Set,
 		baseServer.Set,
