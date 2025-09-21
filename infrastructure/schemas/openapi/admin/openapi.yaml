@@ -7,6 +7,8 @@ info:
 tags:
   - name: documents
   - name: problems
+  - name: hearings
+  - name: hearingMessages
 
 paths:
   /api/documents/{documentId}:
@@ -189,6 +191,54 @@ paths:
         "500":
           $ref: "#/components/responses/Error"
 
+  /api/hearings/{problemId}:
+    get:
+      tags:
+        - hearings
+      summary: "Get a hearing by problem id"
+      operationId: "GetHearing"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetHearingSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/hearings/{hearingId}/messages:
+    get:
+      tags:
+        - hearingMessages
+      summary: "List hearing messages by hearing id"
+      operationId: "ListHearingMessages"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/HearingIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListHearingMessagesSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -219,6 +269,12 @@ components:
         - processing
         - done
         - failed
+
+    hearingMessageRole:
+      type: string
+      enum:
+        - user
+        - assistant
 
     errorCode:
       type: integer
@@ -287,6 +343,51 @@ components:
         - status
         - createdAt
 
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - problemId
+        - createdAt
+
+    HearingMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hearingId:
+          type: string
+          format: uuid
+        problemFieldId:
+          type: string
+          format: uuid
+        role:
+          $ref: "#/components/schemas/hearingMessageRole"
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+      required:
+        - id
+        - hearingId
+        - problemFieldId
+        - role
+        - message
+        - createdAt
+
   parameters:
     DocumentIdPathParameter:
       name: documentId
@@ -302,6 +403,15 @@ components:
       in: path
       required: true
       description: "Problem ID"
+      schema:
+        type: string
+        format: uuid
+
+    HearingIdPathParameter:
+      name: hearingId
+      in: path
+      required: true
+      description: "Hearing ID"
       schema:
         type: string
         format: uuid
@@ -422,3 +532,24 @@ components:
                   $ref: "#/components/schemas/Problem"
             required:
               - problems
+
+    GetHearingSuccess:
+      description: "Get hearing response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Hearing"
+
+    ListHearingMessagesSuccess:
+      description: "List hearing messages response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              hearingMessages:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HearingMessage"
+            required:
+              - hearingMessages

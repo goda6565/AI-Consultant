@@ -181,6 +181,12 @@ module "secret_manage_admin_api_url" {
   region      = var.region
 }
 
+module "secret_manage_agent_api_url" {
+  source      = "../../modules/secret-manager"
+  secret_name = "${var.environment}-${var.service}-agent-api-url"
+  region      = var.region
+}
+
 # Cloud Tasks
 module "document_processing_cloudtasks" {
   source = "../../modules/cloudtasks"

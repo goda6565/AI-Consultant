@@ -32,10 +32,12 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
 	document3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
+	hearing3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
+	hearingmessage2 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	problem3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent"
 	handler3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler"
-	hearing3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler/hearing"
+	hearing4 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector"
 	handler2 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler"
 	chunk3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/vector/handler/chunk"
@@ -43,6 +45,7 @@ import (
 	chunk2 "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	document2 "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
 	hearing2 "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing"
+	"github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_message"
 	problem2 "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 )
 
@@ -83,7 +86,11 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	getProblemHandler := problem3.NewGetProblemHandler(getProblemInputPort)
 	listProblemInputPort := problem2.NewListProblemUseCase(problemRepository)
 	listProblemHandler := problem3.NewListProblemHandler(listProblemInputPort)
-	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler)
+	getHearingInputPort := hearing2.NewGetHearingUseCase(hearingRepository)
+	getHearingHandler := hearing3.NewGetHearingHandler(getHearingInputPort)
+	listHearingMessageInputPort := hearing_message.NewListHearingMessageUseCase(hearingMessageRepository)
+	listHearingMessageHandler := hearingmessage2.NewListHearingMessageHandler(listHearingMessageInputPort)
+	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, getHearingHandler, listHearingMessageHandler)
 	router := admin.NewAdminRouter(authenticator, strictServerInterface, environmentEnvironment, logger)
 	server := echo.NewBaseServer(environmentEnvironment, logger, router)
 	app := &App{
@@ -134,6 +141,7 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 	environmentEnvironment := environment.ProvideEnvironment()
 	logger, cleanup := zap.ProvideZapLogger(environmentEnvironment)
+	authenticator := firebase.NewFirebaseClient()
 	appPool, cleanup2 := database.ProvideAppPool(ctx, environmentEnvironment)
 	hearingRepository := hearing.NewHearingRepository(appPool)
 	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
@@ -147,14 +155,9 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository)
 	executeHearingInputPort := hearing2.NewExecuteHearingUseCase(hearingRepository, hearingMessageRepository, problemRepository, problemFieldRepository, duplicateCheckerService, generateHearingMessageService, judgeProblemFieldCompletionService, adminUnitOfWork)
 	getProblemInputPort := problem2.NewGetProblemUseCase(problemRepository)
-	executeHearingHandler := hearing3.NewExecuteHearingHandler(executeHearingInputPort, getProblemInputPort)
-	hearingHandlers := hearing3.HearingHandlers{
-		Execute: executeHearingHandler,
-	}
-	agentHandlers := &handler3.AgentHandlers{
-		Hearing: hearingHandlers,
-	}
-	router := agent.NewAgentRouter(agentHandlers)
+	executeHearingHandler := hearing4.NewExecuteHearingHandler(executeHearingInputPort, getProblemInputPort)
+	strictServerInterface := handler3.NewAgentHandlers(executeHearingHandler)
+	router := agent.NewAgentRouter(authenticator, strictServerInterface, environmentEnvironment, logger)
 	server := echo.NewBaseServer(environmentEnvironment, logger, router)
 	app := &App{
 		Server: server,

@@ -6,9 +6,4 @@ import (
 
 var Set = wire.NewSet(
 	NewExecuteHearingHandler,
-	wire.Struct(new(HearingHandlers), "*"),
 )
-
-type HearingHandlers struct {
-	Execute ExecuteHearingHandler
-}

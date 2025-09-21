@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: "AI-Consultant Agent API"
+  description: "AI-Consultant Agent API"
+  version: "1.0.0"
+
+tags:
+  - name: hearings
+
+paths:
+  /api/hearings/{problemId}:
+    post:
+      tags:
+        - hearings
+      summary: "Execute a hearing"
+      operationId: "ExecuteHearing"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      requestBody:
+        $ref: "#/components/requestBodies/ExecuteHearingRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ExecuteHearingSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+  
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    errorCode:
+      type: integer
+      enum:
+        - 400
+        - 401
+        - 403
+        - 404
+        - 409
+        - 500
+
+  parameters:
+    ProblemIdPathParameter:
+      name: problemId
+      in: path
+      required: true
+      description: "Problem ID"
+      schema:
+        type: string
+        format: uuid
+
+  requestBodies:
+    ExecuteHearingRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              user_message:
+                type: string
+                description: "User's message to the AI consultant"
+                nullable: true
+
+  responses:
+    Error:
+      description: "Error"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              code:
+                $ref: "#/components/schemas/errorCode"
+            required:
+              - message
+              - code
+    
+    ExecuteHearingSuccess:
+      description: "Execute hearing response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              assistant_message:
+                type: string
+                description: "AI consultant's response message"
+              is_completed:
+                type: boolean
+                description: "Whether the hearing is completed"
+            required:
+              - assistant_message
+              - is_completed

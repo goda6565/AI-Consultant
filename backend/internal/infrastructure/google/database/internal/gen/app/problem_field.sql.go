@@ -32,12 +32,12 @@ func (q *Queries) CreateProblemField(ctx context.Context, arg CreateProblemField
 	return err
 }
 
-const deleteProblemField = `-- name: DeleteProblemField :execrows
-DELETE FROM problem_fields WHERE id = $1
+const deleteProblemFieldByProblemID = `-- name: DeleteProblemFieldByProblemID :execrows
+DELETE FROM problem_fields WHERE problem_id = $1
 `
 
-func (q *Queries) DeleteProblemField(ctx context.Context, id pgtype.UUID) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteProblemField, id)
+func (q *Queries) DeleteProblemFieldByProblemID(ctx context.Context, problemID pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteProblemFieldByProblemID, problemID)
 	if err != nil {
 		return 0, err
 	}

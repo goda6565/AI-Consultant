@@ -11,9 +11,9 @@ export async function AppLayout({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <SidebarProvider defaultOpen={defaultOpen}>
         <AppSidebar />
-        <main className="flex flex-col w-full">
+        <main className="flex flex-col w-full h-screen">
           <AppHeader />
-          <div className="p-4">{children}</div>
+          <div className="flex-1 min-h-0 p-4">{children}</div>
         </main>
       </SidebarProvider>
     </AuthProvider>

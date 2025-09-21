@@ -55,22 +55,30 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 
 	// delete all
 	err = i.adminUnitOfWork.WithTx(ctx, func(ctx context.Context) error {
+		// delete hearing messages first (to avoid foreign key constraint violation)
 		if hearing != nil {
-			// delete hearing messages
-			_, err = i.hearingMessageRepository.DeleteByHearingID(ctx, hearing.GetID())
+			_, err = i.adminUnitOfWork.HearingMessageRepository(ctx).DeleteByHearingID(ctx, hearing.GetID())
 			if err != nil {
 				return fmt.Errorf("failed to delete hearing messages: %w", err)
 			}
+		}
 
-			// delete hearing
-			_, err = i.hearingRepository.DeleteByProblemID(ctx, problem.GetID())
+		// delete hearing
+		if hearing != nil {
+			_, err = i.adminUnitOfWork.HearingRepository(ctx).DeleteByProblemID(ctx, problem.GetID())
 			if err != nil {
 				return fmt.Errorf("failed to delete hearing: %w", err)
 			}
 		}
 
+		// delete problem fields (hearing_messages may reference problem_fields)
+		_, err = i.adminUnitOfWork.ProblemFieldRepository(ctx).DeleteByProblemID(ctx, problem.GetID())
+		if err != nil {
+			return fmt.Errorf("failed to delete problem fields: %w", err)
+		}
+
 		// delete problem
-		numDeleted, err := i.problemRepository.Delete(ctx, problem.GetID())
+		numDeleted, err := i.adminUnitOfWork.ProblemRepository(ctx).Delete(ctx, problem.GetID())
 		if err != nil {
 			return fmt.Errorf("failed to delete problem: %w", err)
 		}

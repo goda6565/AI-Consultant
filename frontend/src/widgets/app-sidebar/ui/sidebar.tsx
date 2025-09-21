@@ -1,11 +1,19 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { ChevronUp, FileText, Plus, Search, User2 } from "lucide-react";
+import {
+  ChevronUp,
+  Ellipsis,
+  FileText,
+  Plus,
+  Search,
+  User2,
+} from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { deleteProblem, useListProblems } from "@/shared/api";
 import { auth } from "@/shared/config";
-import { useAuth } from "@/shared/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +25,10 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
@@ -27,12 +37,12 @@ import {
 
 const menuItems = [
   {
-    title: "新しいケース",
+    title: "新しい課題",
     url: "/",
     icon: Plus,
   },
   {
-    title: "ケースを検索",
+    title: "課題を検索",
     url: "/cases",
     icon: Search,
   },
@@ -46,9 +56,9 @@ const menuItems = [
 export function AppSidebar() {
   const { open } = useSidebar();
   const [isHovering, setIsHovering] = useState(false);
-  const user = useAuth();
+  const user = auth.currentUser;
+  const { data: problems, mutate: mutateProblems } = useListProblems();
 
-  // サイドバーが開かれた時にホバー状態をリセット
   useEffect(() => {
     if (open) {
       setIsHovering(false);
@@ -109,6 +119,51 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {open && (
+          <SidebarGroup>
+            <SidebarGroupLabel>課題</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {problems?.problems.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton asChild>
+                      <a
+                        href={`/problems/${item.id}`}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                    <SidebarMenuAction showOnHover>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Ellipsis className="w-4 h-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={async () => {
+                              try {
+                                await deleteProblem(item.id);
+                                toast.success("課題を削除しました");
+                              } catch (_error) {
+                                toast.error("削除に失敗しました");
+                              } finally {
+                                mutateProblems();
+                              }
+                            }}
+                          >
+                            <span>Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </SidebarMenuAction>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
@@ -116,16 +171,16 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  {user.user?.photoURL ? (
+                  {user?.photoURL ? (
                     <Image
-                      src={user.user?.photoURL}
+                      src={user?.photoURL}
                       alt="User"
                       className="w-4 h-4"
                     />
                   ) : (
                     <User2 />
                   )}
-                  <span>{user.user?.email}</span>
+                  <span>{user?.email}</span>
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -133,7 +188,10 @@ export function AppSidebar() {
                 side="top"
                 className="w-[--radix-popper-anchor-width]"
               >
-                <DropdownMenuItem onClick={() => signOut(auth)}>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => signOut(auth)}
+                >
                   <span>ログアウト</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -111,7 +111,7 @@ func (r *ProblemFieldRepository) UpdateAnswered(ctx context.Context, id sharedVa
 	return nil
 }
 
-func (r *ProblemFieldRepository) Delete(ctx context.Context, id sharedValue.ID) (numDeleted int64, err error) {
+func (r *ProblemFieldRepository) DeleteByProblemID(ctx context.Context, problemID sharedValue.ID) (numDeleted int64, err error) {
 	var q *app.Queries
 	if r.tx != nil {
 		q = app.New(r.pool).WithTx(r.tx)
@@ -119,11 +119,11 @@ func (r *ProblemFieldRepository) Delete(ctx context.Context, id sharedValue.ID) 
 		q = app.New(r.pool)
 	}
 
-	var pfID pgtype.UUID
-	if err := pfID.Scan(id.Value()); err != nil {
+	var pID pgtype.UUID
+	if err := pID.Scan(problemID.Value()); err != nil {
 		return 0, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
 	}
-	numDeleted, err = q.DeleteProblemField(ctx, pfID)
+	numDeleted, err = q.DeleteProblemFieldByProblemID(ctx, pID)
 	if helper.IsNoRowsError(err) {
 		return 0, nil
 	}

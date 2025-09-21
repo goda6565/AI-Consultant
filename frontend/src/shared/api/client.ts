@@ -43,3 +43,38 @@ export const adminApiClient = async <T>(
     throw handleApiError(error);
   }
 };
+
+const agentApiClientInstance = axios.create({
+  baseURL: env.NEXT_PUBLIC_AGENT_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Attach Firebase ID token to each request dynamically
+agentApiClientInstance.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      const normalizedHeaders =
+        config.headers instanceof AxiosHeaders
+          ? config.headers
+          : new AxiosHeaders(config.headers as AxiosRequestHeaders);
+      normalizedHeaders.set("Authorization", `Bearer ${token}`);
+      config.headers = normalizedHeaders;
+    }
+    return config;
+  },
+);
+
+export const agentApiClient = async <T>(
+  config: AxiosRequestConfig,
+): Promise<T> => {
+  try {
+    const response: AxiosResponse<T> = await agentApiClientInstance(config);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
