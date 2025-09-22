@@ -5,7 +5,7 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
-import { auth } from "@/shared/config";
+import { auth } from "@/shared/config/firebase";
 import { env } from "../config";
 import { handleApiError } from "./utils";
 

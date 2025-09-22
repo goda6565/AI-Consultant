@@ -21,7 +21,7 @@ import (
 )
 
 type CreateChunkInputPort interface {
-	Execute(ctx context.Context, input CreateChunkUseCaseInput, logger logger.Logger) (*CreateChunkOutput, error)
+	Execute(ctx context.Context, input CreateChunkUseCaseInput) (*CreateChunkOutput, error)
 }
 
 type CreateChunkUseCaseInput struct {
@@ -56,7 +56,8 @@ func NewCreateChunkUseCase(vectorUnitOfWork transactionPorts.VectorUnitOfWork, d
 
 const maxRetryCount = 3
 
-func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUseCaseInput, logger logger.Logger) (result *CreateChunkOutput, err error) {
+func (i *CreateChunkInteractor) Execute(ctx context.Context, input CreateChunkUseCaseInput) (result *CreateChunkOutput, err error) {
+	logger := logger.GetLogger(ctx)
 	// find document
 	documentID, err := sharedValue.NewID(input.DocumentID)
 	if err != nil {

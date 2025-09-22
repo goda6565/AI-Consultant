@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	logger "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/shared/middleware"
-
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
+	logger "github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	queuePorts "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/queue"
 	"github.com/labstack/echo/v4"
@@ -32,7 +31,7 @@ func (h *createChunkHandler) Handle(c echo.Context) error {
 		return errors.NewInfrastructureError(errors.BadRequestError, "failed to bind body")
 	}
 
-	if _, err := h.createChunkUseCase.Execute(ctx, chunk.CreateChunkUseCaseInput{DocumentID: req.DocumentID}, logger); err != nil {
+	if _, err := h.createChunkUseCase.Execute(ctx, chunk.CreateChunkUseCaseInput{DocumentID: req.DocumentID}); err != nil {
 		logger.Error("failed to create chunk", "error", err)
 		return fmt.Errorf("failed to create chunk: %w", err)
 	}

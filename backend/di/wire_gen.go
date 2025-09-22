@@ -91,7 +91,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	listHearingMessageInputPort := hearing_message.NewListHearingMessageUseCase(hearingMessageRepository)
 	listHearingMessageHandler := hearingmessage2.NewListHearingMessageHandler(listHearingMessageInputPort)
 	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, getHearingHandler, listHearingMessageHandler)
-	router := admin.NewAdminRouter(authenticator, strictServerInterface, environmentEnvironment, logger)
+	router := admin.NewAdminRouter(authenticator, strictServerInterface, environmentEnvironment)
 	server := echo.NewBaseServer(environmentEnvironment, logger, router)
 	app := &App{
 		Server: server,

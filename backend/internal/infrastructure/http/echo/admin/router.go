@@ -9,7 +9,6 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/middleware"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/auth"
-	"github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	"github.com/labstack/echo/v4"
 	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -20,11 +19,10 @@ type AdminRouter struct {
 	authenticator auth.Authenticator
 	handlers      gen.StrictServerInterface
 	environment   *environment.Environment
-	logger        logger.Logger
 }
 
-func NewAdminRouter(authenticator auth.Authenticator, handlers gen.StrictServerInterface, environment *environment.Environment, logger logger.Logger) echoRouter.Router {
-	return &AdminRouter{authenticator: authenticator, handlers: handlers, environment: environment, logger: logger}
+func NewAdminRouter(authenticator auth.Authenticator, handlers gen.StrictServerInterface, environment *environment.Environment) echoRouter.Router {
+	return &AdminRouter{authenticator: authenticator, handlers: handlers, environment: environment}
 }
 
 func setUpSwagger(e *echo.Echo, environment *environment.Environment) (*openapi3.T, error) {

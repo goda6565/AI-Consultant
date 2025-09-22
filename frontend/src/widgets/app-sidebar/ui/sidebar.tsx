@@ -10,9 +10,11 @@ import {
   User2,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { deleteProblem, useListProblems } from "@/shared/api";
+import { useAuthContext } from "@/shared/auth";
 import { auth } from "@/shared/config";
 import {
   DropdownMenu,
@@ -56,7 +58,7 @@ const menuItems = [
 export function AppSidebar() {
   const { open } = useSidebar();
   const [isHovering, setIsHovering] = useState(false);
-  const user = auth.currentUser;
+  const user = useAuthContext().user;
   const { data: problems, mutate: mutateProblems } = useListProblems();
 
   useEffect(() => {
@@ -109,10 +111,10 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -127,12 +129,12 @@ export function AppSidebar() {
                 {problems?.problems.map((item) => (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton asChild>
-                      <a
+                      <Link
                         href={`/problems/${item.id}`}
                         className="flex items-center justify-between gap-2"
                       >
                         <span>{item.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                     <SidebarMenuAction showOnHover>
                       <DropdownMenu>

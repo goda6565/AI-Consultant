@@ -8,7 +8,7 @@ import {
   useGetHearing,
   useListHearingMessages,
 } from "@/shared/api";
-import { Button, LoadingPage, ScrollArea, Textarea } from "@/shared/ui";
+import { Button, Loading, ScrollArea, Textarea } from "@/shared/ui";
 
 type ChatProps = {
   problem: Problem;
@@ -57,7 +57,7 @@ export function Chat({ problem, mutateProblem }: ChatProps) {
   ]);
 
   // 初回読み込み時はローディング表示
-  if (problem.status === "pending") return <LoadingPage />;
+  if (problem.status === "pending") return <Loading />;
 
   return (
     <div className="flex flex-col bg-white h-full">
@@ -75,8 +75,8 @@ export function Chat({ problem, mutateProblem }: ChatProps) {
                 <div
                   className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-sm ${
                     msg.role === "user"
-                      ? "bg-blue-500 text-white rounded-br-md"
-                      : "bg-gray-100 text-gray-900 rounded-bl-md border"
+                      ? "bg-gray-100 text-gray-900 rounded-br-md"
+                      : "bg-white text-gray-900 rounded-bl-md border"
                   }`}
                 >
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">

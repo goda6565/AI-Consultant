@@ -7,7 +7,7 @@ import (
 	problemValue "github.com/goda6565/ai-consultant/backend/internal/domain/problem/value"
 	infraErrors "github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	gen "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/internal"
-	logger "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/shared/middleware"
+	"github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 )

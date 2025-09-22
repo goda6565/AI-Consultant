@@ -37,7 +37,8 @@ func NewJudgeProblemFieldCompletionService(llmClient llm.LLMClient) *JudgeProble
 	return &JudgeProblemFieldCompletionService{llmClient: llmClient}
 }
 
-func (s *JudgeProblemFieldCompletionService) Execute(ctx context.Context, input JudgeProblemFieldCompletionServiceInput, logger logger.Logger) (*JudgeProblemFieldCompletionServiceOutput, error) {
+func (s *JudgeProblemFieldCompletionService) Execute(ctx context.Context, input JudgeProblemFieldCompletionServiceInput) (*JudgeProblemFieldCompletionServiceOutput, error) {
+	logger := logger.GetLogger(ctx)
 	userPrompt := s.createUserPrompt(input.Problem, input.HearingMessages, input.TargetProblemFieldID, input.ProblemFields)
 	logger.Info("user prompt", "userPrompt", userPrompt)
 	llmInput := llm.GenerateStructuredTextInput{
