@@ -124,7 +124,7 @@ func (i *ExecuteHearingInteractor) Execute(ctx context.Context, input ExecuteHea
 		HearingMessages:      hearingMessages,
 		TargetProblemFieldID: targetProblemFieldID,
 		ProblemFields:        problemFields,
-	}, logger)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to judge problem field completion: %w", err)
 	}

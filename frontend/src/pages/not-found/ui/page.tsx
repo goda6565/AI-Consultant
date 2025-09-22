@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button, Heading, RegularText } from "@/shared/ui";
 
 export function NotFound() {
@@ -13,7 +14,7 @@ export function NotFound() {
 
       <div className="flex space-x-4">
         <Button asChild>
-          <a href="/">ホームに戻る</a>
+          <Link href="/">ホームに戻る</Link>
         </Button>
       </div>
     </div>

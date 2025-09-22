@@ -1,32 +1,26 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { onAuthStateChanged, type User } from "firebase/auth";
 import type { ReactNode } from "react";
-import { useEffect } from "react";
-import { useAuth } from "@/shared/hooks";
-import { LoadingPage } from "@/shared/ui";
+import { useEffect, useState } from "react";
+import { AuthContext } from "@/shared/auth";
+import { auth } from "@/shared/config";
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(auth.currentUser);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  if (loading) {
-    return <LoadingPage />;
-  }
-
-  if (!user) {
-    return <LoadingPage />;
-  }
-
-  return <>{children}</>;
+  return (
+    <AuthContext.Provider value={{ user, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

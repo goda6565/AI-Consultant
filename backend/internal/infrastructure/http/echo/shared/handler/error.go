@@ -6,7 +6,7 @@ import (
 
 	domainErrors "github.com/goda6565/ai-consultant/backend/internal/domain/errors"
 	infraErrors "github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
-	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/shared/middleware"
+	logger "github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	usecaseErrors "github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
 	"github.com/labstack/echo/v4"
 )
@@ -26,7 +26,7 @@ const (
 )
 
 func CustomErrorHandler(err error, c echo.Context) {
-	logger := middleware.GetLogger(c.Request().Context())
+	logger := logger.GetLogger(c.Request().Context())
 	var code int
 	var message string
 	var infraErr *infraErrors.InfrastructureError

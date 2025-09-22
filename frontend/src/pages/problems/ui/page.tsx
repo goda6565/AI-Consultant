@@ -10,7 +10,7 @@ import {
   AccordionTrigger,
   Badge,
   Heading,
-  LoadingPage,
+  Loading,
 } from "@/shared/ui";
 import { Chat } from "./chat";
 
@@ -26,7 +26,7 @@ export function ProblemPage({ params }: ProblemPageProps) {
     mutate: mutateProblem,
   } = useGetProblem(id);
   if (isProblemLoading) {
-    return <LoadingPage />;
+    return <Loading />;
   }
   if (!problem) {
     redirect("/");
