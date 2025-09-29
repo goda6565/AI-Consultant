@@ -8,6 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Action struct {
+	ID         pgtype.UUID
+	ProblemID  pgtype.UUID
+	ActionType string
+	Input      string
+	Output     string
+	CreatedAt  pgtype.Timestamptz
+}
+
 type Document struct {
 	ID             pgtype.UUID
 	Title          string

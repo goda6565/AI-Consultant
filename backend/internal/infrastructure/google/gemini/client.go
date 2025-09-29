@@ -74,6 +74,69 @@ func (c *GeminiClient) GenerateStructuredText(ctx context.Context, input llm.Gen
 	return &llm.GenerateStructuredTextOutput{Text: response.Text(), Usage: usage}, nil
 }
 
+func (c *GeminiClient) GenerateFunctionCall(ctx context.Context, input llm.GenerateFunctionCallInput) (*llm.GenerateFunctionCallOutput, error) {
+	// Build tools with function declarations
+	var fns []*genai.FunctionDeclaration
+	for _, fn := range input.Functions {
+		var schema genai.Schema
+		if err := json.Unmarshal(fn.Parameters, &schema); err != nil {
+			return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to unmarshal function schema for %s: %v", fn.Name, err))
+		}
+		fns = append(fns, &genai.FunctionDeclaration{
+			Name:        fn.Name,
+			Description: fn.Description,
+			Parameters:  &schema,
+		})
+	}
+
+	tools := []*genai.Tool{}
+	if len(fns) > 0 {
+		tools = append(tools, &genai.Tool{FunctionDeclarations: fns})
+	}
+
+	cfg := &genai.GenerateContentConfig{
+		Temperature: &input.Temperature,
+		Tools:       tools,
+		ToolConfig: &genai.ToolConfig{
+			FunctionCallingConfig: &genai.FunctionCallingConfig{
+				// ANY mode forces the model to predict only function calls
+				Mode: genai.FunctionCallingConfigModeAny,
+			},
+		},
+	}
+
+	response, err := c.client.Models.GenerateContent(ctx, string(input.Config.Model), []*genai.Content{
+		genai.NewContentFromText(input.SystemPrompt, genai.RoleModel),
+		genai.NewContentFromText(input.UserPrompt, genai.RoleUser),
+	}, cfg)
+	if err != nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to generate function call: %v", err))
+	}
+
+	// Extract function call if present
+	if len(response.Candidates) == 0 || response.Candidates[0] == nil || response.Candidates[0].Content == nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, "no function call found")
+	}
+
+	parts := response.Candidates[0].Content.Parts
+	if len(parts) == 0 || parts[0] == nil || parts[0].FunctionCall == nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, "no function call found")
+	}
+
+	functionCall := llm.FunctionCall{
+		Name:      parts[0].FunctionCall.Name,
+		Arguments: parts[0].FunctionCall.Args,
+	}
+
+	usage := llm.Usage{
+		InputTokens:  int(response.UsageMetadata.PromptTokenCount),
+		OutputTokens: int(response.UsageMetadata.CandidatesTokenCount),
+		TotalTokens:  int(response.UsageMetadata.TotalTokenCount),
+	}
+
+	return &llm.GenerateFunctionCallOutput{FunctionCall: functionCall, Usage: usage}, nil
+}
+
 func (c *GeminiClient) GenerateEmbedding(ctx context.Context, input llm.GenerateEmbeddingInput) (*llm.GenerateEmbeddingOutput, error) {
 	contents := []*genai.Content{
 		genai.NewContentFromText(input.Text, genai.RoleUser),
@@ -112,4 +175,15 @@ func (c *GeminiClient) GenerateEmbeddingBatch(ctx context.Context, input llm.Gen
 		TotalTokens:  int(response.Metadata.BillableCharacterCount),
 	}
 	return &llm.GenerateEmbeddingBatchOutput{Embeddings: embeddings, Usage: usage}, nil
+}
+
+func (c *GeminiClient) GetTokenCount(ctx context.Context, input llm.CountTokenInput) (*llm.CountTokenOutput, error) {
+	contents := []*genai.Content{
+		genai.NewContentFromText(input.Text, genai.RoleUser),
+	}
+	response, err := c.client.Models.CountTokens(ctx, string(input.Config.Model), contents, &genai.CountTokensConfig{})
+	if err != nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get token count: %v", err))
+	}
+	return &llm.CountTokenOutput{TokenCount: int(response.TotalTokens)}, nil
 }

@@ -34,8 +34,10 @@ const (
 type LLMClient interface {
 	GenerateText(ctx context.Context, input GenerateTextInput) (*GenerateTextOutput, error)
 	GenerateStructuredText(ctx context.Context, input GenerateStructuredTextInput) (*GenerateStructuredTextOutput, error)
+	GenerateFunctionCall(ctx context.Context, input GenerateFunctionCallInput) (*GenerateFunctionCallOutput, error)
 	GenerateEmbedding(ctx context.Context, input GenerateEmbeddingInput) (*GenerateEmbeddingOutput, error)
 	GenerateEmbeddingBatch(ctx context.Context, input GenerateEmbeddingBatchInput) (*GenerateEmbeddingBatchOutput, error)
+	GetTokenCount(ctx context.Context, input CountTokenInput) (*CountTokenOutput, error)
 }
 
 type LLMConfig struct {
@@ -62,22 +64,6 @@ func (c LLMConfig) Validate() error {
 type EmbeddingConfig struct {
 	Provider Provider
 	Model    EmbeddingModel
-}
-
-func (c EmbeddingConfig) Validate() error {
-	switch c.Provider {
-	case OpenAI:
-		if c.Model != EmbeddingModelOpenAIEmbeddings {
-			return errors.NewDomainError(errors.ValidationError, fmt.Sprintf("invalid model %s", c.Model))
-		}
-	case VertexAI:
-		if c.Model != GeminiEmbedding001 {
-			return errors.NewDomainError(errors.ValidationError, fmt.Sprintf("invalid model %s", c.Model))
-		}
-	default:
-		return errors.NewDomainError(errors.ValidationError, fmt.Sprintf("invalid provider %s", c.Provider))
-	}
-	return nil
 }
 
 type Usage struct {
@@ -111,6 +97,34 @@ type GenerateStructuredTextOutput struct {
 	Usage Usage
 }
 
+type GenerateFunctionCallInput struct {
+	SystemPrompt string
+	UserPrompt   string
+	Temperature  float32
+	Config       LLMConfig
+	Functions    []Function
+}
+
+type Function struct {
+	Name        string
+	Description string
+	Parameters  json.RawMessage
+}
+
+type GenerateFunctionCallOutput struct {
+	FunctionCall FunctionCall
+	Usage        Usage
+}
+
+type FunctionCall struct {
+	Name      string
+	Arguments map[string]any
+}
+
+func (o *GenerateFunctionCallOutput) FunctionCallString() string {
+	return fmt.Sprintf("Name: %s, Arguments: %v", o.FunctionCall.Name, o.FunctionCall.Arguments)
+}
+
 const EmbeddingDimensions = 1536
 
 type GenerateEmbeddingInput struct {
@@ -131,4 +145,13 @@ type GenerateEmbeddingBatchInput struct {
 type GenerateEmbeddingBatchOutput struct {
 	Embeddings [][]float32
 	Usage      Usage
+}
+
+type CountTokenInput struct {
+	Text   string
+	Config LLMConfig
+}
+
+type CountTokenOutput struct {
+	TokenCount int
 }

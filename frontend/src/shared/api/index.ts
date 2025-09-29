@@ -1,4 +1,5 @@
 export * from "./admin/documents/documents";
+export * from "./admin/events/events";
 export * from "./admin/hearing-messages/hearing-messages";
 export * from "./admin/hearings/hearings";
 export * from "./admin/model";

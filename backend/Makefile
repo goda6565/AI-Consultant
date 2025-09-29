@@ -62,6 +62,11 @@ run-vector: ## Run the application
 run-agent: ## Run the application
 	set -a && . .env.agent && set +a && go run main.go agent run
 
+# run-proposal-job
+.PHONY: run-proposal-job
+run-proposal-job: ## Run the application
+	set -a && . .env.proposal-job && set +a && go run main.go proposal-job run
+
 # stop
 .PHONY: stop
 stop: ## Stop the application

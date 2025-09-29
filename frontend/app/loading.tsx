@@ -1,1 +1,1 @@
-export { LoadingPage as default } from "@/pages/loading";
+export { LoadingPage as default } from "@/pages/loading/ui/page";

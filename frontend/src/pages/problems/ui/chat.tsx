@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ArrowUpIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import type { Problem } from "@/shared/api";
 import {
@@ -9,6 +11,8 @@ import {
   useListHearingMessages,
 } from "@/shared/api";
 import { Button, Loading, ScrollArea, Textarea } from "@/shared/ui";
+import type { Message } from "../model/zod";
+import { Monitor } from "./monitor";
 
 type ChatProps = {
   problem: Problem;
@@ -18,6 +22,8 @@ type ChatProps = {
 export function Chat({ problem, mutateProblem }: ChatProps) {
   const [initialized, setInitialized] = useState(false);
   const [input, setInput] = useState("");
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { trigger: executeHearing, isMutating: isExecuteHearingMutating } =
     useExecuteHearing(problem.id);
@@ -34,6 +40,29 @@ export function Chat({ problem, mutateProblem }: ChatProps) {
     swr: { enabled: problem.status !== "pending" },
   });
 
+  useEffect(() => {
+    if (hearingMessages) {
+      setLocalMessages(
+        hearingMessages.hearingMessages.map((msg) => ({
+          role: msg.role,
+          message: msg.message,
+        })),
+      );
+    }
+  }, [hearingMessages]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  });
+
+  // hearing 初期化
   useEffect(() => {
     if (problem.status === "pending" && !initialized) {
       setInitialized(true);
@@ -56,36 +85,47 @@ export function Chat({ problem, mutateProblem }: ChatProps) {
     initialized,
   ]);
 
-  // 初回読み込み時はローディング表示
-  if (problem.status === "pending") return <Loading />;
+  if (problem.status === "pending")
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loading />
+      </div>
+    );
 
   return (
-    <div className="flex flex-col bg-white h-full">
+    <div className="flex flex-col bg-white h-full max-w-4xl mx-auto">
       {/* list of messages */}
       <div className="flex-1 min-h-0">
-        <ScrollArea className="h-full">
-          <div className="p-4 space-y-4">
-            {hearingMessages?.hearingMessages.map((msg) => (
+        <ScrollArea ref={scrollAreaRef} className="h-full">
+          <div className="p-4 space-y-6">
+            {localMessages.map((msg, index) => (
               <div
-                key={msg.id}
+                key={`${msg.role}-${index}`}
                 className={`flex ${
                   msg.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
-                  className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-sm ${
+                  className={`${
                     msg.role === "user"
-                      ? "bg-gray-100 text-gray-900 rounded-br-md"
-                      : "bg-white text-gray-900 rounded-bl-md border"
+                      ? "px-4 py-3 rounded-2xl shadow-sm bg-gray-100 text-black rounded-br-md max-w-[70%]"
+                      : "w-full"
                   }`}
                 >
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {msg.message}
-                  </div>
+                  {msg.role === "user" ? (
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {msg.message}
+                    </div>
+                  ) : (
+                    <div className="leading-relaxed prose prose-sm w-full text-black max-w-none">
+                      <ReactMarkdown>{msg.message}</ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
+          {problem.status === "processing" && <Monitor problem={problem} />}
         </ScrollArea>
       </div>
 
@@ -94,16 +134,23 @@ export function Chat({ problem, mutateProblem }: ChatProps) {
         onSubmit={async (e) => {
           e.preventDefault();
           if (!input.trim()) return;
+
+          const newMessage: Message = {
+            role: "user",
+            message: input,
+          };
+          setLocalMessages((prev) => [...prev, newMessage as Message]);
+          setInput("");
+
           try {
             await executeHearing({ user_message: input });
-            await mutateHearingMessages();
             mutateProblem();
-            setInput("");
+            mutateHearingMessages(); // バックグラウンド同期
           } catch (_err) {
             toast.error("メッセージ送信に失敗しました");
           }
         }}
-        className="sticky bottom-0 bg-white flex items-center gap-2 p-4 border-t"
+        className="sticky bottom-0 bg-white flex items-center gap-2 p-4"
       >
         <Textarea
           placeholder="メッセージを入力... (Enterで送信、Shift+Enterで改行)"
@@ -127,7 +174,7 @@ export function Chat({ problem, mutateProblem }: ChatProps) {
             isExecuteHearingMutating ||
             problem.status === "processing"
           }
-          className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+          className="flex-1 min-h-[40px] max-h-[240px] resize-none rounded-4xl p-4"
           rows={1}
         />
         <Button
@@ -138,11 +185,12 @@ export function Chat({ problem, mutateProblem }: ChatProps) {
             isHearingMessagesLoading ||
             problem.status === "processing"
           }
+          className="rounded-full w-[40px] h-[40px] p-0 flex items-center justify-center"
         >
           {isExecuteHearingMutating ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
-            "送信"
+            <ArrowUpIcon className="w-4 h-4" />
           )}
         </Button>
       </form>

@@ -15,11 +15,19 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }, [loading, user, router]);
 
   if (loading) {
-    return <Loading />;
+    return (
+      <div className="flex items-center justify-center h-screen w-screen">
+        <Loading />
+      </div>
+    );
   }
 
   if (!user) {
-    return <Loading />;
+    return (
+      <div className="flex items-center justify-center h-screen w-screen">
+        <Loading />
+      </div>
+    );
   }
 
   return children;

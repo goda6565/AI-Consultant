@@ -77,6 +77,8 @@ func domainErrToResponse(err *domainErrors.DomainError) int {
 	switch err.ErrorType {
 	case domainErrors.ValidationError:
 		return http.StatusBadRequest
+	case domainErrors.InvalidFunctionName:
+		return http.StatusInternalServerError
 	default:
 		return http.StatusInternalServerError
 	}

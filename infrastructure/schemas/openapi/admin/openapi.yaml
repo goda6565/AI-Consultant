@@ -9,6 +9,7 @@ tags:
   - name: problems
   - name: hearings
   - name: hearingMessages
+  - name: events
 
 paths:
   /api/documents/{documentId}:
@@ -239,6 +240,31 @@ paths:
         "500":
           $ref: "#/components/responses/Error"
 
+  /api/events/{problemId}:
+    get:
+      tags:
+        - events
+      summary: "List events by problem id"
+      description: "Event History of Problem"
+      operationId: "ListEvents"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListEventsSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -276,6 +302,23 @@ components:
         - user
         - assistant
 
+    eventType:
+      type: string
+      enum:
+        - action
+        - input
+        - output
+
+    actionType:
+      type: string
+      enum:
+        - plan
+        - search
+        - struct
+        - write
+        - review
+        - done
+      
     errorCode:
       type: integer
       enum:
@@ -387,6 +430,26 @@ components:
         - role
         - message
         - createdAt
+  
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          $ref: "#/components/schemas/eventType"
+        actionType:
+          type: string
+          $ref: "#/components/schemas/actionType"
+        message:
+          type: string
+      required:
+        - id
+        - eventType
+        - actionType
+        - message
 
   parameters:
     DocumentIdPathParameter:
@@ -553,3 +616,18 @@ components:
                   $ref: "#/components/schemas/HearingMessage"
             required:
               - hearingMessages
+
+    ListEventsSuccess:
+      description: "List proposal events response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              events:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+            required:
+              - events
+

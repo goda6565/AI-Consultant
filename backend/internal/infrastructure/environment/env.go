@@ -26,6 +26,7 @@ type Environment struct {
 	VertexAIEnvironment
 	SyncQueueEnvironment
 	RedisEnvironment
+	GoogleSearchEnvironment
 }
 
 type ServerEnvironment struct {
@@ -86,4 +87,10 @@ type SyncQueueEnvironment struct {
 
 type RedisEnvironment struct {
 	RedisURL string `env:"REDIS_URL,required"`
+}
+
+type GoogleSearchEnvironment struct {
+	CustomSearchAPIKey string `env:"CUSTOM_SEARCH_API_KEY,required"`
+	SearchEngineID     string `env:"SEARCH_ENGINE_ID,required"`
+	SearchEndpoint     string `env:"SEARCH_ENDPOINT,required"`
 }
