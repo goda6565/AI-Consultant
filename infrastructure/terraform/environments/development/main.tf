@@ -211,3 +211,18 @@ resource "google_project_iam_member" "cloudtasks_enqueuer_cloudrun_default_sa" {
   role    = "roles/cloudtasks.enqueuer"
   member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
+
+# Cloud Run Job
+
+module "backend_proposal_job" {
+  source = "../../modules/cloudrun-job"
+
+  cloudrun_job_name = "${var.environment}-${var.service}-backend-proposal"
+  region            = var.region
+  env_vars          = local.common_env_vars
+  vpc_name          = var.vpc_id
+  subnet_name       = var.subnet_id
+  runners           = ["serviceAccount:${module.backend_agent_cloudrun.cloudrun_service_account_email}"]
+  environment       = var.environment
+  service           = var.service
+}
