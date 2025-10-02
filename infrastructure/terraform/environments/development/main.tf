@@ -244,5 +244,5 @@ module "backend_proposal_job" {
   environment       = var.environment
   service           = var.service
   cpu               = "1"
-  memory            = "5Gi"
+  memory            = "4Gi"
 }
