@@ -37,6 +37,30 @@ func (q *Queries) DeleteHearingByProblemID(ctx context.Context, problemID pgtype
 	return result.RowsAffected(), nil
 }
 
+const getAllHearingsByProblemId = `-- name: GetAllHearingsByProblemId :many
+SELECT id, problem_id, created_at FROM hearings WHERE problem_id = $1
+`
+
+func (q *Queries) GetAllHearingsByProblemId(ctx context.Context, problemID pgtype.UUID) ([]Hearing, error) {
+	rows, err := q.db.Query(ctx, getAllHearingsByProblemId, problemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Hearing
+	for rows.Next() {
+		var i Hearing
+		if err := rows.Scan(&i.ID, &i.ProblemID, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getHearingById = `-- name: GetHearingById :one
 SELECT id, problem_id, created_at FROM hearings WHERE id = $1
 `

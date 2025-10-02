@@ -12,7 +12,7 @@ export type ActionType = (typeof ActionType)[keyof typeof ActionType];
 export const ActionType = {
   plan: "plan",
   search: "search",
-  struct: "struct",
+  analyze: "analyze",
   write: "write",
   review: "review",
   done: "done",

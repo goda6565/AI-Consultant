@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	actionRepository "github.com/goda6565/ai-consultant/backend/internal/domain/action/repository"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
+	reportRepository "github.com/goda6565/ai-consultant/backend/internal/domain/report/repository"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
+	"github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
 	transaction "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/transaction"
 )
@@ -24,14 +27,31 @@ type DeleteProblemInteractor struct {
 	problemRepository        repository.ProblemRepository
 	hearingMessageRepository hearingMessageRepository.HearingMessageRepository
 	hearingRepository        hearingRepository.HearingRepository
+	actionRepository         actionRepository.ActionRepository
 	adminUnitOfWork          transaction.AdminUnitOfWork
+	reportRepository         reportRepository.ReportRepository
 }
 
-func NewDeleteProblemUseCase(problemRepository repository.ProblemRepository, hearingMessageRepository hearingMessageRepository.HearingMessageRepository, hearingRepository hearingRepository.HearingRepository, adminUnitOfWork transaction.AdminUnitOfWork) DeleteProblemInputPort {
-	return &DeleteProblemInteractor{problemRepository: problemRepository, hearingMessageRepository: hearingMessageRepository, hearingRepository: hearingRepository, adminUnitOfWork: adminUnitOfWork}
+func NewDeleteProblemUseCase(
+	problemRepository repository.ProblemRepository,
+	hearingMessageRepository hearingMessageRepository.HearingMessageRepository,
+	hearingRepository hearingRepository.HearingRepository,
+	actionRepository actionRepository.ActionRepository,
+	adminUnitOfWork transaction.AdminUnitOfWork,
+	reportRepository reportRepository.ReportRepository,
+) DeleteProblemInputPort {
+	return &DeleteProblemInteractor{
+		problemRepository:        problemRepository,
+		hearingMessageRepository: hearingMessageRepository,
+		hearingRepository:        hearingRepository,
+		actionRepository:         actionRepository,
+		adminUnitOfWork:          adminUnitOfWork,
+		reportRepository:         reportRepository,
+	}
 }
 
 func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProblemUseCaseInput) error {
+	logger := logger.GetLogger(ctx)
 	// validate and create problem ID
 	problemID, err := sharedValue.NewID(input.ProblemID)
 	if err != nil {
@@ -48,23 +68,52 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 	}
 
 	// check if hearing exists
-	hearing, err := i.hearingRepository.FindByProblemId(ctx, problemID)
+	hearings, err := i.hearingRepository.FindAllByProblemId(ctx, problemID)
 	if err != nil {
 		return fmt.Errorf("failed to find hearing: %w", err)
 	}
 
+	// check if actions exists
+	actions, err := i.actionRepository.FindByProblemID(ctx, problemID)
+	if err != nil {
+		return fmt.Errorf("failed to find actions: %w", err)
+	}
+
+	// check if report exists
+	report, err := i.reportRepository.FindByProblemID(ctx, problemID)
+	if err != nil {
+		return fmt.Errorf("failed to find report: %w", err)
+	}
+
 	// delete all
 	err = i.adminUnitOfWork.WithTx(ctx, func(ctx context.Context) error {
-		// delete hearing messages first (to avoid foreign key constraint violation)
-		if hearing != nil {
-			_, err = i.adminUnitOfWork.HearingMessageRepository(ctx).DeleteByHearingID(ctx, hearing.GetID())
+		// delete reports if exists
+		if report != nil {
+			_, err = i.adminUnitOfWork.ReportRepository(ctx).DeleteByProblemID(ctx, problemID)
 			if err != nil {
-				return fmt.Errorf("failed to delete hearing messages: %w", err)
+				return fmt.Errorf("failed to delete reports: %w", err)
+			}
+		}
+		// delete actions if exists
+		if len(actions) > 0 {
+			_, err = i.adminUnitOfWork.ActionRepository(ctx).DeleteByProblemID(ctx, problemID)
+			if err != nil {
+				return fmt.Errorf("failed to delete actions: %w", err)
+			}
+		}
+		// delete hearing messages first (to avoid foreign key constraint violation)
+		if len(hearings) > 0 {
+			for _, hearing := range hearings {
+				numDeleted, err := i.adminUnitOfWork.HearingMessageRepository(ctx).DeleteByHearingID(ctx, hearing.GetID())
+				logger.Info("deleted hearing messages", "hearing_id", hearing.GetID(), "num_deleted", numDeleted)
+				if err != nil {
+					return fmt.Errorf("failed to delete hearing messages: %w", err)
+				}
 			}
 		}
 
 		// delete hearing
-		if hearing != nil {
+		if len(hearings) > 0 {
 			_, err = i.adminUnitOfWork.HearingRepository(ctx).DeleteByProblemID(ctx, problem.GetID())
 			if err != nil {
 				return fmt.Errorf("failed to delete hearing: %w", err)

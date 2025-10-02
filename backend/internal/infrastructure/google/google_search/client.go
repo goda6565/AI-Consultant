@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	searchClient "github.com/goda6565/ai-consultant/backend/internal/domain/search"
@@ -40,6 +41,10 @@ func (c *GoogleSearchClient) Search(ctx context.Context, input searchClient.WebS
 	params.Set("cx", c.env.SearchEngineID)
 	params.Set("q", input.Query)
 
+	// HTML only
+	params.Set("fileType", "html")
+	params.Set("hq", "filetype:html")
+
 	endpoint := fmt.Sprintf("%s?%s", c.env.SearchEndpoint, params.Encode())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
@@ -70,11 +75,22 @@ func (c *GoogleSearchClient) Search(ctx context.Context, input searchClient.WebS
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to decode response: %v", err))
 	}
 
+	var htmlItems []googleSearchItem
+	for _, item := range response.Items {
+		if strings.HasSuffix(strings.ToLower(item.Link), ".html") {
+			htmlItems = append(htmlItems, item)
+		}
+	}
+
 	var returnResponses []googleSearchItem
-	if input.MaxNumResults > 0 && input.MaxNumResults < len(response.Items) {
-		returnResponses = response.Items[:input.MaxNumResults]
+	source := htmlItems
+	if len(source) == 0 {
+		source = response.Items
+	}
+	if input.MaxNumResults > 0 && input.MaxNumResults < len(source) {
+		returnResponses = source[:input.MaxNumResults]
 	} else {
-		returnResponses = response.Items
+		returnResponses = source
 	}
 
 	results := []searchClient.WebSearchResult{}

@@ -18,6 +18,7 @@ type AdminRestHandlers struct {
 	*problem.DeleteProblemHandler
 	*problem.GetProblemHandler
 	*problem.ListProblemHandler
+	*hearing.CreateHearingHandler
 	*hearing.GetHearingHandler
 	*hearingmessage.ListHearingMessageHandler
 	*event.ListEventHandler
@@ -32,6 +33,7 @@ func NewAdminHandlers(
 	deleteProblemHandler *problem.DeleteProblemHandler,
 	getProblemHandler *problem.GetProblemHandler,
 	listProblemHandler *problem.ListProblemHandler,
+	createHearingHandler *hearing.CreateHearingHandler,
 	getHearingHandler *hearing.GetHearingHandler,
 	listHearingMessageHandler *hearingmessage.ListHearingMessageHandler,
 	listEventHandler *event.ListEventHandler,
@@ -45,6 +47,7 @@ func NewAdminHandlers(
 		deleteProblemHandler,
 		getProblemHandler,
 		listProblemHandler,
+		createHearingHandler,
 		getHearingHandler,
 		listHearingMessageHandler,
 		listEventHandler,

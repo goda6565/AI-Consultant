@@ -47,7 +47,8 @@ func (r *ReviewAction) createUserPrompt(state agentState.State) string {
 
 var reviewSystemPrompt = `
 あなたは「問題解決エージェント」のレビュアーです。  
-最終目的は、ユーザーに提出する「提案書（Proposal）」の品質を高めることです。  
+ユーザーが提供する「現在の状態」には、最終ゴールが明示されています。
+この最終ゴールを常に参照しながら、レビューを行ってください。
 そのために、与えられた現在の内容をレビューし、改善点を指摘してください。  
 
 必須ルール:

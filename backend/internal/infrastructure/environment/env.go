@@ -27,6 +27,7 @@ type Environment struct {
 	SyncQueueEnvironment
 	RedisEnvironment
 	GoogleSearchEnvironment
+	CloudRunJobEnvironment
 }
 
 type ServerEnvironment struct {
@@ -93,4 +94,9 @@ type GoogleSearchEnvironment struct {
 	CustomSearchAPIKey string `env:"CUSTOM_SEARCH_API_KEY,required"`
 	SearchEngineID     string `env:"SEARCH_ENGINE_ID,required"`
 	SearchEndpoint     string `env:"SEARCH_ENDPOINT,required"`
+}
+
+type CloudRunJobEnvironment struct {
+	JobRegion string `env:"CLOUD_RUN_JOB_REGION,required"`
+	JobName   string `env:"CLOUD_RUN_JOB_NAME,required"`
 }

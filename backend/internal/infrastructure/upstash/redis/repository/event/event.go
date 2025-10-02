@@ -10,6 +10,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/event/repository"
 	eventValue "github.com/goda6565/ai-consultant/backend/internal/domain/event/value"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -24,15 +25,23 @@ func NewRedisEventRepository(client *redis.Client) repository.EventRepository {
 }
 
 func (c *RedisEventRepository) Create(ctx context.Context, event *entity.Event) error {
-	return c.client.XAdd(ctx, &redis.XAddArgs{
+	err := c.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: fmt.Sprintf("stream:%s", event.ProblemID.Value()),
 		Values: map[string]interface{}{
-			"eventId":    event.ID,
-			"eventType":  event.EventType,
-			"actionType": event.ActionType,
-			"message":    event.Message,
+			"eventId":    event.ID.Value(),
+			"eventType":  event.EventType.Value(),
+			"actionType": event.ActionType.Value(),
+			"message":    event.Message.Value(),
 		},
 	}).Err()
+	if err != nil {
+		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to xadd event: %v", err))
+	}
+	err = c.client.Expire(ctx, fmt.Sprintf("stream:%s", event.ProblemID.Value()), 10*time.Minute).Err()
+	if err != nil {
+		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to expire event: %v", err))
+	}
+	return nil
 }
 
 func (c *RedisEventRepository) FindAllByProblemID(ctx context.Context, problemID sharedValue.ID) ([]entity.Event, error) {

@@ -8,15 +8,10 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { mutate } from "swr";
 import { columns } from "@/pages/documents/model/columns";
 import type { Document } from "@/pages/documents/model/document";
 import { responseToDocument } from "@/pages/documents/model/document";
-import {
-  deleteDocument,
-  getListDocumentsKey,
-  useListDocuments,
-} from "@/shared/api";
+import type { Document as DocumentResponse } from "@/shared/api";
 import {
   Button,
   Input,
@@ -54,17 +49,28 @@ const columnsWithSelection: ColumnDef<Document, unknown>[] = [
   ...columns,
 ];
 
-export function DocumentTable() {
+type DocumentTableProps = {
+  documents: DocumentResponse[];
+  isLoading: boolean;
+  mutate: () => void;
+  deleteDocument: (id: string) => void;
+};
+
+export function DocumentTable({
+  documents,
+  isLoading,
+  mutate,
+  deleteDocument,
+}: DocumentTableProps) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("");
   const [docType, setDocType] = useState<string>("");
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data, isLoading } = useListDocuments();
   const rows = useMemo(() => {
-    return data?.documents?.map(responseToDocument) || [];
-  }, [data?.documents]);
+    return documents?.map(responseToDocument) || [];
+  }, [documents]);
 
   const filteredData = useMemo(() => {
     if (!rows) return [];
@@ -93,10 +99,10 @@ export function DocumentTable() {
     );
     if (!hasInProgress) return;
     const id = setInterval(() => {
-      void mutate(getListDocumentsKey());
+      void mutate();
     }, 2000);
     return () => clearInterval(id);
-  }, [rows]);
+  }, [rows, mutate]);
 
   const table = useReactTable({
     data: filteredData,
@@ -160,7 +166,7 @@ export function DocumentTable() {
               } else {
                 toast.error(`${failed.length}件の削除に失敗しました`);
               }
-              await mutate(getListDocumentsKey());
+              await mutate();
               setRowSelection({});
               setIsDeleting(false);
             }}

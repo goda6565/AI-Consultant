@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/goda6565/ai-consultant/backend/internal/domain/errors"
 )
@@ -121,8 +122,22 @@ type FunctionCall struct {
 	Arguments map[string]any
 }
 
+func (o *GenerateFunctionCallOutput) FunctionCallValueString() string {
+	var builder strings.Builder
+	for _, value := range o.FunctionCall.Arguments {
+		builder.WriteString(fmt.Sprintf("%v", value))
+	}
+	return builder.String()
+}
+
 func (o *GenerateFunctionCallOutput) FunctionCallString() string {
-	return fmt.Sprintf("Name: %s, Arguments: %v", o.FunctionCall.Name, o.FunctionCall.Arguments)
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("Function: %s\n", o.FunctionCall.Name))
+	builder.WriteString("Arguments:\n")
+	for key, value := range o.FunctionCall.Arguments {
+		builder.WriteString(fmt.Sprintf("  - %s: %v\n", key, value))
+	}
+	return builder.String()
 }
 
 const EmbeddingDimensions = 1536

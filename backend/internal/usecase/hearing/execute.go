@@ -19,9 +19,11 @@ import (
 	problemFieldService "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
 	problemFieldValue "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/value"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
+	"github.com/goda6565/ai-consultant/backend/internal/usecase/ports/job"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/ports/transaction"
 )
 
@@ -33,6 +35,7 @@ type ExecuteHearingInputPort interface {
 
 type ExecuteHearingUseCaseInput struct {
 	ProblemID   string
+	HearingID   string
 	UserMessage *string
 }
 
@@ -50,6 +53,8 @@ type ExecuteHearingInteractor struct {
 	generateHearingMessageService      *hearingMessageService.GenerateHearingMessageService
 	judgeProblemFieldCompletionService *problemFieldService.JudgeProblemFieldCompletionService
 	adminUnitOfWork                    transaction.AdminUnitOfWork
+	jobClient                          job.Job
+	env                                *environment.Environment
 }
 
 func NewExecuteHearingUseCase(
@@ -61,6 +66,8 @@ func NewExecuteHearingUseCase(
 	generateHearingMessageService *hearingMessageService.GenerateHearingMessageService,
 	judgeProblemFieldCompletionService *problemFieldService.JudgeProblemFieldCompletionService,
 	adminUnitOfWork transaction.AdminUnitOfWork,
+	jobClient job.Job,
+	env *environment.Environment,
 ) ExecuteHearingInputPort {
 	return &ExecuteHearingInteractor{
 		hearingRepository:                  hearingRepository,
@@ -71,6 +78,8 @@ func NewExecuteHearingUseCase(
 		generateHearingMessageService:      generateHearingMessageService,
 		judgeProblemFieldCompletionService: judgeProblemFieldCompletionService,
 		adminUnitOfWork:                    adminUnitOfWork,
+		jobClient:                          jobClient,
+		env:                                env,
 	}
 }
 
@@ -81,20 +90,20 @@ func (i *ExecuteHearingInteractor) Execute(ctx context.Context, input ExecuteHea
 		return nil, fmt.Errorf("failed to create problem id: %w", err)
 	}
 
+	// validate and create hearing ID
+	hearingID, err := sharedValue.NewID(input.HearingID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create hearing id: %w", err)
+	}
+
 	// pre-fetch problem, problem fields, and hearing
-	problem, problemFields, hearing, err := i.preFetch(ctx, problemID)
+	problem, problemFields, hearing, hearingMessages, err := i.preFetch(ctx, problemID, hearingID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pre-fetch: %w", err)
 	}
 
-	var hearingMessages []hearingMessageEntity.HearingMessage
 	var targetProblemFieldID sharedValue.ID
-	if hearing == nil {
-		// create hearing and update problem status in transaction
-		hearing, err = i.createHearingWithTx(ctx, problemID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create hearing with transaction: %w", err)
-		}
+	if len(hearingMessages) == 0 {
 		targetProblemFieldID = problemFields[0].GetID() // random select first problem field
 	} else {
 		// find hearing messages by hearing ID
@@ -159,6 +168,13 @@ func (i *ExecuteHearingInteractor) Execute(ctx context.Context, input ExecuteHea
 			if err != nil {
 				return nil, fmt.Errorf("failed to create message: %w", err)
 			}
+			err = i.jobClient.CallJob(ctx, job.JobInput{
+				JobName:   i.env.JobName,
+				ProblemID: problemID.Value(),
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to call job: %w", err)
+			}
 			hearingMessage := hearingMessageEntity.NewHearingMessage(id, hearing.GetID(), targetProblemFieldID, value.RoleAssistant, *messageValue, nil)
 			// update problem status
 			err = i.adminUnitOfWork.WithTx(ctx, func(txCtx context.Context) error {
@@ -211,75 +227,41 @@ func (i *ExecuteHearingInteractor) Execute(ctx context.Context, input ExecuteHea
 	}, nil
 }
 
-func (i *ExecuteHearingInteractor) preFetch(ctx context.Context, problemID sharedValue.ID) (*problemEntity.Problem, []problemFieldEntity.ProblemField, *hearingEntity.Hearing, error) {
+func (i *ExecuteHearingInteractor) preFetch(ctx context.Context, problemID sharedValue.ID, hearingID sharedValue.ID) (*problemEntity.Problem, []problemFieldEntity.ProblemField, *hearingEntity.Hearing, []hearingMessageEntity.HearingMessage, error) {
 	// find problem by problem ID
 	problem, err := i.problemRepository.FindById(ctx, problemID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to find problem: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to find problem: %w", err)
 	}
 	if problem == nil {
-		return nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "problem not found")
+		return nil, nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "problem not found")
 	}
 
 	// find problem fields by problem ID
 	problemFields, err := i.problemFieldRepository.FindByProblemID(ctx, problemID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to find problem fields: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to find problem fields: %w", err)
 	}
 	if len(problemFields) == 0 {
-		return nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "problem fields not found")
+		return nil, nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "problem fields not found")
 	}
 
 	// find hearing by problem ID
-	hearing, err := i.hearingRepository.FindByProblemId(ctx, problemID)
+	hearing, err := i.hearingRepository.FindById(ctx, hearingID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to find hearing: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("failed to find hearing: %w", err)
+	}
+	if hearing == nil {
+		return nil, nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "hearing not found")
 	}
 
-	return problem, problemFields, hearing, nil
-}
-
-func (i *ExecuteHearingInteractor) createHearingWithTx(ctx context.Context, problemID sharedValue.ID) (*hearingEntity.Hearing, error) {
-	// check if hearing already exists for this problem (outside transaction)
-	isDuplicate, err := i.duplicateCheckerService.Execute(ctx, problemID)
+	// find hearing messages by hearing ID
+	hearingMessages, err := i.hearingMessageRepository.FindByHearingID(ctx, hearing.GetID())
 	if err != nil {
-		return nil, fmt.Errorf("failed to check duplicate hearing: %w", err)
-	}
-	if isDuplicate {
-		return nil, errors.NewUseCaseError(errors.DuplicateError, "hearing already exists for this problem")
+		return nil, nil, nil, nil, fmt.Errorf("failed to find hearing messages: %w", err)
 	}
 
-	var hearing *hearingEntity.Hearing
-	err = i.adminUnitOfWork.WithTx(ctx, func(txCtx context.Context) error {
-		// create value objects
-		id, err := sharedValue.NewID(uuid.NewUUID())
-		if err != nil {
-			return fmt.Errorf("failed to create id: %w", err)
-		}
-
-		// create hearing
-		hearing = hearingEntity.NewHearing(id, problemID, nil)
-
-		// save hearing using transaction-aware repository
-		hearingRepo := i.adminUnitOfWork.HearingRepository(txCtx)
-		err = hearingRepo.Create(txCtx, hearing)
-		if err != nil {
-			return fmt.Errorf("failed to save hearing: %w", err)
-		}
-
-		// update problem status using transaction-aware repository
-		problemRepo := i.adminUnitOfWork.ProblemRepository(txCtx)
-		err = problemRepo.UpdateStatus(txCtx, problemID, problemValue.StatusHearing)
-		if err != nil {
-			return fmt.Errorf("failed to update problem status: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return hearing, nil
+	return problem, problemFields, hearing, hearingMessages, nil
 }
 
 func (i *ExecuteHearingInteractor) saveHearingMessage(ctx context.Context, hearingID sharedValue.ID, problemFieldID sharedValue.ID, role value.Role, message string) (*hearingMessageEntity.HearingMessage, error) {

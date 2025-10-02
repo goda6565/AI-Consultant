@@ -20,26 +20,32 @@ import type {
  */
 export const executeHearing = (
   problemId: string,
+  hearingId: string,
   executeHearingRequestBody: ExecuteHearingRequestBody,
 ) => {
   return agentApiClient<ExecuteHearingSuccessResponse>({
-    url: `/api/hearings/${problemId}`,
+    url: `/api/hearings/${problemId}/hearings/${hearingId}/execute`,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     data: executeHearingRequestBody,
   });
 };
 
-export const getExecuteHearingMutationFetcher = (problemId: string) => {
+export const getExecuteHearingMutationFetcher = (
+  problemId: string,
+  hearingId: string,
+) => {
   return (
     _: Key,
     { arg }: { arg: ExecuteHearingRequestBody },
   ): Promise<ExecuteHearingSuccessResponse> => {
-    return executeHearing(problemId, arg);
+    return executeHearing(problemId, hearingId, arg);
   };
 };
-export const getExecuteHearingMutationKey = (problemId: string) =>
-  [`/api/hearings/${problemId}`] as const;
+export const getExecuteHearingMutationKey = (
+  problemId: string,
+  hearingId: string,
+) => [`/api/hearings/${problemId}/hearings/${hearingId}/execute`] as const;
 
 export type ExecuteHearingMutationResult = NonNullable<
   Awaited<ReturnType<typeof executeHearing>>
@@ -63,6 +69,7 @@ export const useExecuteHearing = <
     | ErrorResponse,
 >(
   problemId: string,
+  hearingId: string,
   options?: {
     swr?: SWRMutationConfiguration<
       Awaited<ReturnType<typeof executeHearing>>,
@@ -75,8 +82,9 @@ export const useExecuteHearing = <
 ) => {
   const { swr: swrOptions } = options ?? {};
 
-  const swrKey = swrOptions?.swrKey ?? getExecuteHearingMutationKey(problemId);
-  const swrFn = getExecuteHearingMutationFetcher(problemId);
+  const swrKey =
+    swrOptions?.swrKey ?? getExecuteHearingMutationKey(problemId, hearingId);
+  const swrFn = getExecuteHearingMutationFetcher(problemId, hearingId);
 
   const query = useSWRMutation(swrKey, swrFn, swrOptions);
 

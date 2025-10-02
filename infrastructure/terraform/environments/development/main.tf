@@ -150,6 +150,18 @@ module "frontend_cloudbuild_trigger" {
   branch_pattern                = "^develop$"
 }
 
+module "backend_proposal_job_cloudbuild_trigger" {
+  source = "../../modules/cloudbuild-trigger-branch"
+
+  trigger_name                  = "${var.environment}-${var.service}-backend-proposal-job-cloudbuild-trigger"
+  trigger_description           = "Cloud Build trigger for backend proposal job development"
+  file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/backend-proposal-job.yaml"
+  included_files                = ["backend/**", "infrastructure/deployments/cloudbuild/${var.environment}/backend-proposal-job.yaml"]
+  cloudbuild_service_account_id = var.cloudbuild_service_account_id
+  github_repository_id          = var.github_repository_id
+  branch_pattern                = "^develop$"
+}
+
 # Secret Manager
 module "secret_manage_vector_db_password" {
   source      = "../../modules/secret-manager"

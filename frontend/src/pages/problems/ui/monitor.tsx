@@ -1,69 +1,21 @@
 import { LucideActivity } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { type Problem, useListEvents } from "@/shared/api";
-import { env } from "@/shared/config";
 import {
   Button,
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-  DrawerTrigger,
-  Loading,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "@/shared/ui";
 import type { Event } from "../model/zod";
 import { EventList } from "./event-list";
 
 type MonitorProps = {
-  problem: Problem;
+  events: Event[];
 };
 
-export function Monitor({ problem }: MonitorProps) {
-  const [events, setEvents] = useState<Event[]>([]);
-
-  const {
-    data: eventsData,
-    isLoading,
-    error,
-  } = useListEvents("cc2546eb-1d32-4697-beda-b3ff2ab9bb92");
-
-  useEffect(() => {
-    if (eventsData) {
-      setEvents(eventsData.events);
-    }
-  }, [eventsData]);
-
-  useEffect(() => {
-    const url = `${env.NEXT_PUBLIC_ADMIN_API_URL}/api/events/cc2546eb-1d32-4697-beda-b3ff2ab9bb92/stream`;
-    const es = new EventSource(url);
-
-    es.onmessage = (e) => {
-      try {
-        const parsed = JSON.parse(e.data) as Event;
-        setEvents((prev) => [...prev, parsed]);
-      } catch (_err) {
-        toast.error("イベントストリームのパースに失敗しました");
-      }
-    };
-
-    es.onerror = (_err) => {
-      toast.error("イベントストリームの接続に失敗しました");
-      es.close();
-    };
-
-    return () => {
-      es.close();
-    };
-  }, []);
-
-  if (isLoading)
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loading />
-      </div>
-    );
-  if (error) toast.error(error.message);
-
+export function Monitor({ events }: MonitorProps) {
   return (
     <div className="bg-white border rounded-lg p-4 space-y-3">
       {/* ヘッダー */}
@@ -72,25 +24,39 @@ export function Monitor({ problem }: MonitorProps) {
         <span className="text-sm font-medium">処理中...</span>
       </div>
 
-      {/* 現在のステップ */}
-      {events[events.length - 1] && (
-        <div className="text-sm text-gray-700">
-          {events[events.length - 1].message}
-        </div>
-      )}
+      {(() => {
+        const actionEvents = events.filter(
+          (event) => event.eventType === "action",
+        );
+        const lastActionEvent = actionEvents[actionEvents.length - 1];
+        return (
+          lastActionEvent && (
+            <div className="text-sm text-gray-700">
+              {lastActionEvent.message}
+            </div>
+          )
+        );
+      })()}
 
-      {/* 詳細表示ボタン */}
-      <Drawer direction="right">
-        <DrawerTrigger asChild>
+      <Sheet>
+        <SheetTrigger className="w-full" asChild>
           <Button variant="outline" size="sm" className="w-full">
             詳細ログ
           </Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerTitle className="text-center p-4">{problem.title}</DrawerTitle>
-          <EventList events={events} />
-        </DrawerContent>
-      </Drawer>
+        </SheetTrigger>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>詳細ログ</SheetTitle>
+            <SheetDescription>詳細ログが表示されます。</SheetDescription>
+          </SheetHeader>
+          <EventList
+            events={events.filter(
+              (event, index, self) =>
+                index === self.findIndex((e) => e.id === event.id),
+            )}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

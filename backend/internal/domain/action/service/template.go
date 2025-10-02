@@ -26,26 +26,26 @@ type ActionTemplate interface {
 
 type PlanActionInterface ActionTemplate
 type SearchActionInterface ActionTemplate
-type StructActionInterface ActionTemplate
+type AnalyzeActionInterface ActionTemplate
 type WriteActionInterface ActionTemplate
 type ReviewActionInterface ActionTemplate
 
 type ActionFactory struct {
-	planActionTemplate   PlanActionInterface
-	searchActionTemplate SearchActionInterface
-	structActionTemplate StructActionInterface
-	writeActionTemplate  WriteActionInterface
-	reviewActionTemplate ReviewActionInterface
+	planActionTemplate    PlanActionInterface
+	searchActionTemplate  SearchActionInterface
+	analyzeActionTemplate AnalyzeActionInterface
+	writeActionTemplate   WriteActionInterface
+	reviewActionTemplate  ReviewActionInterface
 }
 
 func NewActionFactory(
 	planActionTemplate PlanActionInterface,
 	searchActionTemplate SearchActionInterface,
-	structActionTemplate StructActionInterface,
+	analyzeActionTemplate AnalyzeActionInterface,
 	writeActionTemplate WriteActionInterface,
 	reviewActionTemplate ReviewActionInterface,
 ) *ActionFactory {
-	return &ActionFactory{planActionTemplate: planActionTemplate, searchActionTemplate: searchActionTemplate, structActionTemplate: structActionTemplate, writeActionTemplate: writeActionTemplate, reviewActionTemplate: reviewActionTemplate}
+	return &ActionFactory{planActionTemplate: planActionTemplate, searchActionTemplate: searchActionTemplate, analyzeActionTemplate: analyzeActionTemplate, writeActionTemplate: writeActionTemplate, reviewActionTemplate: reviewActionTemplate}
 }
 
 func (f *ActionFactory) GetActionTemplate(actionType value.ActionType) (ActionTemplate, error) {
@@ -54,8 +54,8 @@ func (f *ActionFactory) GetActionTemplate(actionType value.ActionType) (ActionTe
 		return f.planActionTemplate, nil
 	case value.ActionTypeSearch:
 		return f.searchActionTemplate, nil
-	case value.ActionTypeStruct:
-		return f.structActionTemplate, nil
+	case value.ActionTypeAnalyze:
+		return f.analyzeActionTemplate, nil
 	case value.ActionTypeWrite:
 		return f.writeActionTemplate, nil
 	case value.ActionTypeReview:

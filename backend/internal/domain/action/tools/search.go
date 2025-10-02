@@ -33,6 +33,9 @@ const (
 	DocumentSearchDescription = "システム内に蓄積されたドキュメントを検索する。社内ナレッジ、過去の事例、内部文書、ユーザー固有の情報、組織固有のベストプラクティスなどを調べる場合に使用する。"
 )
 
+const defaultWebSearchMaxNumResults = 10
+const defaultDocumentSearchMaxNumResults = 10
+
 func NewSearchTools(llmClient llm.LLMClient, webSearchTool search.WebSearchClient, documentSearchTool search.DocumentSearchClient) *SearchTools {
 	return &SearchTools{llmClient: llmClient, WebSearchTool: webSearchTool, DocumentSearchTool: documentSearchTool}
 }
@@ -112,7 +115,7 @@ func (s *SearchTools) Execute(ctx context.Context, input ExecuteInput) (*Execute
 
 func (s *SearchTools) webSearch(ctx context.Context, query string) ([]SearchResult, error) {
 	logger := logger.GetLogger(ctx)
-	output, err := s.WebSearchTool.Search(ctx, search.WebSearchInput{Query: query})
+	output, err := s.WebSearchTool.Search(ctx, search.WebSearchInput{Query: query, MaxNumResults: defaultWebSearchMaxNumResults})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search web: %w", err)
 	}
@@ -152,11 +155,17 @@ func (s *SearchTools) webSearch(ctx context.Context, query string) ([]SearchResu
 }
 
 func (s *SearchTools) documentSearch(ctx context.Context, query string) ([]SearchResult, error) {
-	embedding, err := s.llmClient.GenerateEmbedding(ctx, llm.GenerateEmbeddingInput{Text: query})
+	embedding, err := s.llmClient.GenerateEmbedding(ctx, llm.GenerateEmbeddingInput{
+		Text: query,
+		Config: llm.EmbeddingConfig{
+			Provider: llm.VertexAI,
+			Model:    llm.GeminiEmbedding001,
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate embedding: %w", err)
 	}
-	output, err := s.DocumentSearchTool.Search(ctx, search.DocumentSearchInput{Query: query, Embedding: &embedding.Embedding})
+	output, err := s.DocumentSearchTool.Search(ctx, search.DocumentSearchInput{Query: query, Embedding: &embedding.Embedding, MaxNumResults: defaultDocumentSearchMaxNumResults})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search document: %w", err)
 	}

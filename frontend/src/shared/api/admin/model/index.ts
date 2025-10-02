@@ -9,6 +9,7 @@
 export * from "./actionType";
 export * from "./createDocumentBody";
 export * from "./createDocumentSuccessResponse";
+export * from "./createHearingSuccessResponse";
 export * from "./createProblemBody";
 export * from "./createProblemSuccessResponse";
 export * from "./document";

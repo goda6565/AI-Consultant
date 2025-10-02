@@ -11,13 +11,14 @@ import (
 	service8 "github.com/goda6565/ai-consultant/backend/internal/domain/action/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/action/tools"
 	service7 "github.com/goda6565/ai-consultant/backend/internal/domain/agent/service"
-	service4 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
+	service5 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
-	service5 "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/service"
+	service4 "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/service"
 	service6 "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/service"
 	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	service3 "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudrunjob"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/action"
@@ -27,6 +28,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/report"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/search"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/transaction"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
@@ -90,15 +92,20 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	generateProblemFieldService := service3.NewGenerateProblemFieldService(llmClient)
 	hearingRepository := hearing.NewHearingRepository(appPool)
 	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
-	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository)
+	actionRepository := action.NewActionRepository(appPool)
+	reportRepository := report.NewReportRepository(appPool)
+	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository, actionRepository, reportRepository)
 	createProblemInputPort := problem2.NewCreateProblemUseCase(generateTitleService, problemRepository, problemFieldRepository, generateProblemFieldService, adminUnitOfWork)
 	createProblemHandler := problem3.NewCreateProblemHandler(createProblemInputPort)
-	deleteProblemInputPort := problem2.NewDeleteProblemUseCase(problemRepository, hearingMessageRepository, hearingRepository, adminUnitOfWork)
+	deleteProblemInputPort := problem2.NewDeleteProblemUseCase(problemRepository, hearingMessageRepository, hearingRepository, actionRepository, adminUnitOfWork, reportRepository)
 	deleteProblemHandler := problem3.NewDeleteProblemHandler(deleteProblemInputPort)
 	getProblemInputPort := problem2.NewGetProblemUseCase(problemRepository)
 	getProblemHandler := problem3.NewGetProblemHandler(getProblemInputPort)
 	listProblemInputPort := problem2.NewListProblemUseCase(problemRepository)
 	listProblemHandler := problem3.NewListProblemHandler(listProblemInputPort)
+	duplicateCheckerService := service4.NewDuplicateCheckerService(hearingRepository)
+	createHearingInputPort := hearing2.NewCreateHearingUseCase(hearingRepository, duplicateCheckerService, adminUnitOfWork)
+	createHearingHandler := hearing3.NewCreateHearingHandler(createHearingInputPort)
 	getHearingInputPort := hearing2.NewGetHearingUseCase(hearingRepository)
 	getHearingHandler := hearing3.NewGetHearingHandler(getHearingInputPort)
 	listHearingMessageInputPort := hearing_message.NewListHearingMessageUseCase(hearingMessageRepository)
@@ -107,7 +114,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	eventRepository := event.NewRedisEventRepository(client)
 	listEventInputPort := event2.NewListEventUseCase(eventRepository)
 	listEventHandler := event3.NewListEventHandler(listEventInputPort)
-	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, getHearingHandler, listHearingMessageHandler, listEventHandler)
+	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, createHearingHandler, getHearingHandler, listHearingMessageHandler, listEventHandler)
 	streamEventInputPort := event2.NewStreamEventUseCase(eventRepository)
 	streamEventHandler := event3.NewStreamEventHandler(streamEventInputPort)
 	adminHandlers := &handler.AdminHandlers{
@@ -137,10 +144,10 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 	appPool, cleanup3 := database.ProvideAppPool(ctx, environmentEnvironment)
 	documentRepository := document.NewDocumentRepository(appPool)
 	ocrClient := ocr.NewDocumentAIClient(ctx, environmentEnvironment)
-	pdfParser := service4.NewPdfParserService(ocrClient)
+	pdfParser := service5.NewPdfParserService(ocrClient)
 	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
-	csvAnalyzer := service4.NewCsvAnalyzerService(llmClient)
-	chunker := service4.NewChunkService()
+	csvAnalyzer := service5.NewCsvAnalyzerService(llmClient)
+	chunker := service5.NewChunkService()
 	storagePort := storage.NewClient(ctx)
 	createChunkInputPort := chunk2.NewCreateChunkUseCase(vectorUnitOfWork, documentRepository, pdfParser, csvAnalyzer, chunker, storagePort, llmClient)
 	createHandler := chunk3.NewCreateChunkHandler(createChunkInputPort)
@@ -171,13 +178,21 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
 	problemRepository := problem.NewProblemRepository(appPool)
 	problemFieldRepository := problemfield.NewProblemFieldRepository(appPool)
-	duplicateCheckerService := service5.NewDuplicateCheckerService(hearingRepository)
+	duplicateCheckerService := service4.NewDuplicateCheckerService(hearingRepository)
 	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
 	generateHearingMessageService := service6.NewGenerateHearingMessageService(llmClient)
 	judgeProblemFieldCompletionService := service3.NewJudgeProblemFieldCompletionService(llmClient)
 	documentRepository := document.NewDocumentRepository(appPool)
-	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository)
-	executeHearingInputPort := hearing2.NewExecuteHearingUseCase(hearingRepository, hearingMessageRepository, problemRepository, problemFieldRepository, duplicateCheckerService, generateHearingMessageService, judgeProblemFieldCompletionService, adminUnitOfWork)
+	actionRepository := action.NewActionRepository(appPool)
+	reportRepository := report.NewReportRepository(appPool)
+	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository, actionRepository, reportRepository)
+	job, err := cloudrunjob.NewCloudRunJobClient(ctx, environmentEnvironment)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	executeHearingInputPort := hearing2.NewExecuteHearingUseCase(hearingRepository, hearingMessageRepository, problemRepository, problemFieldRepository, duplicateCheckerService, generateHearingMessageService, judgeProblemFieldCompletionService, adminUnitOfWork, job, environmentEnvironment)
 	getProblemInputPort := problem2.NewGetProblemUseCase(problemRepository)
 	executeHearingHandler := hearing4.NewExecuteHearingHandler(executeHearingInputPort, getProblemInputPort)
 	strictServerInterface := handler3.NewAgentHandlers(executeHearingHandler)
@@ -201,26 +216,31 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	hearingRepository := hearing.NewHearingRepository(appPool)
 	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
 	actionRepository := action.NewActionRepository(appPool)
+	client, cleanup3 := redis.ProvideRedisClient(ctx, environmentEnvironment)
+	eventRepository := event.NewRedisEventRepository(client)
 	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
 	orchestrator := service7.NewOrchestrator(llmClient)
 	summarizeService := service7.NewSummarizeService(llmClient)
+	goalService := service7.NewGoalService(llmClient)
 	planActionInterface := service8.NewPlanAction(llmClient)
 	webSearchClient := googlesearch.NewGoogleSearchClient(environmentEnvironment)
-	vectorPool, cleanup3 := database.ProvideVectorPool(ctx, environmentEnvironment)
+	vectorPool, cleanup4 := database.ProvideVectorPool(ctx, environmentEnvironment)
 	documentSearchClient := search.NewSearchClient(vectorPool, appPool)
 	searchTools := tools.NewSearchTools(llmClient, webSearchClient, documentSearchClient)
 	searchActionInterface := service8.NewSearchAction(llmClient, searchTools)
-	structActionInterface := service8.NewStructAction(llmClient)
+	analyzeActionInterface := service8.NewAnalyzeAction(llmClient)
 	writeActionInterface := service8.NewWriteAction(llmClient)
 	reviewActionInterface := service8.NewReviewAction(llmClient)
-	actionFactory := service8.NewActionFactory(planActionInterface, searchActionInterface, structActionInterface, writeActionInterface, reviewActionInterface)
-	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, orchestrator, summarizeService, actionFactory)
+	actionFactory := service8.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
+	reportRepository := report.NewReportRepository(appPool)
+	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, actionFactory, reportRepository)
 	jobApplication := proposal2.NewExecuteProposal(ctx, executeProposalInputPort)
 	jobJob := job.NewBaseJob(ctx, logger, jobApplication)
 	diJob := &Job{
 		Job: jobJob,
 	}
 	return diJob, func() {
+		cleanup4()
 		cleanup3()
 		cleanup2()
 		cleanup()

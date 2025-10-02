@@ -193,6 +193,29 @@ paths:
           $ref: "#/components/responses/Error"
 
   /api/hearings/{problemId}:
+    post:
+      tags:
+        - hearings
+      summary: "Create a hearing"
+      operationId: "CreateHearing"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateHearingSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
     get:
       tags:
         - hearings
@@ -314,7 +337,7 @@ components:
       enum:
         - plan
         - search
-        - struct
+        - analyze
         - write
         - review
         - done
@@ -596,6 +619,19 @@ components:
             required:
               - problems
 
+    CreateHearingSuccess:
+      description: "Create hearing response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              hearingId:
+                type: string
+                format: uuid
+            required:
+              - hearingId
+            
     GetHearingSuccess:
       description: "Get hearing response"
       content:

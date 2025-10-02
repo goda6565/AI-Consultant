@@ -12,7 +12,7 @@ import { adminApiClient } from "../../client";
 import type { ErrorResponse, ListEventsSuccessResponse } from ".././model";
 
 /**
- * Event History of Proposal
+ * Event History of Problem
  * @summary List events by problem id
  */
 export const listEvents = (problemId: string) => {

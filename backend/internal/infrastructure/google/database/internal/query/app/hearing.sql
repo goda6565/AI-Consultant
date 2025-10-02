@@ -9,3 +9,6 @@ SELECT * FROM hearings WHERE id = $1;
 
 -- name: GetHearingByProblemId :one
 SELECT * FROM hearings WHERE problem_id = $1;
+
+-- name: GetAllHearingsByProblemId :many
+SELECT * FROM hearings WHERE problem_id = $1;

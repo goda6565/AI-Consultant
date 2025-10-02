@@ -44,6 +44,7 @@ func (h *ExecuteHearingHandler) ExecuteHearing(ctx context.Context, request gen.
 
 	output, err := h.executeHearingUseCase.Execute(ctx, hearing.ExecuteHearingUseCaseInput{
 		ProblemID:   problemID,
+		HearingID:   request.HearingId.String(),
 		UserMessage: request.Body.UserMessage,
 	}, logger)
 	if err != nil {

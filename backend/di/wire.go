@@ -18,6 +18,7 @@ import (
 	problemService "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	problemFieldService "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
+	jobClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudrunjob"
 	cloudtasksClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	actionRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/action"
@@ -27,6 +28,7 @@ import (
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	problemFieldRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
+	reportRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/report"
 	documentSearchClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/search"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/transaction"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/firebase"
@@ -75,12 +77,15 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		problemRepository.Set,
 		problemFieldRepository.Set,
 		eventRepository.Set,
+		reportRepository.Set,
+		actionRepository.Set,
 		transaction.Set,
 		storageClient.Set,
 		cloudtasksClient.Set,
 		documentService.Set,
 		problemService.Set,
 		problemFieldService.Set,
+		hearingService.Set,
 		documentUseCase.Set,
 		problemUseCase.Set,
 		hearingUseCase.Set,
@@ -124,12 +129,15 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 		firebase.Set,
 		gemini.Set,
 		database.Set,
+		jobClient.Set,
 		transaction.Set,
 		documentRepository.Set,
 		hearingRepository.Set,
 		hearingMessageRepository.Set,
 		problemRepository.Set,
 		problemFieldRepository.Set,
+		reportRepository.Set,
+		actionRepository.Set,
 		problemFieldService.Set,
 		hearingService.Set,
 		hearingMessageService.Set,
@@ -149,10 +157,13 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 		zap.Set,
 		gemini.Set,
 		database.Set,
+		redis.Set,
 		problemRepository.Set,
 		problemFieldRepository.Set,
 		hearingRepository.Set,
 		hearingMessageRepository.Set,
+		eventRepository.Set,
+		reportRepository.Set,
 		actionRepository.Set,
 		actionService.Set,
 		actionService.ActionFactorySet,

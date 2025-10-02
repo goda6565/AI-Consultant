@@ -6,11 +6,82 @@
  * OpenAPI spec version: 1.0.0
  */
 
-import type { Key, SWRConfiguration } from "swr";
+import type { Arguments, Key, SWRConfiguration } from "swr";
 import useSwr from "swr";
+import type { SWRMutationConfiguration } from "swr/mutation";
+import useSWRMutation from "swr/mutation";
 import { adminApiClient } from "../../client";
-import type { ErrorResponse, GetHearingSuccessResponse } from ".././model";
+import type {
+  CreateHearingSuccessResponse,
+  ErrorResponse,
+  GetHearingSuccessResponse,
+} from ".././model";
 
+/**
+ * @summary Create a hearing
+ */
+export const createHearing = (problemId: string) => {
+  return adminApiClient<CreateHearingSuccessResponse>({
+    url: `/api/hearings/${problemId}`,
+    method: "POST",
+  });
+};
+
+export const getCreateHearingMutationFetcher = (problemId: string) => {
+  return (
+    _: Key,
+    __: { arg: Arguments },
+  ): Promise<CreateHearingSuccessResponse> => {
+    return createHearing(problemId);
+  };
+};
+export const getCreateHearingMutationKey = (problemId: string) =>
+  [`/api/hearings/${problemId}`] as const;
+
+export type CreateHearingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createHearing>>
+>;
+export type CreateHearingMutationError =
+  | ErrorResponse
+  | ErrorResponse
+  | ErrorResponse
+  | ErrorResponse
+  | ErrorResponse;
+
+/**
+ * @summary Create a hearing
+ */
+export const useCreateHearing = <
+  TError =
+    | ErrorResponse
+    | ErrorResponse
+    | ErrorResponse
+    | ErrorResponse
+    | ErrorResponse,
+>(
+  problemId: string,
+  options?: {
+    swr?: SWRMutationConfiguration<
+      Awaited<ReturnType<typeof createHearing>>,
+      TError,
+      Key,
+      Arguments,
+      Awaited<ReturnType<typeof createHearing>>
+    > & { swrKey?: string };
+  },
+) => {
+  const { swr: swrOptions } = options ?? {};
+
+  const swrKey = swrOptions?.swrKey ?? getCreateHearingMutationKey(problemId);
+  const swrFn = getCreateHearingMutationFetcher(problemId);
+
+  const query = useSWRMutation(swrKey, swrFn, swrOptions);
+
+  return {
+    swrKey,
+    ...query,
+  };
+};
 /**
  * @summary Get a hearing by problem id
  */

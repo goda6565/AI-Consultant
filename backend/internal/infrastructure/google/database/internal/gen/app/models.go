@@ -59,3 +59,10 @@ type ProblemField struct {
 	Answered  bool
 	CreatedAt pgtype.Timestamptz
 }
+
+type Report struct {
+	ID        pgtype.UUID
+	ProblemID pgtype.UUID
+	Content   string
+	CreatedAt pgtype.Timestamptz
+}

@@ -3,17 +3,21 @@ package transaction
 import (
 	"context"
 
+	actionRepository "github.com/goda6565/ai-consultant/backend/internal/domain/action/repository"
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/domain/document/repository"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
 	problemFieldRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/repository"
+	reportRepository "github.com/goda6565/ai-consultant/backend/internal/domain/report/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
+	actionRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/action"
 	documentRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
 	hearingRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
 	hearingMessageRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
 	problemRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	problemFieldRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
+	reportRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/report"
 	transaction "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/transaction"
 	"github.com/jackc/pgx/v5"
 )
@@ -25,6 +29,8 @@ type AdminUnitOfWork struct {
 	hearingRepository        hearingRepository.HearingRepository
 	hearingMessageRepository hearingMessageRepository.HearingMessageRepository
 	problemFieldRepository   problemFieldRepository.ProblemFieldRepository
+	actionRepository         actionRepository.ActionRepository
+	reportRepository         reportRepository.ReportRepository
 }
 
 func NewAdminUnitOfWork(
@@ -35,6 +41,8 @@ func NewAdminUnitOfWork(
 	hearingRepository hearingRepository.HearingRepository,
 	hearingMessageRepository hearingMessageRepository.HearingMessageRepository,
 	problemFieldRepository problemFieldRepository.ProblemFieldRepository,
+	actionRepository actionRepository.ActionRepository,
+	reportRepository reportRepository.ReportRepository,
 ) transaction.AdminUnitOfWork {
 	return &AdminUnitOfWork{
 		pool:                     pool,
@@ -43,6 +51,8 @@ func NewAdminUnitOfWork(
 		hearingRepository:        hearingRepository,
 		hearingMessageRepository: hearingMessageRepository,
 		problemFieldRepository:   problemFieldRepository,
+		actionRepository:         actionRepository,
+		reportRepository:         reportRepository,
 	}
 }
 
@@ -125,6 +135,30 @@ func (u *AdminUnitOfWork) ProblemFieldRepository(ctx context.Context) problemFie
 	impl := u.problemFieldRepository.(*problemFieldRepositoryImpl.ProblemFieldRepository)
 	if impl == nil {
 		panic("problemFieldRepository is not a problemFieldRepositoryImpl.ProblemFieldRepository")
+	}
+	return impl.WithTx(tx)
+}
+
+func (u *AdminUnitOfWork) ActionRepository(ctx context.Context) actionRepository.ActionRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.actionRepository.(*actionRepositoryImpl.ActionRepository)
+	if impl == nil {
+		panic("actionRepository is not a actionRepositoryImpl.ActionRepository")
+	}
+	return impl.WithTx(tx)
+}
+
+func (u *AdminUnitOfWork) ReportRepository(ctx context.Context) reportRepository.ReportRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.reportRepository.(*reportRepositoryImpl.ReportRepository)
+	if impl == nil {
+		panic("reportRepository is not a reportRepositoryImpl.ReportRepository")
 	}
 	return impl.WithTx(tx)
 }

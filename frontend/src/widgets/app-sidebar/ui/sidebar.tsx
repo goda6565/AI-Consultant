@@ -1,14 +1,7 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import {
-  ChevronUp,
-  Ellipsis,
-  FileText,
-  Plus,
-  Search,
-  User2,
-} from "lucide-react";
+import { ChevronUp, Ellipsis, FileText, Plus, User2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -42,11 +35,6 @@ const menuItems = [
     title: "新しい課題",
     url: "/",
     icon: Plus,
-  },
-  {
-    title: "課題を検索",
-    url: "/cases",
-    icon: Search,
   },
   {
     title: "ドキュメントを追加",

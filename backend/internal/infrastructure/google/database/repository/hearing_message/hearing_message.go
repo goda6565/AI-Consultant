@@ -29,7 +29,12 @@ func (r *HearingMessageRepository) WithTx(tx pgx.Tx) *HearingMessageRepository {
 }
 
 func (r *HearingMessageRepository) FindByHearingID(ctx context.Context, hearingID sharedValue.ID) ([]entity.HearingMessage, error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var hID pgtype.UUID
 	if err := hID.Scan(hearingID.Value()); err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan hearing id: %v", err))
@@ -50,7 +55,12 @@ func (r *HearingMessageRepository) FindByHearingID(ctx context.Context, hearingI
 }
 
 func (r *HearingMessageRepository) Create(ctx context.Context, hearingMessage *entity.HearingMessage) error {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var id pgtype.UUID
 	if err := id.Scan(hearingMessage.GetID().Value()); err != nil {
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
@@ -78,7 +88,12 @@ func (r *HearingMessageRepository) Create(ctx context.Context, hearingMessage *e
 }
 
 func (r *HearingMessageRepository) DeleteByHearingID(ctx context.Context, hearingID sharedValue.ID) (numDeleted int64, err error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var hID pgtype.UUID
 	if err := hID.Scan(hearingID.Value()); err != nil {
 		return 0, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan hearing id: %v", err))
@@ -91,7 +106,12 @@ func (r *HearingMessageRepository) DeleteByHearingID(ctx context.Context, hearin
 }
 
 func (r *HearingMessageRepository) FindByProblemFieldID(ctx context.Context, problemFieldID sharedValue.ID) ([]entity.HearingMessage, error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var pID pgtype.UUID
 	if err := pID.Scan(problemFieldID.Value()); err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan problem field id: %v", err))
