@@ -86,7 +86,7 @@ locals {
     },
     {
       name  = "CLOUD_RUN_JOB_NAME"
-      value = "dev-ai-consultant-backend-proposal"
+      value = "dev-ai-consultant-backend-proposal-job"
     },
     {
       name = "VECTOR_DB_USERNAME"

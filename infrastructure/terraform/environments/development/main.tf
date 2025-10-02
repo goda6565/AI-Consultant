@@ -235,7 +235,7 @@ resource "google_project_iam_member" "cloudtasks_enqueuer_cloudrun_default_sa" {
 module "backend_proposal_job" {
   source = "../../modules/cloudrun-job"
 
-  cloudrun_job_name = "${var.environment}-${var.service}-backend-proposal"
+  cloudrun_job_name = "${var.environment}-${var.service}-backend-proposal-job"
   region            = var.region
   env_vars          = local.common_env_vars
   vpc_name          = var.vpc_id
