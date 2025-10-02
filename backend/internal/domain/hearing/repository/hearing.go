@@ -11,6 +11,7 @@ import (
 type HearingRepository interface {
 	FindById(ctx context.Context, id sharedValue.ID) (*entity.Hearing, error)
 	FindByProblemId(ctx context.Context, problemID sharedValue.ID) (*entity.Hearing, error)
+	FindAllByProblemId(ctx context.Context, problemID sharedValue.ID) ([]entity.Hearing, error)
 	Create(ctx context.Context, hearing *entity.Hearing) error
 	DeleteByProblemID(ctx context.Context, problemID sharedValue.ID) (numDeleted int64, err error)
 }

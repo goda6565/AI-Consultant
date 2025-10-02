@@ -71,6 +71,21 @@ func (mr *MockLLMClientMockRecorder) GenerateEmbeddingBatch(ctx, input any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateEmbeddingBatch", reflect.TypeOf((*MockLLMClient)(nil).GenerateEmbeddingBatch), ctx, input)
 }
 
+// GenerateFunctionCall mocks base method.
+func (m *MockLLMClient) GenerateFunctionCall(ctx context.Context, input llm.GenerateFunctionCallInput) (*llm.GenerateFunctionCallOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateFunctionCall", ctx, input)
+	ret0, _ := ret[0].(*llm.GenerateFunctionCallOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateFunctionCall indicates an expected call of GenerateFunctionCall.
+func (mr *MockLLMClientMockRecorder) GenerateFunctionCall(ctx, input any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateFunctionCall", reflect.TypeOf((*MockLLMClient)(nil).GenerateFunctionCall), ctx, input)
+}
+
 // GenerateStructuredText mocks base method.
 func (m *MockLLMClient) GenerateStructuredText(ctx context.Context, input llm.GenerateStructuredTextInput) (*llm.GenerateStructuredTextOutput, error) {
 	m.ctrl.T.Helper()

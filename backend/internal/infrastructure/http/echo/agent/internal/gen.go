@@ -39,6 +39,9 @@ const (
 // ErrorCode defines model for errorCode.
 type ErrorCode int
 
+// HearingIdPathParameter defines model for HearingIdPathParameter.
+type HearingIdPathParameter = openapi_types.UUID
+
 // ProblemIdPathParameter defines model for ProblemIdPathParameter.
 type ProblemIdPathParameter = openapi_types.UUID
 
@@ -75,8 +78,8 @@ type ExecuteHearingJSONRequestBody ExecuteHearingJSONBody
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Execute a hearing
-	// (POST /api/hearings/{problemId})
-	ExecuteHearing(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// (POST /api/hearings/{problemId}/hearings/{hearingId}/execute)
+	ExecuteHearing(ctx echo.Context, problemId ProblemIdPathParameter, hearingId HearingIdPathParameter) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -95,10 +98,18 @@ func (w *ServerInterfaceWrapper) ExecuteHearing(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
 	}
 
+	// ------------- Path parameter "hearingId" -------------
+	var hearingId HearingIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hearingId", ctx.Param("hearingId"), &hearingId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter hearingId: %s", err))
+	}
+
 	ctx.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ExecuteHearing(ctx, problemId)
+	err = w.Handler.ExecuteHearing(ctx, problemId, hearingId)
 	return err
 }
 
@@ -130,7 +141,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.POST(baseURL+"/api/hearings/:problemId", wrapper.ExecuteHearing)
+	router.POST(baseURL+"/api/hearings/:problemId/hearings/:hearingId/execute", wrapper.ExecuteHearing)
 
 }
 
@@ -149,6 +160,7 @@ type ExecuteHearingSuccessJSONResponse struct {
 
 type ExecuteHearingRequestObject struct {
 	ProblemId ProblemIdPathParameter `json:"problemId"`
+	HearingId HearingIdPathParameter `json:"hearingId"`
 	Body      *ExecuteHearingJSONRequestBody
 }
 
@@ -227,7 +239,7 @@ func (response ExecuteHearing500JSONResponse) VisitExecuteHearingResponse(w http
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Execute a hearing
-	// (POST /api/hearings/{problemId})
+	// (POST /api/hearings/{problemId}/hearings/{hearingId}/execute)
 	ExecuteHearing(ctx context.Context, request ExecuteHearingRequestObject) (ExecuteHearingResponseObject, error)
 }
 
@@ -244,10 +256,11 @@ type strictHandler struct {
 }
 
 // ExecuteHearing operation middleware
-func (sh *strictHandler) ExecuteHearing(ctx echo.Context, problemId ProblemIdPathParameter) error {
+func (sh *strictHandler) ExecuteHearing(ctx echo.Context, problemId ProblemIdPathParameter, hearingId HearingIdPathParameter) error {
 	var request ExecuteHearingRequestObject
 
 	request.ProblemId = problemId
+	request.HearingId = hearingId
 
 	var body ExecuteHearingJSONRequestBody
 	if err := ctx.Bind(&body); err != nil {
@@ -277,18 +290,18 @@ func (sh *strictHandler) ExecuteHearing(ctx echo.Context, problemId ProblemIdPat
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/6RVXW/bOgz9KwbvBfqiG6s37sP81nYblj0F64Y+BEGhOGyswpY0SR4WBP7vAyV/pPkY",
-	"GvQliESK5DmHpHdQ6Npohco7yHdghBU1erThNLd6VWE9W8+FL+e9iSxrdIWVxkutIO/9ktlHYCDpxghf",
-	"AgMlaqRTHwcYWPzZSItryL1tkIErSqwFxXzWthYecmgaSZ5+a+ix81aqDbRtGx+j83d6LTFU+Ok3Fo3H",
-	"LyjI6Vs0k6HQyqMKf4UxlSwE1Zq+OCp4t5fVWG3Q+i5e49A+1eic2OAxzh8O7ZVLOnvideJLTG5nSaGV",
-	"ayovlCfQTVWJVYU9wkMcw41evWDhR2QjLfHGGa1ch9Nabd+Bq9DrgOdfi8+Qwz/pKHsa37gUKcc9ObYM",
-	"9jg4rn8sdjE4sphjeRLdaxojmJYdqPfQFAU69w6UwjnpSIXzEr4S68olPcvJiOMALwPpnoiuCj1BPoz4",
-	"WKIv0YZWKCOSRLpkfDFEXGldoVBHFB6XfZDzTaRGLocSemAhWycxFT+qTAfV1JAvMs5Zxq9Zxqcs4xnL",
-	"+Ad2w/mYViqPG7QxFhaNlX77QDEj73coLNrbxpd0WoXT536avz5+h66CQEKwjqSU3puIR6pnfUqw/+4H",
-	"wZLbDdLvfEYBpKch+4vHL7QuRrme8AknLbVBJYyEHKYTPpkCC6sqoEiFkWlHn0t3w9JqQ6PpuFeo3UIz",
-	"ztYj6V0Dh2Dj/lycHrfRJT2zX9vl/qbbnpvbV8swPb0JD/fI/5yfD9f5pafHsmWQvel1P90Zv77Ie3qR",
-	"d3aB980Fde91eJBwv7cXS5LGNXUt7HZv5kQ/ddSVYkPaQ99IsAzN3V3v+k/iYG6X7Z8AAAD//6V2cYWF",
-	"BwAA",
+	"H4sIAAAAAAAC/6RVTW/bMAz9KwY3oBctdhf3MN/absOyU7Bu6CEICsVhYxW2pInysCDwfx8o23Gaj7VB",
+	"L0Ek8es9ks8byE1ljUbtCbINWOlkhR5dOH1D6ZReTZZT6Ytp/8QvS6TcKeuV0ZD1dtHkMwhQfGOlL0CA",
+	"lhVCBkUfBwQ4/F0rh0vIvKtRAOUFVpJjPhpXSQ8Z1LViS7+27EyefaFpBEydWZRYvVhPZ3eyHtvHeVM9",
+	"TeuM5G/MUmFg7MtfzGuPHSE/2md+yI32qMNfaW2pcsm1xk/EBW92slpnLDrfxasJ3UOFRHKFhzh/EboL",
+	"irr3yJvIFxhdT6LcaKpLL7Vn0HVZykWJPcJDXrsbs3jC3A/IBlraG7JGU4fTOePegCs3y4DnvcNHyOBd",
+	"PIxh3PpQjJzjlg0bATscHNY/FDvbGoo2x/wouuc0tmAasde9uzrPkegNKCWRIu7C6RY+a9YFRT3L0YBj",
+	"D68ARQ9MV4meIe9HvC/QF+jCKHSLFymKBo9txIUxJUp9QOFh2Xs5X0Vqy+W2hB5YyNa1mIsfuswHXVeQ",
+	"zdIkEWlyKdJkLNIkFWnySVwlyZBWaY8rdG0szGun/PqOY7a836B06K5rX/BpEU5f+23+fv8TugoCCeF1",
+	"IKXw3rZ4lH40xxr24XbbsOh6hfw7nXAA5XnJ/mPxBx21US5HySjhXhqLWloFGYxHyWgMIkhVQBFLq+KO",
+	"Poo3W9Fqdi63ytrE2BIeptC0osOzGCZ1shw60k13yDSI/ez4Lg4m8QnxbcSLnic+I818V0DXp+TgmcbG",
+	"xwV2X54+JsnpcJ1dfHzbGwHpq7x70UiTy7Osx2dZp2dYX51R987ihObvrsxszq2huqqkW++ssuyXmYdd",
+	"rnhq+k87wTzsTHe92fvyEzTz5l8AAAD//xKwq+ZsCAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

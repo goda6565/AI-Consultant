@@ -9,6 +9,8 @@ tags:
   - name: problems
   - name: hearings
   - name: hearingMessages
+  - name: events
+  - name: reports
 
 paths:
   /api/documents/{documentId}:
@@ -192,6 +194,29 @@ paths:
           $ref: "#/components/responses/Error"
 
   /api/hearings/{problemId}:
+    post:
+      tags:
+        - hearings
+      summary: "Create a hearing"
+      operationId: "CreateHearing"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateHearingSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
     get:
       tags:
         - hearings
@@ -228,6 +253,55 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ListHearingMessagesSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/events/{problemId}:
+    get:
+      tags:
+        - events
+      summary: "List events by problem id"
+      description: "Event History of Problem"
+      operationId: "ListEvents"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListEventsSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/reports/{problemId}:
+    get:
+      tags:
+        - reports
+      summary: "Get a report by problem id"
+      operationId: "GetReport"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetReportSuccess"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -276,6 +350,23 @@ components:
         - user
         - assistant
 
+    eventType:
+      type: string
+      enum:
+        - action
+        - input
+        - output
+
+    actionType:
+      type: string
+      enum:
+        - plan
+        - search
+        - analyze
+        - write
+        - review
+        - done
+      
     errorCode:
       type: integer
       enum:
@@ -386,6 +477,46 @@ components:
         - problemFieldId
         - role
         - message
+        - createdAt
+  
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          $ref: "#/components/schemas/eventType"
+        actionType:
+          type: string
+          $ref: "#/components/schemas/actionType"
+        message:
+          type: string
+      required:
+        - id
+        - eventType
+        - actionType
+        - message
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - problemId
+        - content
         - createdAt
 
   parameters:
@@ -533,6 +664,19 @@ components:
             required:
               - problems
 
+    CreateHearingSuccess:
+      description: "Create hearing response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              hearingId:
+                type: string
+                format: uuid
+            required:
+              - hearingId
+            
     GetHearingSuccess:
       description: "Get hearing response"
       content:
@@ -553,3 +697,24 @@ components:
                   $ref: "#/components/schemas/HearingMessage"
             required:
               - hearingMessages
+
+    ListEventsSuccess:
+      description: "List proposal events response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              events:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+            required:
+              - events
+
+    GetReportSuccess:
+      description: "Get report response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Report"

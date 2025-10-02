@@ -73,6 +73,22 @@ locals {
       value = "${var.region}"
     },
     {
+      name  = "SEARCH_ENGINE_ID"
+      value = "73a44b6d80ee442c9"
+    },
+    {
+      name  = "SEARCH_ENDPOINT"
+      value = "https://customsearch.googleapis.com/customsearch/v1"
+    },
+    {
+      name  = "CLOUD_RUN_JOB_REGION"
+      value = "asia-northeast1"
+    },
+    {
+      name  = "CLOUD_RUN_JOB_NAME"
+      value = "dev-ai-consultant-backend-proposal"
+    },
+    {
       name = "VECTOR_DB_USERNAME"
       secret_key_ref = {
         secret  = "dev-ai-consultant-vector-db-username"
@@ -106,6 +122,13 @@ locals {
         secret  = "shared-ai-consultant-redis-url"
         version = "latest"
       }
-    }
+    },
+    {
+      name = "CUSTOM_SEARCH_API_KEY"
+      secret_key_ref = {
+        secret  = "dev-ai-consultant-custom-search-api-key"
+        version = "latest"
+      }
+    },
   ]
 }

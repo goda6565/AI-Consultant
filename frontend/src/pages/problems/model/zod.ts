@@ -1,19 +1,21 @@
 import { z } from "zod";
 
-export const requestMessageSchema = z.object({
-  user_message: z.string(),
-});
-
-export const responseMessageSchema = z.object({
-  type: z.enum(["hearing_response", "hearing_completed", "error"]),
-  assistant_message: z.string(),
+export const MessageFormSchema = z.object({
+  message: z.string(),
 });
 
 export const MessageSchema = z.object({
-  id: z.string(),
-  content: z.string(),
-  isUser: z.boolean(),
-  timestamp: z.date(),
+  role: z.enum(["user", "assistant"]),
+  message: z.string(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;
+
+export const EventSchema = z.object({
+  id: z.string(),
+  eventType: z.enum(["action", "input", "output"]),
+  actionType: z.enum(["plan", "search", "analyze", "write", "review", "done"]),
+  message: z.string(),
+});
+
+export type Event = z.infer<typeof EventSchema>;

@@ -2,11 +2,13 @@ package admin
 
 import (
 	"encoding/json"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	echoRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
-	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
+	gen "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/middleware"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/auth"
 	"github.com/labstack/echo/v4"
@@ -17,11 +19,11 @@ import (
 
 type AdminRouter struct {
 	authenticator auth.Authenticator
-	handlers      gen.StrictServerInterface
+	handlers      *handler.AdminHandlers
 	environment   *environment.Environment
 }
 
-func NewAdminRouter(authenticator auth.Authenticator, handlers gen.StrictServerInterface, environment *environment.Environment) echoRouter.Router {
+func NewAdminRouter(authenticator auth.Authenticator, handlers *handler.AdminHandlers, environment *environment.Environment) echoRouter.Router {
 	return &AdminRouter{authenticator: authenticator, handlers: handlers, environment: environment}
 }
 
@@ -49,13 +51,13 @@ func (r *AdminRouter) RegisterRoutes(e *echo.Echo) *echo.Echo {
 	if err != nil {
 		panic(err)
 	}
+	e.GET("/api/events/:problemId/stream", echo.HandlerFunc(r.handlers.Stream))
 	subGroup := e.Group("")
-
 	subGroup.Use(oapiMiddleware.OapiRequestValidatorWithOptions(swagger, &oapiMiddleware.Options{
 		Options: openapi3filter.Options{
 			AuthenticationFunc: middleware.AuthMiddlewareFunc(r.authenticator),
 		},
 	}))
-	gen.RegisterHandlers(subGroup, gen.NewStrictHandler(r.handlers, nil))
+	gen.RegisterHandlers(subGroup, gen.NewStrictHandler(r.handlers.Rest, nil))
 	return e
 }

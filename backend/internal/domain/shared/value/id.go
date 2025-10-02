@@ -18,7 +18,7 @@ func (id ID) Value() string {
 
 func NewID(value string) (ID, error) {
 	if err := uuid.Validate(value); err != nil {
-		return "", errors.NewDomainError(errors.ValidationError, "article id must be a valid UUID")
+		return "", errors.NewDomainError(errors.ValidationError, "Id must be a valid UUID")
 	}
 	return ID(value), nil
 }

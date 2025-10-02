@@ -150,6 +150,18 @@ module "frontend_cloudbuild_trigger" {
   branch_pattern                = "^develop$"
 }
 
+module "backend_proposal_job_cloudbuild_trigger" {
+  source = "../../modules/cloudbuild-trigger-branch"
+
+  trigger_name                  = "${var.environment}-${var.service}-backend-proposal-job-cloudbuild-trigger"
+  trigger_description           = "Cloud Build trigger for backend proposal job development"
+  file_name                     = "infrastructure/deployments/cloudbuild/${var.environment}/backend-proposal-job.yaml"
+  included_files                = ["backend/**", "infrastructure/deployments/cloudbuild/${var.environment}/backend-proposal-job.yaml"]
+  cloudbuild_service_account_id = var.cloudbuild_service_account_id
+  github_repository_id          = var.github_repository_id
+  branch_pattern                = "^develop$"
+}
+
 # Secret Manager
 module "secret_manage_vector_db_password" {
   source      = "../../modules/secret-manager"
@@ -187,6 +199,12 @@ module "secret_manage_agent_api_url" {
   region      = var.region
 }
 
+module "secret_manage_custom_search_api_key" {
+  source      = "../../modules/secret-manager"
+  secret_name = "${var.environment}-${var.service}-custom-search-api-key"
+  region      = var.region
+}
+
 # Cloud Tasks
 module "document_processing_cloudtasks" {
   source = "../../modules/cloudtasks"
@@ -210,4 +228,19 @@ resource "google_project_iam_member" "cloudtasks_enqueuer_cloudrun_default_sa" {
   project = var.project_id
   role    = "roles/cloudtasks.enqueuer"
   member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
+# Cloud Run Job
+
+module "backend_proposal_job" {
+  source = "../../modules/cloudrun-job"
+
+  cloudrun_job_name = "${var.environment}-${var.service}-backend-proposal"
+  region            = var.region
+  env_vars          = local.common_env_vars
+  vpc_name          = var.vpc_id
+  subnet_name       = var.subnet_id
+  runners           = ["serviceAccount:${module.backend_agent_cloudrun.cloudrun_service_account_email}"]
+  environment       = var.environment
+  service           = var.service
 }

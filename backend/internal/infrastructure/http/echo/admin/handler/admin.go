@@ -2,13 +2,15 @@ package handler
 
 import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/event"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/report"
 	gen "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
 )
 
-type AdminHandlers struct {
+type AdminRestHandlers struct {
 	*document.CreateDocumentHandler
 	*document.DeleteDocumentHandler
 	*document.GetDocumentHandler
@@ -17,8 +19,11 @@ type AdminHandlers struct {
 	*problem.DeleteProblemHandler
 	*problem.GetProblemHandler
 	*problem.ListProblemHandler
+	*hearing.CreateHearingHandler
 	*hearing.GetHearingHandler
 	*hearingmessage.ListHearingMessageHandler
+	*event.ListEventHandler
+	*report.GetReportHandler
 }
 
 func NewAdminHandlers(
@@ -30,9 +35,13 @@ func NewAdminHandlers(
 	deleteProblemHandler *problem.DeleteProblemHandler,
 	getProblemHandler *problem.GetProblemHandler,
 	listProblemHandler *problem.ListProblemHandler,
+	createHearingHandler *hearing.CreateHearingHandler,
 	getHearingHandler *hearing.GetHearingHandler,
-	listHearingMessageHandler *hearingmessage.ListHearingMessageHandler) gen.StrictServerInterface {
-	return &AdminHandlers{
+	listHearingMessageHandler *hearingmessage.ListHearingMessageHandler,
+	listEventHandler *event.ListEventHandler,
+	getReportHandler *report.GetReportHandler,
+) gen.StrictServerInterface {
+	return &AdminRestHandlers{
 		createDocumentHandler,
 		deleteDocumentHandler,
 		getDocumentHandler,
@@ -41,7 +50,10 @@ func NewAdminHandlers(
 		deleteProblemHandler,
 		getProblemHandler,
 		listProblemHandler,
+		createHearingHandler,
 		getHearingHandler,
 		listHearingMessageHandler,
+		listEventHandler,
+		getReportHandler,
 	}
 }

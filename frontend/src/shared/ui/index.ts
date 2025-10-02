@@ -1,6 +1,8 @@
 export * from "./accordion";
 export * from "./badge";
 export * from "./button";
+export * from "./card";
+export * from "./drawer";
 export * from "./dropdown-menu";
 export * from "./dropdown-menu";
 export * from "./form";
@@ -9,6 +11,7 @@ export * from "./input";
 export * from "./loading";
 export * from "./loading";
 export * from "./logo";
+export * from "./markdown";
 export * from "./regular-text";
 export * from "./scroll-area";
 export * from "./separator";

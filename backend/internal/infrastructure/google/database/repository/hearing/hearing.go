@@ -29,7 +29,12 @@ func (r *HearingRepository) WithTx(tx pgx.Tx) *HearingRepository {
 }
 
 func (r *HearingRepository) FindById(ctx context.Context, id sharedValue.ID) (*entity.Hearing, error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var hearingID pgtype.UUID
 	if err := hearingID.Scan(id.Value()); err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
@@ -45,7 +50,12 @@ func (r *HearingRepository) FindById(ctx context.Context, id sharedValue.ID) (*e
 }
 
 func (r *HearingRepository) FindByProblemId(ctx context.Context, problemID sharedValue.ID) (*entity.Hearing, error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var pID pgtype.UUID
 	if err := pID.Scan(problemID.Value()); err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan problem id: %v", err))
@@ -60,8 +70,42 @@ func (r *HearingRepository) FindByProblemId(ctx context.Context, problemID share
 	return toEntity(hearing)
 }
 
+func (r *HearingRepository) FindAllByProblemId(ctx context.Context, problemID sharedValue.ID) ([]entity.Hearing, error) {
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
+	var pID pgtype.UUID
+	if err := pID.Scan(problemID.Value()); err != nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan problem id: %v", err))
+	}
+	hearings, err := q.GetAllHearingsByProblemId(ctx, pID)
+	if helper.IsNoRowsError(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get hearing by problem id: %v", err))
+	}
+	entities := make([]entity.Hearing, len(hearings))
+	for i, hearing := range hearings {
+		entity, err := toEntity(hearing)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert hearing to entity: %v", err)
+		}
+		entities[i] = *entity
+	}
+	return entities, nil
+}
+
 func (r *HearingRepository) Create(ctx context.Context, hearing *entity.Hearing) error {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var id pgtype.UUID
 	if err := id.Scan(hearing.GetID().Value()); err != nil {
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
@@ -81,7 +125,12 @@ func (r *HearingRepository) Create(ctx context.Context, hearing *entity.Hearing)
 }
 
 func (r *HearingRepository) DeleteByProblemID(ctx context.Context, problemID sharedValue.ID) (numDeleted int64, err error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	var pID pgtype.UUID
 	if err := pID.Scan(problemID.Value()); err != nil {
 		return 0, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan problem id: %v", err))

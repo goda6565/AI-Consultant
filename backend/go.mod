@@ -5,7 +5,9 @@ go 1.25.1
 require (
 	cloud.google.com/go/cloudtasks v1.13.6
 	cloud.google.com/go/documentai v1.37.0
+	cloud.google.com/go/run v1.10.0
 	cloud.google.com/go/storage v1.56.1
+	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/getkin/kin-openapi v0.132.0
 	github.com/google/uuid v1.6.0
@@ -54,6 +56,7 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/arrow/go/v10 v10.0.1 // indirect
 	github.com/apache/thrift v0.16.0 // indirect
