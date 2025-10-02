@@ -130,6 +130,14 @@ type Problem struct {
 	Title       string             `json:"title"`
 }
 
+// Report defines model for Report.
+type Report struct {
+	Content   string             `json:"content"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	ProblemId openapi_types.UUID `json:"problemId"`
+}
+
 // ActionType defines model for actionType.
 type ActionType string
 
@@ -189,6 +197,9 @@ type GetHearingSuccess = Hearing
 
 // GetProblemSuccess defines model for GetProblemSuccess.
 type GetProblemSuccess = Problem
+
+// GetReportSuccess defines model for GetReportSuccess.
+type GetReportSuccess = Report
 
 // ListDocumentsSuccess defines model for ListDocumentsSuccess.
 type ListDocumentsSuccess struct {
@@ -280,6 +291,9 @@ type ServerInterface interface {
 	// Get a problem by problem id
 	// (GET /api/problems/{problemId})
 	GetProblem(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Get a report by problem id
+	// (GET /api/reports/{problemId})
+	GetReport(ctx echo.Context, problemId ProblemIdPathParameter) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -475,6 +489,24 @@ func (w *ServerInterfaceWrapper) GetProblem(ctx echo.Context) error {
 	return err
 }
 
+// GetReport converts echo context to params.
+func (w *ServerInterfaceWrapper) GetReport(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetReport(ctx, problemId)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -515,6 +547,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/api/problems", wrapper.CreateProblem)
 	router.DELETE(baseURL+"/api/problems/:problemId", wrapper.DeleteProblem)
 	router.GET(baseURL+"/api/problems/:problemId", wrapper.GetProblem)
+	router.GET(baseURL+"/api/reports/:problemId", wrapper.GetReport)
 
 }
 
@@ -540,6 +573,8 @@ type GetDocumentSuccessJSONResponse Document
 type GetHearingSuccessJSONResponse Hearing
 
 type GetProblemSuccessJSONResponse Problem
+
+type GetReportSuccessJSONResponse Report
 
 type ListDocumentsSuccessJSONResponse struct {
 	Documents []Document `json:"documents"`
@@ -1429,6 +1464,80 @@ func (response GetProblem500JSONResponse) VisitGetProblemResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetReportRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type GetReportResponseObject interface {
+	VisitGetReportResponse(w http.ResponseWriter) error
+}
+
+type GetReport200JSONResponse struct{ GetReportSuccessJSONResponse }
+
+func (response GetReport200JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport400JSONResponse struct{ ErrorJSONResponse }
+
+func (response GetReport400JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport401JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport403JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport404JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport500JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// List documents
@@ -1467,6 +1576,9 @@ type StrictServerInterface interface {
 	// Get a problem by problem id
 	// (GET /api/problems/{problemId})
 	GetProblem(ctx context.Context, request GetProblemRequestObject) (GetProblemResponseObject, error)
+	// Get a report by problem id
+	// (GET /api/reports/{problemId})
+	GetReport(ctx context.Context, request GetReportRequestObject) (GetReportResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -1785,36 +1897,62 @@ func (sh *strictHandler) GetProblem(ctx echo.Context, problemId ProblemIdPathPar
 	return nil
 }
 
+// GetReport operation middleware
+func (sh *strictHandler) GetReport(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request GetReportRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetReport(ctx.Request().Context(), request.(GetReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetReport")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetReportResponseObject); ok {
+		return validResponse.VisitGetReportResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

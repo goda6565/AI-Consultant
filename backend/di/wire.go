@@ -43,6 +43,7 @@ import (
 	hearingHandlerAdmin "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	hearingMessageHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	problemHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
+	reportHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/report"
 	agentRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent"
 	agentHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler"
 	hearingHandlerAgent "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler/hearing"
@@ -60,6 +61,7 @@ import (
 	hearingMessageUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_message"
 	problemUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 	proposalUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/proposal"
+	reportUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/report"
 )
 
 func InitAdminApplication(ctx context.Context) (*App, func(), error) {
@@ -91,6 +93,8 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		hearingUseCase.Set,
 		hearingMessageUseCase.Set,
 		eventUseCase.Set,
+		reportUseCase.Set,
+		reportHandler.Set,
 		documentHandler.Set,
 		problemHandler.Set,
 		hearingHandlerAdmin.Set,

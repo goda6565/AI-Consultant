@@ -10,6 +10,7 @@ tags:
   - name: hearings
   - name: hearingMessages
   - name: events
+  - name: reports
 
 paths:
   /api/documents/{documentId}:
@@ -288,6 +289,30 @@ paths:
         "500":
           $ref: "#/components/responses/Error"
 
+  /api/reports/{problemId}:
+    get:
+      tags:
+        - reports
+      summary: "Get a report by problem id"
+      operationId: "GetReport"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetReportSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -473,6 +498,26 @@ components:
         - eventType
         - actionType
         - message
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - problemId
+        - content
+        - createdAt
 
   parameters:
     DocumentIdPathParameter:
@@ -667,3 +712,9 @@ components:
             required:
               - events
 
+    GetReportSuccess:
+      description: "Get report response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Report"

@@ -44,6 +44,7 @@ import (
 	hearing3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	hearingmessage2 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	problem3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
+	report3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/report"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent"
 	handler3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler"
 	hearing4 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent/handler/hearing"
@@ -62,6 +63,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_message"
 	problem2 "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/proposal"
+	report2 "github.com/goda6565/ai-consultant/backend/internal/usecase/report"
 )
 
 // Injectors from wire.go:
@@ -114,7 +116,9 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	eventRepository := event.NewRedisEventRepository(client)
 	listEventInputPort := event2.NewListEventUseCase(eventRepository)
 	listEventHandler := event3.NewListEventHandler(listEventInputPort)
-	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, createHearingHandler, getHearingHandler, listHearingMessageHandler, listEventHandler)
+	getReportInputPort := report2.NewGetReportUseCase(reportRepository)
+	getReportHandler := report3.NewGetReportHandler(getReportInputPort)
+	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, createHearingHandler, getHearingHandler, listHearingMessageHandler, listEventHandler, getReportHandler)
 	streamEventInputPort := event2.NewStreamEventUseCase(eventRepository)
 	streamEventHandler := event3.NewStreamEventHandler(streamEventInputPort)
 	adminHandlers := &handler.AdminHandlers{

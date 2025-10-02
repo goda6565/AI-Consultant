@@ -6,6 +6,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/report"
 	gen "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
 )
 
@@ -22,6 +23,7 @@ type AdminRestHandlers struct {
 	*hearing.GetHearingHandler
 	*hearingmessage.ListHearingMessageHandler
 	*event.ListEventHandler
+	*report.GetReportHandler
 }
 
 func NewAdminHandlers(
@@ -37,6 +39,7 @@ func NewAdminHandlers(
 	getHearingHandler *hearing.GetHearingHandler,
 	listHearingMessageHandler *hearingmessage.ListHearingMessageHandler,
 	listEventHandler *event.ListEventHandler,
+	getReportHandler *report.GetReportHandler,
 ) gen.StrictServerInterface {
 	return &AdminRestHandlers{
 		createDocumentHandler,
@@ -51,5 +54,6 @@ func NewAdminHandlers(
 		getHearingHandler,
 		listHearingMessageHandler,
 		listEventHandler,
+		getReportHandler,
 	}
 }
