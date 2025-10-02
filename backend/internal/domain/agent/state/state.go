@@ -42,6 +42,10 @@ func (s *State) GetHistory() value.History {
 	return s.history
 }
 
+func (s *State) GetActionHistory() []actionValue.ActionType {
+	return s.actionHistory
+}
+
 func (s *State) SetGoal(goal value.Goal) {
 	s.goal = goal
 }
@@ -95,7 +99,7 @@ func (s *State) ToGoalPrompt() string {
 	b.WriteString(fmt.Sprintf("タイトル: %s\n", s.problem.GetTitle().Value()))
 	b.WriteString(fmt.Sprintf("説明: %s\n\n", s.problem.GetDescription().Value()))
 
-	b.WriteString("=== ユーザーとのヒアリング履歴 ===\n")
+	b.WriteString("=== ユーザーとのヒアリング履歴（参考情報のみ。ヒアリングは今後することができません。） ===\n")
 	fieldMap := make(map[string]string)
 	for _, f := range s.problemFields {
 		fid := f.GetID()
@@ -121,7 +125,7 @@ func (s *State) ToPrompt() string {
 	b.WriteString(fmt.Sprintf("タイトル: %s\n", s.problem.GetTitle().Value()))
 	b.WriteString(fmt.Sprintf("説明: %s\n\n", s.problem.GetDescription().Value()))
 
-	b.WriteString("=== ユーザーとのヒアリング履歴 ===\n")
+	b.WriteString("=== ユーザーとのヒアリング履歴（参考情報のみ。ヒアリングは今後することができません。） ===\n")
 	fieldMap := make(map[string]string)
 	for _, f := range s.problemFields {
 		fid := f.GetID()
@@ -146,6 +150,7 @@ func (s *State) ToPrompt() string {
 	b.WriteString(s.ToActionHistory())
 
 	b.WriteString("\n=== 利用可能なアクション一覧 ===\n")
+	b.WriteString("**このアクション以外はできないので、今後の計画にこれら以外のActionは考慮しないでください**")
 	b.WriteString(actionValue.AvailableActionTypes())
 
 	return b.String()

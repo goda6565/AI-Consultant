@@ -8,7 +8,7 @@ package di
 
 import (
 	"context"
-	service8 "github.com/goda6565/ai-consultant/backend/internal/domain/action/service"
+	service9 "github.com/goda6565/ai-consultant/backend/internal/domain/action/service"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/action/tools"
 	service7 "github.com/goda6565/ai-consultant/backend/internal/domain/agent/service"
 	service5 "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
@@ -17,6 +17,7 @@ import (
 	service6 "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/service"
 	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	service3 "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
+	service8 "github.com/goda6565/ai-consultant/backend/internal/domain/prompt/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudrunjob"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
@@ -226,16 +227,17 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	orchestrator := service7.NewOrchestrator(llmClient)
 	summarizeService := service7.NewSummarizeService(llmClient)
 	goalService := service7.NewGoalService(llmClient)
-	planActionInterface := service8.NewPlanAction(llmClient)
+	promptBuilder := service8.NewPromptBuilder()
+	planActionInterface := service9.NewPlanAction(llmClient, promptBuilder)
 	webSearchClient := googlesearch.NewGoogleSearchClient(environmentEnvironment)
 	vectorPool, cleanup4 := database.ProvideVectorPool(ctx, environmentEnvironment)
 	documentSearchClient := search.NewSearchClient(vectorPool, appPool)
 	searchTools := tools.NewSearchTools(llmClient, webSearchClient, documentSearchClient)
-	searchActionInterface := service8.NewSearchAction(llmClient, searchTools)
-	analyzeActionInterface := service8.NewAnalyzeAction(llmClient)
-	writeActionInterface := service8.NewWriteAction(llmClient)
-	reviewActionInterface := service8.NewReviewAction(llmClient)
-	actionFactory := service8.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
+	searchActionInterface := service9.NewSearchAction(llmClient, searchTools, promptBuilder)
+	analyzeActionInterface := service9.NewAnalyzeAction(llmClient, promptBuilder)
+	writeActionInterface := service9.NewWriteAction(llmClient, promptBuilder)
+	reviewActionInterface := service9.NewReviewAction(llmClient, promptBuilder)
+	actionFactory := service9.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
 	reportRepository := report.NewReportRepository(appPool)
 	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, actionFactory, reportRepository)
 	jobApplication := proposal2.NewExecuteProposal(ctx, executeProposalInputPort)

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { use } from "react";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { useExecuteHearing } from "@/shared/api";
+import { useExecuteHearing, useGetReport } from "@/shared/api";
 import {
   Accordion,
   AccordionContent,
@@ -18,10 +18,12 @@ import {
 import { useChatApi } from "../api/use-chat-api";
 import { useChatMessage } from "../api/use-chat-message";
 import { useEventSse } from "../api/use-event";
+import { formatEventsAsText } from "../lib/format-event-as-text";
 import type { Message, MessageFormSchema } from "../model/zod";
 import { MessageForm } from "./form";
 import { MessageView } from "./message-view";
 import { Monitor } from "./monitor";
+import { ReportView } from "./report-view";
 
 type ProblemPageProps = {
   params: Promise<{ id: string }>;
@@ -48,6 +50,16 @@ export function ProblemPage({ params }: ProblemPageProps) {
     enabled: problem?.status !== "pending",
   });
 
+  const {
+    data: report,
+    isLoading: isReportLoading,
+    error: isReportError,
+  } = useGetReport(id, {
+    swr: {
+      enabled: problem?.status === "done",
+    },
+  });
+
   // Mutation API
   const { trigger: executeHearing, isMutating: isExecuteHearingMutating } =
     useExecuteHearing(problem?.id ?? "", hearing?.id ?? "");
@@ -60,7 +72,7 @@ export function ProblemPage({ params }: ProblemPageProps) {
     );
   }
 
-  if (isChatError || isHearingMessagesError) {
+  if (isChatError || isHearingMessagesError || isReportError) {
     toast.error("failed to fetch messages");
   }
 
@@ -95,6 +107,25 @@ export function ProblemPage({ params }: ProblemPageProps) {
     }
   };
 
+  const onCopyEvents = () => {
+    try {
+      const text = formatEventsAsText(events);
+      navigator.clipboard.writeText(text);
+      toast.success("イベントログをコピーしました");
+    } catch (_err) {
+      toast.error("イベントログをコピーに失敗しました");
+    }
+  };
+
+  const onCopyReport = () => {
+    try {
+      navigator.clipboard.writeText(report?.content ?? "");
+      toast.success("レポートをコピーしました");
+    } catch (_err) {
+      toast.error("レポートをコピーに失敗しました");
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex gap-6 justify-between items-center p-4 border-b">
@@ -108,18 +139,28 @@ export function ProblemPage({ params }: ProblemPageProps) {
         </Accordion>
         <Badge variant="outline">{problem.status}</Badge>
       </div>
-      <div className="flex flex-col flex-1 justify-between min-h-0 max-w-3xl w-full mx-auto">
+      <div className="flex flex-col flex-1 justify-between min-h-0 max-w-4xl w-full mx-auto">
         <div className="flex-1 min-h-0">
           <ScrollArea className="h-full">
             <div className="mb-30">
               <MessageView messages={localMessages} />
-              {problem.status === "processing" && <Monitor events={events} />}
+              {problem.status === "processing" && (
+                <Monitor events={events} onCopyEvents={onCopyEvents} />
+              )}
+              {problem.status === "done" && (
+                <ReportView
+                  report={report}
+                  isLoading={isReportLoading}
+                  onCopyReport={onCopyReport}
+                />
+              )}
             </div>
           </ScrollArea>
         </div>
         <MessageForm
           onSubmit={onChatSubmit}
           isMutating={isExecuteHearingMutating}
+          enabled={problem.status === "hearing"}
         />
       </div>
     </div>

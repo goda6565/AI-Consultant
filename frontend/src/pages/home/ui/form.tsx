@@ -40,9 +40,9 @@ export function ProblemForm({ onSubmit, isMutating }: ProblemFormProps) {
             <FormItem className="flex-1 flex flex-col">
               <FormControl>
                 <Textarea
-                  placeholder="課題の詳細を入力してください"
+                  placeholder="解決したい課題について詳しく説明してください"
                   {...field}
-                  className="resize-none flex-1"
+                  className="resize-none flex-1 min-h-[60vh]"
                   disabled={isMutating}
                 />
               </FormControl>
@@ -51,7 +51,7 @@ export function ProblemForm({ onSubmit, isMutating }: ProblemFormProps) {
           )}
         />
         <Button type="submit" className="w-full" disabled={isMutating}>
-          {isMutating ? "Creating..." : "Create Problem"}
+          {isMutating ? "作成中..." : "課題を作成する"}
         </Button>
       </form>
     </Form>

@@ -17,6 +17,7 @@ import (
 	hearingMessageService "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/service"
 	problemService "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	problemFieldService "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
+	promptService "github.com/goda6565/ai-consultant/backend/internal/domain/prompt/service"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	jobClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudrunjob"
 	cloudtasksClient "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
@@ -169,6 +170,7 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 		eventRepository.Set,
 		reportRepository.Set,
 		actionRepository.Set,
+		promptService.Set,
 		actionService.Set,
 		actionService.ActionFactorySet,
 		agentService.Set,

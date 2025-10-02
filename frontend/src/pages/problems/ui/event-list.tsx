@@ -22,11 +22,12 @@ import type { Event } from "../model/zod";
 export function EventList({ events }: { events: Event[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll only when events changes
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, []);
+  }, [events]);
 
   return (
     <div

@@ -51,7 +51,7 @@ export function HomePage() {
       </div>
       <div className="flex flex-col items-center justify-center h-full">
         <Heading>Create Problem</Heading>
-        <div className="flex w-full max-w-6xl h-full flex-col gap-5 p-5">
+        <div className="flex w-full max-w-6xl max-h-[80vh] flex-col justify-center gap-5 p-5">
           <ProblemForm
             onSubmit={onSubmit}
             isMutating={isCreateProblemMutating}

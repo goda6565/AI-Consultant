@@ -13,9 +13,10 @@ import { EventList } from "./event-list";
 
 type MonitorProps = {
   events: Event[];
+  onCopyEvents: () => void;
 };
 
-export function Monitor({ events }: MonitorProps) {
+export function Monitor({ events, onCopyEvents }: MonitorProps) {
   return (
     <div className="bg-white border rounded-lg p-4 space-y-3">
       {/* ヘッダー */}
@@ -45,9 +46,12 @@ export function Monitor({ events }: MonitorProps) {
           </Button>
         </SheetTrigger>
         <SheetContent>
-          <SheetHeader>
+          <SheetHeader className="pb-0">
             <SheetTitle>詳細ログ</SheetTitle>
             <SheetDescription>詳細ログが表示されます。</SheetDescription>
+            <Button variant="outline" size="sm" onClick={onCopyEvents}>
+              ログをコピー
+            </Button>
           </SheetHeader>
           <EventList
             events={events.filter(

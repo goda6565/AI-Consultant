@@ -16,9 +16,14 @@ import { MessageFormSchema } from "../model/zod";
 interface MessageFormProps {
   onSubmit: (values: z.infer<typeof MessageFormSchema>) => void | Promise<void>;
   isMutating: boolean;
+  enabled: boolean;
 }
 
-export function MessageForm({ onSubmit, isMutating }: MessageFormProps) {
+export function MessageForm({
+  onSubmit,
+  isMutating,
+  enabled,
+}: MessageFormProps) {
   const messageForm = useForm<z.infer<typeof MessageFormSchema>>({
     resolver: zodResolver(MessageFormSchema),
     defaultValues: {
@@ -42,7 +47,7 @@ export function MessageForm({ onSubmit, isMutating }: MessageFormProps) {
                   placeholder="メッセージを入力してください"
                   {...field}
                   className="resize-none flex-1"
-                  disabled={isMutating}
+                  disabled={isMutating || !enabled}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -58,7 +63,7 @@ export function MessageForm({ onSubmit, isMutating }: MessageFormProps) {
         <Button
           type="submit"
           className="w-10 h-10 rounded-full"
-          disabled={isMutating}
+          disabled={isMutating || !enabled}
         >
           {isMutating ? (
             <LucideLoader2 className="w-full h-full animate-spin" />

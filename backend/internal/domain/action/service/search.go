@@ -6,25 +6,28 @@ import (
 
 	"github.com/goda6565/ai-consultant/backend/internal/domain/action/tools"
 	actionValue "github.com/goda6565/ai-consultant/backend/internal/domain/action/value"
-	agentState "github.com/goda6565/ai-consultant/backend/internal/domain/agent/state"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/llm"
+	"github.com/goda6565/ai-consultant/backend/internal/domain/prompt/service"
 )
 
 type SearchAction struct {
-	llmClient   llm.LLMClient
-	searchTools *tools.SearchTools
+	llmClient     llm.LLMClient
+	searchTools   *tools.SearchTools
+	promptBuilder *service.PromptBuilder
 }
 
-func NewSearchAction(llmClient llm.LLMClient, searchTools *tools.SearchTools) SearchActionInterface {
-	return &SearchAction{llmClient: llmClient, searchTools: searchTools}
+func NewSearchAction(llmClient llm.LLMClient, searchTools *tools.SearchTools, promptBuilder *service.PromptBuilder) SearchActionInterface {
+	return &SearchAction{llmClient: llmClient, searchTools: searchTools, promptBuilder: promptBuilder}
 }
 
 func (s *SearchAction) Execute(ctx context.Context, input ActionTemplateInput) (*ActionTemplateOutput, error) {
-	systemPrompt := s.createSystemPrompt()
-	userPrompt := s.createUserPrompt(input.State)
+	prompt := s.promptBuilder.Build(service.PromptBuilderInput{
+		ActionType: actionValue.ActionTypeSearch,
+		State:      input.State,
+	})
 	llmInput := llm.GenerateFunctionCallInput{
-		SystemPrompt: systemPrompt,
-		UserPrompt:   userPrompt,
+		SystemPrompt: prompt.SystemPrompt,
+		UserPrompt:   prompt.UserPrompt,
 		Config:       llm.LLMConfig{Provider: llm.VertexAI, Model: llm.Gemini25Flash},
 		Temperature:  0.0,
 		Functions:    s.searchTools.Tools(),
@@ -47,40 +50,6 @@ func (s *SearchAction) Execute(ctx context.Context, input ActionTemplateInput) (
 	}
 	return &ActionTemplateOutput{Action: *action, Content: input.State.GetContent()}, nil // search action does not change content
 }
-
-func (s *SearchAction) createSystemPrompt() string {
-	return searchSystemPrompt
-}
-
-func (s *SearchAction) createUserPrompt(state agentState.State) string {
-	return fmt.Sprintf(searchUserPrompt, state.ToPrompt())
-}
-
-var searchSystemPrompt = `
-あなたは「問題解決エージェント」の検索担当です。  
-目的は、現在の課題解決に不足している情報を補うため、適切な検索を実行することです。  
-ユーザーが提供する「現在の状態」には、最終ゴールが明示されています。
-この最終ゴールを常に参照しながら、検索を行ってください。
-
-ルール:
-- 出力は必ず関数呼び出しのみとする。文章を直接生成してはいけない。  
-- 利用可能な検索方法は渡されたリストの中から選ぶ。  
-- どの情報が不足しているかを判断し、その不足を埋める検索クエリを設計する。  
-- クエリは具体的かつ明確にする（例: "クラウド移行 セキュリティ ベストプラクティス 2025"）。  
-- URLや既存リンクを改変してはいけない。  
-- 不確実な情報は推測せず、「調査が必要」と判断したら必ず検索を行う。  
-`
-
-var searchUserPrompt = `
-以下は現在のエージェント状態です。  
-この情報を踏まえて、不足している部分を補うための検索を必ず実行してください。  
-
-- 不足がなければ「検索不要」の関数呼び出しを返してください。
-- 出力は必ず関数呼び出し形式のみで返してください。
-
-=== 現在の状態 ===
-%s
-`
 
 func (s *SearchAction) summarizeSearchAction(ctx context.Context, params string, searchResults tools.ExecuteOutput) (string, error) {
 	systemPrompt := s.createSummarizeSearchActionSystemPrompt()

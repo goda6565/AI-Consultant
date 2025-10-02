@@ -3,9 +3,9 @@
 import { useRef } from "react";
 import { toast } from "sonner";
 import {
+  type CreateDocumentBody,
   DocumentType,
   type ErrorResponse,
-  useCreateDocument,
 } from "@/shared/api";
 import { Button } from "@/shared/ui";
 
@@ -93,9 +93,13 @@ const getDocumentType = (file: File): DocumentType => {
   throw new Error("Invalid file type");
 };
 
-export function Uploader() {
+type UploaderProps = {
+  trigger: (data: CreateDocumentBody) => void;
+  isMutating: boolean;
+};
+
+export function Uploader({ trigger, isMutating }: UploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { trigger, isMutating } = useCreateDocument();
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();

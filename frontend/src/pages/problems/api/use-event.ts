@@ -30,14 +30,24 @@ export const useEventSse = ({ problemId, enabled }: UseEventSseProps) => {
         `${env.NEXT_PUBLIC_ADMIN_API_URL}/api/events/${problemId}/stream`,
       );
 
-      es.onmessage = (e) => {
-        try {
-          const parsed = EventSchema.parse(JSON.parse(e.data));
-          setEvents((prev) => [...prev, parsed]);
-        } catch {
-          toast.error("failed to parse event");
-        }
-      };
+      const handle =
+        (eventType: Event["eventType"]) => (e: MessageEvent<string>) => {
+          try {
+            const base = JSON.parse(e.data) as {
+              actionType: Event["actionType"];
+              message: string;
+            };
+            const id = (e as MessageEvent).lastEventId ?? crypto.randomUUID();
+            const event = EventSchema.parse({ id, eventType, ...base });
+            setEvents((prev) => [...prev, event]);
+          } catch {
+            toast.error("failed to parse event");
+          }
+        };
+
+      es.addEventListener("action", handle("action"));
+      es.addEventListener("input", handle("input"));
+      es.addEventListener("output", handle("output"));
 
       es.onerror = () => {
         toast.error("event stream connection closed. reconnecting...");

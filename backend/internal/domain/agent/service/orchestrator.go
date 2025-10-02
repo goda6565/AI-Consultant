@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	actionValue "github.com/goda6565/ai-consultant/backend/internal/domain/action/value"
@@ -11,7 +12,9 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 )
 
-const FinishMessage = "アクション回数が最大値を超えたため、完了しました。"
+const ForceWriteMessage = "最大アクション数に達したため、Writeを強制実行します。"
+const FinishMessage = "最大アクション数に達したため、処理を完了します。"
+const MaxActionCount = 100
 
 type Orchestrator struct {
 	llmClient llm.LLMClient
@@ -36,10 +39,20 @@ type OrchestratorOutputStruct struct {
 }
 
 func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*OrchestratorOutput, error) {
-
 	state := input.State
+	actionHistory := state.GetActionHistory()
+	currentActionCount := len(actionHistory)
+
+	if currentActionCount >= MaxActionCount {
+		// Write must be executed
+		if o.shouldForceWrite(actionHistory) {
+			return &OrchestratorOutput{NextAction: actionValue.ActionTypeWrite, Reason: ForceWriteMessage}, nil
+		}
+		return &OrchestratorOutput{NextAction: actionValue.ActionTypeDone, Reason: FinishMessage}, nil
+	}
+
 	llmInput := llm.GenerateStructuredTextInput{
-		SystemPrompt: o.createSystemPrompt(),
+		SystemPrompt: o.createSystemPrompt(state),
 		UserPrompt:   o.createUserPrompt(state),
 		Config:       llm.LLMConfig{Provider: llm.VertexAI, Model: llm.Gemini25Flash},
 		Schema: json.RawMessage(`
@@ -74,8 +87,12 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 	return &OrchestratorOutput{NextAction: nextAction, Reason: output.Reason}, nil
 }
 
-func (o *Orchestrator) createSystemPrompt() string {
-	return fmt.Sprintf(orchestratorSystemPrompt, actionValue.AvailableActionTypes())
+func (o *Orchestrator) shouldForceWrite(actionHistory []actionValue.ActionType) bool {
+	return !slices.Contains(actionHistory, actionValue.ActionTypeWrite)
+}
+
+func (o *Orchestrator) createSystemPrompt(state agentState.State) string {
+	return fmt.Sprintf(orchestratorSystemPrompt, actionValue.AvailableActionTypes(), state.ToActionHistory())
 }
 
 func (o *Orchestrator) createUserPrompt(state agentState.State) string {
@@ -105,7 +122,10 @@ var orchestratorSystemPrompt = `
 2. **停滞回避**：同じアクションを連続して繰り返さず、停滞を避ける  
 3. **反省の活用**：過去の行動の不足や失敗を踏まえ、改善につながる選択をする  
 4. **段階的遷移**：plan → search → analyze → write → review → done など自然な流れを意識する  
-5. **代替検討**：もし search が連続した場合は、plan や review など他の行動も検討する  
+5. **履歴監視**：
+- 同じアクションが2回連続した場合は「停滞の兆候」とみなし、次は別のアクションを検討する。  
+- 同じアクションが3回連続した場合は「停滞状態」とみなし、必ず別のアクションに切り替える。  
+- 停滞を回避するために選択した場合、その旨をreasonに必ず明記する。  
 6. **ゴール整合性**：選んだ行動が最終ゴール（レポート完成）に確実に寄与していることを確認する  
 
 # 出力例
@@ -115,5 +135,8 @@ var orchestratorSystemPrompt = `
 {"action": "review", "reason": "直近のwriteで提案書が生成されたが、改善点を抽出するために見直す"}  
 
 # 実際の利用可能アクション一覧
+%s
+
+# 直近の行動履歴
 %s
 `
