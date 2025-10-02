@@ -8,6 +8,13 @@ resource "google_cloud_run_v2_job" "cloudrun_job" {
       containers {
         image = "us-docker.pkg.dev/cloudrun/container/job:latest"
 
+        resources {
+          limits = {
+            cpu    = var.cpu
+            memory = var.memory
+          }
+        }
+
         dynamic "env" {
           for_each = var.env_vars
           content {

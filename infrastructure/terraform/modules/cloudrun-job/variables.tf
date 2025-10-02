@@ -67,4 +67,12 @@ variable "runners" {
   default     = []
 }
 
+variable "memory" {
+  description = "Memory for the Cloud Run Job"
+  type        = string
+}
 
+variable "cpu" {
+  description = "CPU for the Cloud Run Job"
+  type        = string
+}

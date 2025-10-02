@@ -243,4 +243,6 @@ module "backend_proposal_job" {
   runners           = ["serviceAccount:${module.backend_agent_cloudrun.cloudrun_service_account_email}"]
   environment       = var.environment
   service           = var.service
+  cpu               = "1"
+  memory            = "5Gi"
 }
