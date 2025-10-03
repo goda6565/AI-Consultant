@@ -8,6 +8,9 @@ help: ## Show help messages
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 
+
+## For Development
+
 # format
 .PHONY: format
 format: ## Format the code
@@ -23,6 +26,10 @@ lint: ## Lint the code
 check: ## Check the code
 	go fmt ./... && golangci-lint run && go test ./...
 
+
+## For Code Generation
+
+
 # mock_gen
 .PHONY: mock_gen
 mock_gen: ## Generate mock files
@@ -32,6 +39,21 @@ mock_gen: ## Generate mock files
 .PHONY: sqlc
 sqlc: ## Generate the sqlc files
 	go tool sqlc generate
+
+# code_gen
+.PHONY: code_gen
+code_gen: ## generate oapi-codegen
+	go tool oapi-codegen --config=./oapi-codegen.admin.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml
+	go tool oapi-codegen --config=./oapi-codegen.agent.yaml ../infrastructure/schemas/openapi/agent/openapi.yaml
+
+# wire_gen
+.PHONY: wire_gen
+wire_gen: ## generate wire
+	go run github.com/google/wire/cmd/wire ./di	
+
+
+## For Running
+
 
 # run
 .PHONY: run
@@ -46,6 +68,11 @@ run: ## Run the application
 	@echo "Applying migrations..."
 	make migrate-app-up
 	make migrate-vector-up
+
+# stop
+.PHONY: stop
+stop: ## Stop the application
+	docker compose down --volumes --remove-orphans
 
 # run-admin
 .PHONY: run-admin
@@ -67,10 +94,9 @@ run-agent: ## Run the application
 run-proposal-job: ## Run the application
 	set -a && . .env.proposal-job && set +a && go run main.go proposal-job run
 
-# stop
-.PHONY: stop
-stop: ## Stop the application
-	docker compose down --volumes --remove-orphans
+
+## For Migrations
+
 
 # migrate-app-up
 .PHONY: migrate-app-up
@@ -91,14 +117,3 @@ migrate-app-down: ## Run the migrations app down
 .PHONY: migrate-vector-down
 migrate-vector-down: ## Run the migrations vector down
 	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/vector -database postgres://postgres:password@localhost:5432/vector_db?sslmode=disable down -all
-
-# code_gen
-.PHONY: code_gen
-code_gen: ## generate oapi-codegen
-	go tool oapi-codegen --config=./oapi-codegen.admin.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml
-	go tool oapi-codegen --config=./oapi-codegen.agent.yaml ../infrastructure/schemas/openapi/agent/openapi.yaml
-
-# wire_gen
-.PHONY: wire_gen
-wire_gen: ## generate wire
-	go run github.com/google/wire/cmd/wire ./di	

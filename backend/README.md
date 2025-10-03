@@ -11,6 +11,7 @@ There are 3 services in the backend.
 - Admin: Document Management (rest)
 - Agent: AI Consultant Agent (websocket)
 - Vector: Sync Document to Vector Database (cloud tasks)
+- Proposal Job: Generate Proposal (cloud run job)
 
 All services are running on the cloud run.
 
@@ -26,4 +27,5 @@ There are 2 databases in the backend.
 go run main.go admin run
 go run main.go agent run
 go run main.go vector run
+go run main.go proposal-job run
 ```
