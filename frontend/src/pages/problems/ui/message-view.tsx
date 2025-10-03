@@ -17,7 +17,7 @@ export function MessageView({ messages }: MessageViewProps) {
   }, [messages.length]);
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-12">
       {messages.map((msg, index) => (
         <div
           key={`${msg.role}-${index}`}
