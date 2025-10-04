@@ -115,3 +115,18 @@ func (mr *MockLLMClientMockRecorder) GenerateText(ctx, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateText", reflect.TypeOf((*MockLLMClient)(nil).GenerateText), ctx, input)
 }
+
+// GetTokenCount mocks base method.
+func (m *MockLLMClient) GetTokenCount(ctx context.Context, input llm.CountTokenInput) (*llm.CountTokenOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTokenCount", ctx, input)
+	ret0, _ := ret[0].(*llm.CountTokenOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTokenCount indicates an expected call of GetTokenCount.
+func (mr *MockLLMClientMockRecorder) GetTokenCount(ctx, input any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenCount", reflect.TypeOf((*MockLLMClient)(nil).GetTokenCount), ctx, input)
+}

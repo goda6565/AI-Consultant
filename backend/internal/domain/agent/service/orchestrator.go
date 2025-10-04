@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
+	"math/rand/v2"
 	"slices"
 	"strings"
 
@@ -14,7 +16,8 @@ import (
 
 const ForceWriteMessage = "最大アクション数に達したため、Writeを強制実行します。"
 const FinishMessage = "最大アクション数に達したため、処理を完了します。"
-const MaxActionCount = 100
+const LeastFrequentActionMessage = "直近のアクション履歴から、最も出現回数が少ないアクションを選択します。"
+const MaxActionCount = 1
 
 type Orchestrator struct {
 	llmClient llm.LLMClient
@@ -49,6 +52,11 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 			return &OrchestratorOutput{NextAction: actionValue.ActionTypeWrite, Reason: ForceWriteMessage}, nil
 		}
 		return &OrchestratorOutput{NextAction: actionValue.ActionTypeDone, Reason: FinishMessage}, nil
+	}
+
+	if currentActionCount%10 == 0 {
+		nextAction := o.selectLeastFrequentAction(actionHistory)
+		return &OrchestratorOutput{NextAction: nextAction, Reason: LeastFrequentActionMessage}, nil
 	}
 
 	llmInput := llm.GenerateStructuredTextInput{
@@ -89,6 +97,44 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 
 func (o *Orchestrator) shouldForceWrite(actionHistory []actionValue.ActionType) bool {
 	return !slices.Contains(actionHistory, actionValue.ActionTypeWrite)
+}
+
+func (o *Orchestrator) selectLeastFrequentAction(history []actionValue.ActionType) actionValue.ActionType {
+	if len(history) == 0 {
+		return actionValue.ActionTypePlan
+	}
+
+	// get recent 10 actions
+	start := len(history) - 10
+	if start < 0 {
+		start = 0
+	}
+	recent := history[start:]
+
+	// create count map
+	counts := make(map[actionValue.ActionType]int)
+	for _, a := range recent {
+		counts[a]++
+	}
+
+	// available action types without done
+	candidates := actionValue.AvailableActionTypesListWithoutDone()
+
+	// find the least frequent action
+	minCount := math.MaxInt
+	var leasts []actionValue.ActionType
+	for _, c := range candidates {
+		cnt := counts[c]
+		if cnt < minCount {
+			minCount = cnt
+			leasts = []actionValue.ActionType{c}
+		} else if cnt == minCount {
+			leasts = append(leasts, c)
+		}
+	}
+
+	// return random least frequent action
+	return leasts[rand.IntN(len(leasts))]
 }
 
 func (o *Orchestrator) createSystemPrompt(state agentState.State) string {

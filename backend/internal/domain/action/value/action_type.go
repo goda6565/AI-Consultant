@@ -54,6 +54,16 @@ func AvailableActionTypes() string {
 	return b.String()
 }
 
+func AvailableActionTypesListWithoutDone() []ActionType {
+	return []ActionType{
+		ActionTypePlan,
+		ActionTypeSearch,
+		ActionTypeAnalyze,
+		ActionTypeWrite,
+		ActionTypeReview,
+	}
+}
+
 func (a ActionType) Equals(other ActionType) bool {
 	return a == other
 }
