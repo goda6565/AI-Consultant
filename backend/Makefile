@@ -94,6 +94,10 @@ run-agent: ## Run the application
 run-proposal-job: ## Run the application
 	set -a && . .env.proposal-job && set +a && go run main.go proposal-job run
 
+# run-proposal-job-eval
+.PHONY: run-proposal-job-eval
+run-proposal-job-eval: ## Run the application
+	set -a && . .env.proposal-job-eval && set +a && go run main.go proposal-job-eval run
 
 ## For Migrations
 

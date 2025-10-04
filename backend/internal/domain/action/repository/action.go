@@ -7,6 +7,7 @@ import (
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
 )
 
+//go:generate go tool mockgen -source=$GOFILE -destination=mock/$GOFILE -package=mock
 type ActionRepository interface {
 	FindByProblemID(ctx context.Context, problemID sharedValue.ID) ([]actionEntity.Action, error)
 	Create(ctx context.Context, action *actionEntity.Action) error

@@ -12,18 +12,20 @@ import (
 )
 
 type State struct {
-	problem         problemEntity.Problem
-	goal            value.Goal
-	content         value.Content
-	problemFields   []problemFieldEntity.ProblemField
-	hearingMessages []hearingMessageEntity.HearingMessage
-	history         value.History
-	actionHistory   []actionValue.ActionType
-	actionCount     int
+	problem            problemEntity.Problem
+	goal               value.Goal
+	content            value.Content
+	problemFields      []problemFieldEntity.ProblemField
+	hearingMessages    []hearingMessageEntity.HearingMessage
+	history            value.History
+	currentAction      actionValue.ActionType
+	actionHistory      []actionValue.ActionType
+	currentActionCount int
+	actionLoopCount    int
 }
 
 func NewState(problem problemEntity.Problem, content value.Content, problemFields []problemFieldEntity.ProblemField, hearingMessages []hearingMessageEntity.HearingMessage, history value.History, actionHistory []actionValue.ActionType) *State {
-	return &State{problem: problem, content: content, problemFields: problemFields, hearingMessages: hearingMessages, history: history, actionHistory: actionHistory, actionCount: 0}
+	return &State{problem: problem, content: content, problemFields: problemFields, hearingMessages: hearingMessages, history: history, currentAction: actionValue.ActionTypePlan, actionHistory: actionHistory, currentActionCount: 0, actionLoopCount: 0}
 }
 
 func (s *State) GetProblem() problemEntity.Problem {
@@ -42,6 +44,24 @@ func (s *State) GetHistory() value.History {
 	return s.history
 }
 
+func (s *State) GetCurrentAction() actionValue.ActionType {
+	return s.currentAction
+}
+
+func (s *State) ToNextAction(canProceed bool) {
+	if canProceed {
+		s.currentAction = s.currentAction.Proceed()
+		s.currentActionCount = 0
+	} else {
+		s.currentActionCount++
+	}
+	s.actionHistory = append(s.actionHistory, s.currentAction)
+}
+
+func (s *State) Done() {
+	s.currentAction = actionValue.ActionTypeDone
+}
+
 func (s *State) GetActionHistory() []actionValue.ActionType {
 	return s.actionHistory
 }
@@ -54,12 +74,20 @@ func (s *State) SetContent(content value.Content) {
 	s.content = content
 }
 
-func (s *State) GetActionCount() int {
-	return s.actionCount
+func (s *State) IncrementActionLoopCount() {
+	s.actionLoopCount++
 }
 
-func (s *State) IncrementActionCount() {
-	s.actionCount++
+func (s *State) GetActionLoopCount() int {
+	return s.actionLoopCount
+}
+
+func (s *State) IsInitialAction() bool {
+	return len(s.actionHistory) == 0
+}
+
+func (s *State) GetCurrentActionCount() int {
+	return s.currentActionCount
 }
 
 func (s *State) AddHistory(actionType actionValue.ActionType, content string) {
@@ -76,10 +104,6 @@ func (s *State) AddHistory(actionType actionValue.ActionType, content string) {
 
 func (s *State) SetHistory(history value.History) {
 	s.history = history
-}
-
-func (s *State) AddActionHistory(actionType actionValue.ActionType) {
-	s.actionHistory = append(s.actionHistory, actionType)
 }
 
 func (s *State) ToActionHistory() string {
@@ -146,12 +170,15 @@ func (s *State) ToPrompt() string {
 	b.WriteString("=== 現在の履歴 ===\n")
 	b.WriteString(s.history.GetValue())
 
+	b.WriteString("\n=== 現在のアクション ===\n")
+	b.WriteString(s.currentAction.Value())
+
 	b.WriteString("\n=== 現在のアクション履歴 ===\n")
 	b.WriteString(s.ToActionHistory())
 
-	b.WriteString("\n=== 利用可能なアクション一覧 ===\n")
+	b.WriteString("\n=== アクションルート ===\n")
 	b.WriteString("**このアクション以外はできないので、今後の計画にこれら以外のActionは考慮しないでください**")
-	b.WriteString(actionValue.AvailableActionTypes())
+	b.WriteString(actionValue.ActionRoute())
 
 	return b.String()
 }

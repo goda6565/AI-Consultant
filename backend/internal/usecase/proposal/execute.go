@@ -34,6 +34,8 @@ import (
 
 var ActionMessage = "%sを実行開始"
 
+const MaxAllowedFailures = 3
+
 type ExecuteProposalInputPort interface {
 	Execute(ctx context.Context, input ExecuteProposalUseCaseInput) error
 }
@@ -52,6 +54,7 @@ type ExecuteProposalInteractor struct {
 	orchestrator             *agentService.Orchestrator
 	summarizeService         *agentService.SummarizeService
 	goalService              *agentService.GoalService
+	terminator               *agentService.Terminator
 	actionFactory            *actionService.ActionFactory
 	reportRepository         reportRepository.ReportRepository
 }
@@ -66,6 +69,7 @@ func NewExecuteProposalUseCase(
 	orchestrator *agentService.Orchestrator,
 	summarizeService *agentService.SummarizeService,
 	goalService *agentService.GoalService,
+	terminator *agentService.Terminator,
 	actionFactory *actionService.ActionFactory,
 	reportRepository reportRepository.ReportRepository,
 ) ExecuteProposalInputPort {
@@ -79,6 +83,7 @@ func NewExecuteProposalUseCase(
 		orchestrator:             orchestrator,
 		summarizeService:         summarizeService,
 		goalService:              goalService,
+		terminator:               terminator,
 		actionFactory:            actionFactory,
 		reportRepository:         reportRepository,
 	}
@@ -118,30 +123,43 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 	}
 	logger.Debug("goal", "goal", goal.Goal.Value())
 	state.SetGoal(goal.Goal)
+
+	var failCount int
+
 	for {
-		state.IncrementActionCount()
 		// orchestrator
-		nextAction, err := i.orchestrator.Execute(ctx, agentService.OrchestratorInput{State: *state})
-		logger.Debug("nextAction", "nextAction", nextAction.NextAction.Value())
+		decision, err := i.orchestrator.Execute(ctx, agentService.OrchestratorInput{State: *state})
+		logger.Debug("nextAction", "canProceed", decision.CanProceed)
+		logger.Debug("nextAction", "reason", decision.Reason)
 		if err != nil {
 			return fmt.Errorf("failed to execute orchestrator: %w", err)
 		}
+
+		if decision.CanProceed && state.GetCurrentAction() == actionValue.ActionTypeReview {
+			state.IncrementActionLoopCount()
+			terminatorOutput, err := i.terminator.Execute(ctx, agentService.TerminatorInput{State: *state})
+			if err != nil {
+				return fmt.Errorf("failed to execute terminator: %w", err)
+			}
+			logger.Debug("terminatorOutput", "shouldTerminate", terminatorOutput.ShouldTerminate)
+			logger.Debug("terminatorOutput", "reason", terminatorOutput.Reason)
+			if terminatorOutput.ShouldTerminate {
+				state.Done()
+				err = i.createEvent(ctx, problemID, eventValue.EventTypeAction, state.GetCurrentAction(), "提案作成が完了しました。")
+				if err != nil {
+					return fmt.Errorf("failed to create event: %w", err)
+				}
+				break
+			}
+		}
+
 		// action
-		state.AddHistory(actionValue.SelfActionTypeOrchestrator, nextAction.Reason)
-		err = i.createEvent(ctx, problemID, eventValue.EventTypeAction, nextAction.NextAction, fmt.Sprintf(ActionMessage, nextAction.NextAction.Value()))
+		state.ToNextAction(decision.CanProceed)
+		err = i.createEvent(ctx, problemID, eventValue.EventTypeAction, state.GetCurrentAction(), fmt.Sprintf(ActionMessage, state.GetCurrentAction().Value()))
 		if err != nil {
 			return fmt.Errorf("failed to create event: %w", err)
 		}
-		if nextAction.NextAction.Equals(actionValue.ActionTypeDone) {
-			content := state.GetContent()
-			logger.Debug("content", "content", content.Value())
-			err = i.createEvent(ctx, problemID, eventValue.EventTypeOutput, nextAction.NextAction, "提案作成が完了しました。")
-			if err != nil {
-				return fmt.Errorf("failed to create event: %w", err)
-			}
-			break
-		}
-		tmpl, err := i.actionFactory.GetActionTemplate(nextAction.NextAction)
+		tmpl, err := i.actionFactory.GetActionTemplate(state.GetCurrentAction())
 		if err != nil {
 			return fmt.Errorf("failed to get action: %w", err)
 		}
@@ -149,7 +167,14 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 			State: *state,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to execute action: %w", err)
+			// agent must be alive even if some actions fail
+			logger.Error("failed to execute action", "error", err)
+			failCount++
+			if failCount >= MaxAllowedFailures {
+				logger.Error("failed to execute action", "error", err)
+				return fmt.Errorf("failed to execute action: %w", err)
+			}
+			continue
 		}
 		// save action
 		err = i.saveAction(ctx, output.Action)
@@ -159,24 +184,25 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 		// save to state
 		inputValue := output.Action.GetInput()
 		outputValue := output.Action.GetOutput()
+		logger.Debug("action", "action", output.Action.GetActionType().Value())
+		logger.Debug("inputValue", "inputValue", inputValue.Value())
+		logger.Debug("outputValue", "outputValue", outputValue.Value())
 		if inputValue.Value() != "" {
-			err = i.createEvent(ctx, problemID, eventValue.EventTypeInput, nextAction.NextAction, inputValue.Value())
+			err = i.createEvent(ctx, problemID, eventValue.EventTypeInput, state.GetCurrentAction(), inputValue.Value())
 			if err != nil {
 				return fmt.Errorf("failed to create event: %w", err)
 			}
 		}
 		if outputValue.Value() != "" {
-			err = i.createEvent(ctx, problemID, eventValue.EventTypeOutput, nextAction.NextAction, outputValue.Value())
+			err = i.createEvent(ctx, problemID, eventValue.EventTypeOutput, state.GetCurrentAction(), outputValue.Value())
 			if err != nil {
 				return fmt.Errorf("failed to create event: %w", err)
 			}
 		}
 		state.SetContent(output.Content)
-		state.AddHistory(nextAction.NextAction, output.Action.ToHistory())
-		state.AddActionHistory(nextAction.NextAction)
-		history := state.GetHistory()
-		logger.Debug("history", "history", history.GetValue())
+		state.AddHistory(state.GetCurrentAction(), output.Action.ToHistory())
 		// summarize
+		history := state.GetHistory()
 		summarizeNeeded, err := i.summarizeService.IsSummarizeNeeded(ctx, agentService.SummarizeServiceInput{
 			History:   history.GetValue(),
 			LLMConfig: llm.LLMConfig{Provider: llm.VertexAI, Model: llm.Gemini25Flash},
@@ -190,6 +216,7 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 				History:   history.GetValue(),
 				LLMConfig: llm.LLMConfig{Provider: llm.VertexAI, Model: llm.Gemini25Flash},
 			})
+			logger.Debug("summarizedHistory", "summarizedHistory", summarizedHistory.SummarizedHistory)
 			if err != nil {
 				return fmt.Errorf("failed to summarize history: %w", err)
 			}

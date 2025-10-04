@@ -45,6 +45,10 @@ func (a *Action) GetCreatedAt() *time.Time {
 	return a.createdAt
 }
 
+func (a *Action) SetCreatedAt(createdAt *time.Time) {
+	a.createdAt = createdAt
+}
+
 func (a *Action) ToHistory() string {
 	return fmt.Sprintf("%s: %s", a.actionType.Value(), a.output.Value())
 }

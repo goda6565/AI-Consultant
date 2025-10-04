@@ -6,4 +6,5 @@ var Set = wire.NewSet(
 	NewOrchestrator,
 	NewSummarizeService,
 	NewGoalService,
+	NewTerminator,
 )

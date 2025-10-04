@@ -71,6 +71,21 @@ func (mr *MockHearingRepositoryMockRecorder) DeleteByProblemID(ctx, problemID an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByProblemID", reflect.TypeOf((*MockHearingRepository)(nil).DeleteByProblemID), ctx, problemID)
 }
 
+// FindAllByProblemId mocks base method.
+func (m *MockHearingRepository) FindAllByProblemId(ctx context.Context, problemID value.ID) ([]entity.Hearing, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindAllByProblemId", ctx, problemID)
+	ret0, _ := ret[0].([]entity.Hearing)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindAllByProblemId indicates an expected call of FindAllByProblemId.
+func (mr *MockHearingRepositoryMockRecorder) FindAllByProblemId(ctx, problemID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByProblemId", reflect.TypeOf((*MockHearingRepository)(nil).FindAllByProblemId), ctx, problemID)
+}
+
 // FindById mocks base method.
 func (m *MockHearingRepository) FindById(ctx context.Context, id value.ID) (*entity.Hearing, error) {
 	m.ctrl.T.Helper()

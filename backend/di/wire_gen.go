@@ -18,6 +18,11 @@ import (
 	service2 "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	service3 "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
 	service8 "github.com/goda6565/ai-consultant/backend/internal/domain/prompt/service"
+	"github.com/goda6565/ai-consultant/backend/internal/evaluate"
+	"github.com/goda6565/ai-consultant/backend/internal/evaluate/proposal-job"
+	"github.com/goda6565/ai-consultant/backend/internal/evaluate/proposal-job/llm-as-a-judge"
+	"github.com/goda6565/ai-consultant/backend/internal/evaluate/proposal-job/memory"
+	"github.com/goda6565/ai-consultant/backend/internal/evaluate/proposal-job/mock"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudrunjob"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/cloudtasks"
@@ -227,6 +232,7 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	orchestrator := service7.NewOrchestrator(llmClient)
 	summarizeService := service7.NewSummarizeService(llmClient)
 	goalService := service7.NewGoalService(llmClient)
+	terminator := service7.NewTerminator(llmClient)
 	promptBuilder := service8.NewPromptBuilder()
 	planActionInterface := service9.NewPlanAction(llmClient, promptBuilder)
 	webSearchClient := googlesearch.NewGoogleSearchClient(environmentEnvironment)
@@ -239,7 +245,7 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	reviewActionInterface := service9.NewReviewAction(llmClient, promptBuilder)
 	actionFactory := service9.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
 	reportRepository := report.NewReportRepository(appPool)
-	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, actionFactory, reportRepository)
+	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, terminator, actionFactory, reportRepository)
 	jobApplication := proposal2.NewExecuteProposal(ctx, executeProposalInputPort)
 	jobJob := job.NewBaseJob(ctx, logger, jobApplication)
 	diJob := &Job{
@@ -248,6 +254,38 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	return diJob, func() {
 		cleanup4()
 		cleanup3()
+		cleanup2()
+		cleanup()
+	}, nil
+}
+
+func InitProposalJobEval(ctx context.Context) (*Eval, func(), error) {
+	environmentEnvironment := environment.ProvideEnvironment()
+	logger, cleanup := zap.ProvideZapLogger(environmentEnvironment)
+	llmClient := gemini.NewGeminiClient(ctx, environmentEnvironment)
+	orchestrator := service7.NewOrchestrator(llmClient)
+	summarizeService := service7.NewSummarizeService(llmClient)
+	goalService := service7.NewGoalService(llmClient)
+	terminator := service7.NewTerminator(llmClient)
+	promptBuilder := service8.NewPromptBuilder()
+	planActionInterface := service9.NewPlanAction(llmClient, promptBuilder)
+	webSearchClient := googlesearch.NewGoogleSearchClient(environmentEnvironment)
+	documentSearchClient, cleanup2 := mock.NewMockDocumentSearchClient()
+	searchTools := tools.NewSearchTools(llmClient, webSearchClient, documentSearchClient)
+	searchActionInterface := service9.NewSearchAction(llmClient, searchTools, promptBuilder)
+	analyzeActionInterface := service9.NewAnalyzeAction(llmClient, promptBuilder)
+	writeActionInterface := service9.NewWriteAction(llmClient, promptBuilder)
+	reviewActionInterface := service9.NewReviewAction(llmClient, promptBuilder)
+	actionFactory := service9.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
+	reportRepository := memory.NewMemoryReportRepository()
+	actionRepository := memory.NewMemoryActionRepository()
+	judge := llmasjudge.NewJudge(llmClient)
+	evaluator := proposaljob.NewProposalJobEval(orchestrator, summarizeService, goalService, terminator, actionFactory, reportRepository, actionRepository, judge)
+	baseEvaluator := evaluate.NewBaseEvaluator(logger, evaluator)
+	eval := &Eval{
+		Evaluator: baseEvaluator,
+	}
+	return eval, func() {
 		cleanup2()
 		cleanup()
 	}, nil
