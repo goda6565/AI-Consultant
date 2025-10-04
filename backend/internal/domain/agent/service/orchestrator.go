@@ -17,7 +17,7 @@ import (
 const ForceWriteMessage = "最大アクション数に達したため、Writeを強制実行します。"
 const FinishMessage = "最大アクション数に達したため、処理を完了します。"
 const LeastFrequentActionMessage = "直近のアクション履歴から、最も出現回数が少ないアクションを選択します。"
-const MaxActionCount = 1
+const MaxActionCount = 30
 
 type Orchestrator struct {
 	llmClient llm.LLMClient
