@@ -4,22 +4,21 @@ layout: home
 
 hero:
   name: "AI-Consultant"
-  text: "A VitePress Site"
-  tagline: My great project tagline
+  tagline: Intelligent AI-powered consulting and analysis
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Backend
+      link: /backend/
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Frontend
+      link: /frontend/
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: AI-Powered Analysis
+    details: Advanced data analysis and insights using AI technology
+  - title: Automated Proposals
+    details: ML algorithms for optimized proposal generation
+  - title: Scalable Architecture
+    details: Microservices-based flexible and extensible system design
 ---
 
