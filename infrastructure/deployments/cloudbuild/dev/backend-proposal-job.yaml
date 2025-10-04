@@ -23,7 +23,7 @@ steps:
   args:
     - run
     - jobs
-    - deploy
+    - update
     - dev-ai-consultant-backend-proposal-job
     - '--image=${_CONTAINER}'
     - '--region=${_REGION}'
