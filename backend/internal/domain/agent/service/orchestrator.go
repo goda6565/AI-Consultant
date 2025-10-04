@@ -18,6 +18,7 @@ const ForceWriteMessage = "最大アクション数に達したため、Writeを
 const FinishMessage = "最大アクション数に達したため、処理を完了します。"
 const LeastFrequentActionMessage = "直近のアクション履歴から、最も出現回数が少ないアクションを選択します。"
 const MaxActionCount = 30
+const LeastFrequentActionInterval = 10
 
 type Orchestrator struct {
 	llmClient llm.LLMClient
@@ -54,7 +55,7 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 		return &OrchestratorOutput{NextAction: actionValue.ActionTypeDone, Reason: FinishMessage}, nil
 	}
 
-	if currentActionCount%10 == 0 {
+	if currentActionCount%LeastFrequentActionInterval == 0 {
 		nextAction := o.selectLeastFrequentAction(actionHistory)
 		return &OrchestratorOutput{NextAction: nextAction, Reason: LeastFrequentActionMessage}, nil
 	}
@@ -105,7 +106,7 @@ func (o *Orchestrator) selectLeastFrequentAction(history []actionValue.ActionTyp
 	}
 
 	// get recent 10 actions
-	start := len(history) - 10
+	start := len(history) - LeastFrequentActionInterval
 	if start < 0 {
 		start = 0
 	}

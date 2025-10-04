@@ -31,6 +31,7 @@ import (
 )
 
 const EvaluateProblemID = "378b8576-1482-4d14-852f-90e753fabce3"
+const numEvaluations = 3
 
 type ProposalJobEval struct {
 	orchestrator     *agentService.Orchestrator
@@ -280,7 +281,7 @@ func (e *ProposalJobEval) runLLMJudgment(ctx context.Context, report *reportEnti
 	problemDescription := mockProblem.GetDescription().Value()
 
 	startTime := time.Now()
-	result, err := e.judge.Judge(ctx, problemDescription, actions, report)
+	result, err := e.judge.Judge(ctx, problemDescription, actions, report, numEvaluations)
 	if err != nil {
 		return fmt.Errorf("failed to judge: %w", err)
 	}

@@ -11,14 +11,12 @@ import (
 )
 
 type Judge struct {
-	llmClient      llm.LLMClient
-	numEvaluations int // 複数回評価を実行する回数
+	llmClient llm.LLMClient
 }
 
 func NewJudge(llmClient llm.LLMClient) *Judge {
 	return &Judge{
-		llmClient:      llmClient,
-		numEvaluations: 3, // デフォルトで3回評価
+		llmClient: llmClient,
 	}
 }
 
@@ -39,25 +37,28 @@ type JudgmentResult struct {
 }
 
 // Judge evaluates the actions and report using LLM with multiple rounds and aggregation
-func (j *Judge) Judge(ctx context.Context, problemDescription string, actions []actionEntity.Action, report *reportEntity.Report) (*JudgmentResult, error) {
+func (j *Judge) Judge(ctx context.Context, problemDescription string, actions []actionEntity.Action, report *reportEntity.Report, numEvaluations int) (*JudgmentResult, error) {
 	systemPrompt := buildSystemPrompt()
 	userPrompt := buildUserPrompt(problemDescription, actions, report)
 	schema := buildJudgmentSchema()
 
 	// 複数回評価を実行（出力後の最適化）
-	results := make([]JudgmentResult, 0, j.numEvaluations)
+	results := make([]JudgmentResult, 0, numEvaluations)
 
-	for i := 0; i < j.numEvaluations; i++ {
+	var temperature float32
+	temperature = 0.0
+	for i := 0; i < numEvaluations; i++ {
 		input := llm.GenerateStructuredTextInput{
 			SystemPrompt: systemPrompt,
 			UserPrompt:   userPrompt,
-			Temperature:  0.3, // 適度なバリエーションを持たせる
+			Temperature:  temperature,
 			Schema:       schema,
 			Config: llm.LLMConfig{
 				Provider: llm.VertexAI,
 				Model:    llm.Gemini25Flash,
 			},
 		}
+		temperature += 0.1
 
 		output, err := j.llmClient.GenerateStructuredText(ctx, input)
 		if err != nil {
