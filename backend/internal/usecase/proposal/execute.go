@@ -34,6 +34,8 @@ import (
 
 var ActionMessage = "%sを実行開始"
 
+const MaxAllowedFailures = 3
+
 type ExecuteProposalInputPort interface {
 	Execute(ctx context.Context, input ExecuteProposalUseCaseInput) error
 }
@@ -118,6 +120,8 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 	}
 	logger.Debug("goal", "goal", goal.Goal.Value())
 	state.SetGoal(goal.Goal)
+
+	var failCount int
 	for {
 		state.IncrementActionCount()
 		// orchestrator
@@ -149,7 +153,14 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 			State: *state,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to execute action: %w", err)
+			// agent must be alive even if some actions fail
+			logger.Error("failed to execute action", "error", err)
+			failCount++
+			if failCount >= MaxAllowedFailures {
+				logger.Error("failed to execute action", "error", err)
+				return fmt.Errorf("failed to execute action: %w", err)
+			}
+			continue
 		}
 		// save action
 		err = i.saveAction(ctx, output.Action)
