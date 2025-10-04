@@ -55,7 +55,7 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 		return &OrchestratorOutput{NextAction: actionValue.ActionTypeDone, Reason: FinishMessage}, nil
 	}
 
-	if currentActionCount%LeastFrequentActionInterval == 0 {
+	if currentActionCount%LeastFrequentActionInterval == 0 && currentActionCount > 0 {
 		nextAction := o.selectLeastFrequentAction(actionHistory)
 		return &OrchestratorOutput{NextAction: nextAction, Reason: LeastFrequentActionMessage}, nil
 	}

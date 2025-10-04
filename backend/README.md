@@ -9,9 +9,9 @@ This is the backend for AI Consultant.
 There are 3 services in the backend.
 
 - Admin: Document Management (rest)
-- Agent: AI Consultant Agent (websocket)
+- Agent: Hearing Agent (rest)
 - Vector: Sync Document to Vector Database (cloud tasks)
-- Proposal Job: Generate Proposal (cloud run job)
+- Proposal Job: Generate Proposal Agent (cloud run job)
 
 All services are running on the cloud run.
 
