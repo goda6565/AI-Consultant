@@ -1,7 +1,7 @@
 "use client";
 
 import { redirect } from "next/navigation";
-import { use } from "react";
+import { use, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { useExecuteHearing, useGetReport } from "@/shared/api";
@@ -31,6 +31,7 @@ type ProblemPageProps = {
 
 export function ProblemPage({ params }: ProblemPageProps) {
   const { id } = use(params);
+  const scrollRef = useRef<HTMLDivElement>(null);
   // Fetch API
   const { problem, hearing, mutateChat, isChatLoading, isChatError } =
     useChatApi(id);
@@ -59,6 +60,19 @@ export function ProblemPage({ params }: ProblemPageProps) {
       enabled: problem?.status === "done",
     },
   });
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll only when length changes
+  useEffect(() => {
+    if (scrollRef.current) {
+      // ScrollAreaの内部コンテンツを最下部にスクロール
+      const scrollContainer = scrollRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [localMessages.length, !!report, events.length]);
 
   // Mutation API
   const { trigger: executeHearing, isMutating: isExecuteHearingMutating } =
@@ -141,7 +155,7 @@ export function ProblemPage({ params }: ProblemPageProps) {
       </div>
       <div className="flex flex-col flex-1 justify-between min-h-0 max-w-4xl w-full mx-auto">
         <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full" ref={scrollRef}>
             <div className="mb-30">
               <MessageView messages={localMessages} />
               {problem.status === "processing" && (

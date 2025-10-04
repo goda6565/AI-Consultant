@@ -10,7 +10,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 )
 
-const MaxActionLoopCount = 5
+const MaxActionLoopCount = 3
 
 type Terminator struct {
 	llmClient llm.LLMClient

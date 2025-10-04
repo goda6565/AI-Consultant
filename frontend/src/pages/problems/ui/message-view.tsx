@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { Markdown } from "@/shared/ui";
 import type { Message } from "../model/zod";
 
@@ -7,15 +6,6 @@ type MessageViewProps = {
 };
 
 export function MessageView({ messages }: MessageViewProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll only when length changes
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
-  }, [messages.length]);
-
   return (
     <div className="p-4 space-y-12">
       {messages.map((msg, index) => (
@@ -44,7 +34,6 @@ export function MessageView({ messages }: MessageViewProps) {
           </div>
         </div>
       ))}
-      <div ref={scrollRef} />
     </div>
   );
 }
