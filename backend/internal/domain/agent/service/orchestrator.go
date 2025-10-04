@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
-	"math/rand/v2"
-	"slices"
 	"strings"
 
 	actionValue "github.com/goda6565/ai-consultant/backend/internal/domain/action/value"
@@ -14,11 +11,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 )
 
-const ForceWriteMessage = ""
-const LeastFrequentActionMessage = ""
-const FinishMessage = "最大アクション数に達したため、処理を完了します。"
-const MaxActionCount = 30
-const LeastFrequentActionInterval = 10
+const MaxSameActionExecutionCount = 3
 
 type Orchestrator struct {
 	llmClient llm.LLMClient
@@ -33,31 +26,24 @@ type OrchestratorInput struct {
 }
 
 type OrchestratorOutput struct {
-	NextAction actionValue.ActionType
+	CanProceed bool
 	Reason     string
 }
 
 type OrchestratorOutputStruct struct {
-	Action string `json:"action"`
-	Reason string `json:"reason"`
+	CanProceed bool   `json:"canProceed"`
+	Reason     string `json:"reason"`
 }
 
 func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*OrchestratorOutput, error) {
 	state := input.State
-	actionHistory := state.GetActionHistory()
-	currentActionCount := len(actionHistory)
 
-	if currentActionCount >= MaxActionCount {
-		// Write must be executed
-		if o.shouldForceWrite(actionHistory) {
-			return &OrchestratorOutput{NextAction: actionValue.ActionTypeWrite, Reason: ForceWriteMessage}, nil
-		}
-		return &OrchestratorOutput{NextAction: actionValue.ActionTypeDone, Reason: FinishMessage}, nil
+	if state.IsInitialAction() {
+		return &OrchestratorOutput{CanProceed: false, Reason: "初回実行"}, nil
 	}
 
-	if currentActionCount%LeastFrequentActionInterval == 0 && currentActionCount > 0 {
-		nextAction := o.selectLeastFrequentAction(actionHistory)
-		return &OrchestratorOutput{NextAction: nextAction, Reason: LeastFrequentActionMessage}, nil
+	if state.GetCurrentActionCount() > MaxSameActionExecutionCount {
+		return &OrchestratorOutput{CanProceed: true, Reason: "同じアクションの実行回数が上限に達し停滞しているため、一度次のアクションに進む"}, nil
 	}
 
 	llmInput := llm.GenerateStructuredTextInput{
@@ -68,14 +54,14 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 			{
 				"type": "object",
 				"properties": {
-					"action": {
-						"type": "string"
+					"canProceed": {
+						"type": "boolean"
 					},
 					"reason": {
 						"type": "string"
 					}
 				},
-				"required": ["action", "reason"]
+				"required": ["canProceed", "reason"]
 			}
 		`),
 		Temperature: 0.0,
@@ -89,57 +75,15 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 	if err := json.Unmarshal([]byte(llmOutput.Text), &output); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal output: %w", err)
 	}
-	nextAction, err := actionValue.NewActionType(output.Action)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create next action: %w", err)
-	}
-	return &OrchestratorOutput{NextAction: nextAction, Reason: output.Reason}, nil
-}
 
-func (o *Orchestrator) shouldForceWrite(actionHistory []actionValue.ActionType) bool {
-	return !slices.Contains(actionHistory, actionValue.ActionTypeWrite)
-}
-
-func (o *Orchestrator) selectLeastFrequentAction(history []actionValue.ActionType) actionValue.ActionType {
-	if len(history) == 0 {
-		return actionValue.ActionTypePlan
-	}
-
-	// get recent 10 actions
-	start := len(history) - LeastFrequentActionInterval
-	if start < 0 {
-		start = 0
-	}
-	recent := history[start:]
-
-	// create count map
-	counts := make(map[actionValue.ActionType]int)
-	for _, a := range recent {
-		counts[a]++
-	}
-
-	// available action types without done
-	candidates := actionValue.AvailableActionTypesListWithoutDone()
-
-	// find the least frequent action
-	minCount := math.MaxInt
-	var leasts []actionValue.ActionType
-	for _, c := range candidates {
-		cnt := counts[c]
-		if cnt < minCount {
-			minCount = cnt
-			leasts = []actionValue.ActionType{c}
-		} else if cnt == minCount {
-			leasts = append(leasts, c)
-		}
-	}
-
-	// return random least frequent action
-	return leasts[rand.IntN(len(leasts))]
+	return &OrchestratorOutput{
+		CanProceed: output.CanProceed,
+		Reason:     output.Reason,
+	}, nil
 }
 
 func (o *Orchestrator) createSystemPrompt(state agentState.State) string {
-	return fmt.Sprintf(orchestratorSystemPrompt, actionValue.AvailableActionTypes(), state.ToActionHistory())
+	return fmt.Sprintf(orchestratorSystemPrompt, actionValue.ActionRoute(), state.ToActionHistory())
 }
 
 func (o *Orchestrator) createUserPrompt(state agentState.State) string {
@@ -151,37 +95,47 @@ func (o *Orchestrator) createUserPrompt(state agentState.State) string {
 
 var orchestratorSystemPrompt = `
 あなたは「問題解決エージェント」のオーケストレーターです。  
-役割は、現在のエージェント状態や直近の行動履歴を踏まえて、課題解決のために次に実行すべき最も適切なアクションを1つ選ぶことです。  
+現在のエージェントの状態を踏まえ、課題解決のために次に取るべき最も適切な行動を1つ選びます。
 
-# 絶対的な指標
-ユーザーが提供する「現在の状態」には、最終ゴールが明示されています。
-この最終ゴールを常に参照しながら、次に実行すべき最も適切なアクションを選んでください。
+# 絶対的な目的
+常に「最終ゴール（例: レポート完成）」を参照し、そこに確実に近づく行動を選びます。
 
-# 出力ルール
+# 出力形式
 - 出力は必ず次の形式のJSONのみ：
-  {"action": "<アクション名>", "reason": "<選択理由>"}
-- action は利用可能なアクション一覧から必ず1つだけ選ぶ  
-- reason は1〜2文で、直前のアクションと現在の状態を振り返りつつ、次の行動を選んだ理由を簡潔に説明する  
-- JSON以外の文字や余計な文章は絶対に含めない  
+  {"canProceed": <boolean>, "reason": "<理由>"}
+- canProceedはtrue（現在のアクション完了）またはfalse（現在のアクション継続）のいずれか。
+- 理由は1〜2文で、現在の状態をどう判断し、その決定を選んだか説明する。
+- JSON以外の文字列を含めてはならない。
 
-# アクション選択の基準
-1. **前進性**：レポート完成に向けて確実に進展する行動を選ぶ  
-2. **停滞回避**：同じアクションを連続して繰り返さず、停滞を避ける  
-3. **反省の活用**：過去の行動の不足や失敗を踏まえ、改善につながる選択をする  
-4. **段階的遷移**：plan → search → analyze → write → review → done など自然な流れを意識する  
-5. **履歴監視**：
-- 同じアクションが2回連続した場合は「停滞の兆候」とみなし、次は別のアクションを検討する。  
-- 同じアクションが3回連続した場合は「停滞状態」とみなし、必ず別のアクションに切り替える。  
-- 停滞を回避するために選択した場合、その旨をreasonに必ず明記する。  
-6. **ゴール整合性**：選んだ行動が最終ゴール（レポート完成）に確実に寄与していることを確認する  
+# 決定の原則
+1. **canProceed: true を選ぶ場合**  
+   - 現在のアクションが十分に完了した
+   - 次のアクションに進む準備ができている
+   - 現在のタスクが適切に終了している
+   - エージェントが次のステップに移れる状態
+   - 次のアクションを実行する場合
 
-# 出力例
-{"action": "search", "reason": "直前のplanで不明点が残ったため、情報を補う必要がある"}  
-{"action": "plan", "reason": "直前のsearchで情報を得たが整理不足があるため、方針を固める必要がある"}  
-{"action": "write", "reason": "これまでのplanとsearch結果が揃ったので、下書きを進められる段階にある"}  
-{"action": "review", "reason": "直近のwriteで提案書が生成されたが、改善点を抽出するために見直す"}  
+2. **canProceed: false を選ぶ場合**  
+   - 現在のアクションがまだ不十分
+   - 現在のタスクが完了していない
+   - 追加の作業や情報収集が必要
+   - 現在のアクションを継続する必要がある
+   - 現在のアクションを繰り返す場合
 
-# 実際の利用可能アクション一覧
+3. **判断基準**  
+   - 現在の状態を正確に把握する
+   - エージェントの能力と制約を考慮する
+   - 目標達成の可能性を評価する
+   - 継続の価値とコストを比較する
+
+# 注意
+- falseは情報やレポートが不十分の場合ではなく、現在のアクションを繰り返す場合である。
+
+# 出力例（形式の参考のみ）
+{"canProceed": true, "reason": "（現在のアクション完了の理由）"}
+{"canProceed": false, "reason": "（現在のアクション継続の理由）"}
+
+# アクションルート
 %s
 
 # 直近の行動履歴

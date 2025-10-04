@@ -232,6 +232,7 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	orchestrator := service7.NewOrchestrator(llmClient)
 	summarizeService := service7.NewSummarizeService(llmClient)
 	goalService := service7.NewGoalService(llmClient)
+	terminator := service7.NewTerminator(llmClient)
 	promptBuilder := service8.NewPromptBuilder()
 	planActionInterface := service9.NewPlanAction(llmClient, promptBuilder)
 	webSearchClient := googlesearch.NewGoogleSearchClient(environmentEnvironment)
@@ -244,7 +245,7 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	reviewActionInterface := service9.NewReviewAction(llmClient, promptBuilder)
 	actionFactory := service9.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
 	reportRepository := report.NewReportRepository(appPool)
-	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, actionFactory, reportRepository)
+	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, terminator, actionFactory, reportRepository)
 	jobApplication := proposal2.NewExecuteProposal(ctx, executeProposalInputPort)
 	jobJob := job.NewBaseJob(ctx, logger, jobApplication)
 	diJob := &Job{
@@ -265,6 +266,7 @@ func InitProposalJobEval(ctx context.Context) (*Eval, func(), error) {
 	orchestrator := service7.NewOrchestrator(llmClient)
 	summarizeService := service7.NewSummarizeService(llmClient)
 	goalService := service7.NewGoalService(llmClient)
+	terminator := service7.NewTerminator(llmClient)
 	promptBuilder := service8.NewPromptBuilder()
 	planActionInterface := service9.NewPlanAction(llmClient, promptBuilder)
 	webSearchClient := googlesearch.NewGoogleSearchClient(environmentEnvironment)
@@ -278,7 +280,7 @@ func InitProposalJobEval(ctx context.Context) (*Eval, func(), error) {
 	reportRepository := memory.NewMemoryReportRepository()
 	actionRepository := memory.NewMemoryActionRepository()
 	judge := llmasjudge.NewJudge(llmClient)
-	evaluator := proposaljob.NewProposalJobEval(orchestrator, summarizeService, goalService, actionFactory, reportRepository, actionRepository, judge)
+	evaluator := proposaljob.NewProposalJobEval(orchestrator, summarizeService, goalService, terminator, actionFactory, reportRepository, actionRepository, judge)
 	baseEvaluator := evaluate.NewBaseEvaluator(logger, evaluator)
 	eval := &Eval{
 		Evaluator: baseEvaluator,

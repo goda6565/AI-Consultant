@@ -37,6 +37,7 @@ type ProposalJobEval struct {
 	orchestrator     *agentService.Orchestrator
 	summarizeService *agentService.SummarizeService
 	goalService      *agentService.GoalService
+	terminator       *agentService.Terminator
 	actionFactory    *actionService.ActionFactory
 	reportRepository reportRepository.ReportRepository
 	actionRepository actionRepository.ActionRepository
@@ -48,6 +49,7 @@ func NewProposalJobEval(
 	orchestrator *agentService.Orchestrator,
 	summarizeService *agentService.SummarizeService,
 	goalService *agentService.GoalService,
+	terminator *agentService.Terminator,
 	actionFactory *actionService.ActionFactory,
 	reportRepository reportRepository.ReportRepository,
 	actionRepository actionRepository.ActionRepository,
@@ -57,6 +59,7 @@ func NewProposalJobEval(
 		orchestrator:     orchestrator,
 		summarizeService: summarizeService,
 		goalService:      goalService,
+		terminator:       terminator,
 		actionFactory:    actionFactory,
 		reportRepository: reportRepository,
 		actionRepository: actionRepository,
@@ -99,10 +102,10 @@ func (e *ProposalJobEval) prepareForEvaluation(ctx context.Context) (proposal.Ex
 		e.orchestrator,
 		e.summarizeService,
 		e.goalService,
+		e.terminator,
 		e.actionFactory,
 		e.reportRepository,
 	)
-
 	return executeProposalUseCase, nil
 }
 

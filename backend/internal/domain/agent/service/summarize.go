@@ -7,8 +7,8 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 )
 
-const GeminiSummarizeTokenThreshold = 1000000
-const OpenAISummarizeTokenThreshold = 1000000 // Now Dummy
+const GeminiSummarizeTokenThreshold = 500000
+const OpenAISummarizeTokenThreshold = 500000 // Now Dummy
 
 type SummarizeService struct {
 	llmClient llm.LLMClient
