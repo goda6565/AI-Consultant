@@ -45,8 +45,7 @@ func (j *Judge) Judge(ctx context.Context, problemDescription string, actions []
 	// 複数回評価を実行（出力後の最適化）
 	results := make([]JudgmentResult, 0, numEvaluations)
 
-	var temperature float32
-	temperature = 0.0
+	temperature := float32(0.0)
 	for i := 0; i < numEvaluations; i++ {
 		input := llm.GenerateStructuredTextInput{
 			SystemPrompt: systemPrompt,

@@ -41,7 +41,7 @@ type ProposalJobEval struct {
 	reportRepository reportRepository.ReportRepository
 	actionRepository actionRepository.ActionRepository
 	judge            *llmasjudge.Judge
-	outputDir        string // 出力ディレクトリを保存
+	outputDir        string
 }
 
 func NewProposalJobEval(
