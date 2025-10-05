@@ -67,6 +67,12 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 		return errors.NewUseCaseError(errors.NotFoundError, "problem not found")
 	}
 
+	// check if job config exists
+	jobConfig, err := i.adminUnitOfWork.JobConfigRepository(ctx).FindByProblemID(ctx, problemID)
+	if err != nil {
+		return fmt.Errorf("failed to find job config: %w", err)
+	}
+
 	// check if hearing exists
 	hearings, err := i.hearingRepository.FindAllByProblemId(ctx, problemID)
 	if err != nil {
@@ -120,6 +126,14 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 			}
 		}
 
+		// delete job config
+		if jobConfig != nil {
+			_, err = i.adminUnitOfWork.JobConfigRepository(ctx).DeleteByProblemID(ctx, problem.GetID())
+			if err != nil {
+				return fmt.Errorf("failed to delete job config: %w", err)
+			}
+		}
+
 		// delete problem fields (hearing_messages may reference problem_fields)
 		_, err = i.adminUnitOfWork.ProblemFieldRepository(ctx).DeleteByProblemID(ctx, problem.GetID())
 		if err != nil {
@@ -133,12 +147,6 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 		}
 		if numDeleted == 0 {
 			return errors.NewUseCaseError(errors.NotFoundError, "problem not found")
-		}
-
-		// delete job config
-		_, err = i.adminUnitOfWork.JobConfigRepository(ctx).DeleteByProblemID(ctx, problem.GetID())
-		if err != nil {
-			return fmt.Errorf("failed to delete job config: %w", err)
 		}
 		return nil
 	})
