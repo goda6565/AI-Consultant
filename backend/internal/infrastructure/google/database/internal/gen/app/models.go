@@ -8,14 +8,67 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Action struct {
+	ID         pgtype.UUID
+	ProblemID  pgtype.UUID
+	ActionType string
+	Input      string
+	Output     string
+	CreatedAt  pgtype.Timestamptz
+}
+
 type Document struct {
-	ID                pgtype.UUID
-	Title             string
-	DocumentExtension string
-	BucketName        string
-	ObjectName        string
-	DocumentStatus    string
-	SyncStep          string
-	CreatedAt         pgtype.Timestamptz
-	UpdatedAt         pgtype.Timestamptz
+	ID             pgtype.UUID
+	Title          string
+	DocumentType   string
+	BucketName     string
+	ObjectName     string
+	DocumentStatus string
+	RetryCount     int32
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type Hearing struct {
+	ID        pgtype.UUID
+	ProblemID pgtype.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type HearingMessage struct {
+	ID             pgtype.UUID
+	HearingID      pgtype.UUID
+	Role           string
+	Message        string
+	CreatedAt      pgtype.Timestamptz
+	ProblemFieldID pgtype.UUID
+}
+
+type JobConfig struct {
+	ID                   string
+	ProblemID            string
+	EnableInternalSearch bool
+}
+
+type Problem struct {
+	ID          pgtype.UUID
+	Title       string
+	Description string
+	Status      string
+	CreatedAt   pgtype.Timestamptz
+}
+
+type ProblemField struct {
+	ID        pgtype.UUID
+	ProblemID pgtype.UUID
+	Field     string
+	Answered  bool
+	CreatedAt pgtype.Timestamptz
+}
+
+type Report struct {
+	ID        pgtype.UUID
+	ProblemID pgtype.UUID
+	Content   string
+	CreatedAt pgtype.Timestamptz
 }

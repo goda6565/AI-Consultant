@@ -28,16 +28,16 @@ func (h *GetDocumentHandler) GetDocument(ctx context.Context, request gen.GetDoc
 
 func toDocumentJSONResponse(document *entity.Document) gen.GetDocumentResponseObject {
 	return gen.GetDocument200JSONResponse{
-		SingleDocumentJSONResponse: gen.SingleDocumentJSONResponse{
-			BucketName:        document.GetStoragePath().BucketName(),
-			CreatedAt:         *document.GetCreatedAt(),
-			DocumentExtension: gen.DocumentExtension(document.GetDocumentExtension()),
-			DocumentStatus:    gen.DocumentStatus(document.GetStatus()),
-			Id:                openapi_types.UUID(uuid.MustParse(document.GetID().Value())),
-			ObjectName:        document.GetStoragePath().ObjectName(),
-			SyncStep:          gen.SyncStep(document.GetSyncStep()),
-			Title:             document.GetTitle().Value(),
-			UpdatedAt:         *document.GetUpdatedAt(),
+		GetDocumentSuccessJSONResponse: gen.GetDocumentSuccessJSONResponse{
+			BucketName:     document.GetStorageInfo().BucketName(),
+			CreatedAt:      *document.GetCreatedAt(),
+			DocumentType:   gen.DocumentType(document.GetDocumentType()),
+			DocumentStatus: gen.DocumentStatus(document.GetStatus()),
+			Id:             openapi_types.UUID(uuid.MustParse(document.GetID().Value())),
+			ObjectName:     document.GetStorageInfo().ObjectName(),
+			RetryCount:     document.GetRetryCount().Value(),
+			Title:          document.GetTitle().Value(),
+			UpdatedAt:      *document.GetUpdatedAt(),
 		},
 	}
 }

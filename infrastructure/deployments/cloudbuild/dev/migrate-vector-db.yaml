@@ -1,0 +1,46 @@
+availableSecrets:
+  secretManager:
+    - versionName: projects/ai-consultant-471305/secrets/dev-ai-consultant-vector-db-username/versions/latest
+      env: DB_USER
+    - versionName: projects/ai-consultant-471305/secrets/dev-ai-consultant-vector-db-password/versions/latest
+      env: DB_PASSWORD
+
+steps:
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        version=v4.19.0
+        os=linux
+        arch=amd64
+        tmpdir=$(mktemp -d)
+        curl -sSL -o "$tmpdir/migrate.tar.gz" https://github.com/golang-migrate/migrate/releases/download/$$version/migrate.$$os-$$arch.tar.gz
+        tar -xzf "$tmpdir/migrate.tar.gz" -C "$tmpdir"
+        bin=$(find "$tmpdir" -maxdepth 1 -type f -name 'migrate*' | head -n1)
+        chmod +x "$bin"
+        mv "$bin" /workspace/migrate
+    
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
+        /workspace/migrate \
+          -path /workspace/infrastructure/schemas/migrations/vector \
+          -database "postgres://$$DB_USER:$$DB_PASSWORD@${_VECTOR_DB_HOST}:5432/${_VECTOR_DB_NAME}?sslmode=disable" \
+          up
+    secretEnv: ['DB_USER', 'DB_PASSWORD']
+
+
+images: []
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  workerPool: 'projects/ai-consultant-471305/locations/us-west2/workerPools/shared-ai-consultant-cloudbuild-pool'
+
+substitutions:
+  _VECTOR_DB_HOST: '10.18.208.3'
+  _VECTOR_DB_NAME: 'dev_vector_db'

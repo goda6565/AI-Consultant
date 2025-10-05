@@ -2,27 +2,52 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base: '/AI-Consultant/',
   title: "AI-Consultant",
-  description: "A VitePress Site",
+  description: "AI-Consultant project documentation",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      { text: 'Backend', link: '/backend/' },
+      { text: 'Frontend', link: '/frontend/' },
     ],
 
     sidebar: [
       {
-        text: 'Examples',
+        text: 'Overview',
         items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
+          { text: 'Project Overview', link: '/' },
+        ]
+      },
+      {
+        text: 'Backend',
+        items: [
+          { text: 'Admin', link: '/backend/admin' },
+          { text: 'Agent', link: '/backend/agent' },
+          { text: 'Proposal Job', link: '/backend/proposal-job' },
+          { text: 'Vector', link: '/backend/vector' }
+        ]
+      },
+      {
+        text: 'Frontend',
+        items: [
+          { text: 'Frontend Overview', link: '/frontend/frontend' }
         ]
       }
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
-    ]
+      { icon: 'github', link: 'https://github.com/harutin/sakana/problem-set/ai-consultant' }
+    ],
+
+    footer: {
+      message: 'AI-Consultant Project',
+      copyright: 'Copyright © 2025 AI-Consultant'
+    },
+
+    search: {
+      provider: 'local'
+    }
   }
 })

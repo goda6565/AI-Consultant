@@ -1,0 +1,29 @@
+substitutions:
+  _REGION: 'asia-northeast1'
+  _ENV: 'development'
+  _APP_NAME: 'backend-vector'
+  _CONTAINER: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/shared-ai-consultant-artifact-registry/${_APP_NAME}/${_ENV}:${SHORT_SHA}'
+
+options:
+  automapSubstitutions: true
+  logging: CLOUD_LOGGING_ONLY
+  env:
+    - DOCKER_BUILDKIT=1
+
+steps:
+- name: 'gcr.io/kaniko-project/executor:latest'
+  args:
+  - --destination=${_CONTAINER}
+  - --cache=true
+  - --cache-ttl=24h
+  - --context=backend
+  - --dockerfile=Dockerfile.vector
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - run
+    - deploy
+    - dev-ai-consultant-backend-vector
+    - '--image=${_CONTAINER}'
+    - '--region=${_REGION}'
+    - --port=8080

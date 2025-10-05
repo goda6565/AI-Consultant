@@ -10,3 +10,8 @@ node_modules
 
 # secret
 .env
+.env.*
+
+# Evaluation outputs
+backend/internal/evaluate/proposal-job/outputs/
+evaluation_results_*/

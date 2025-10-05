@@ -6,7 +6,7 @@ import (
 
 	domainErrors "github.com/goda6565/ai-consultant/backend/internal/domain/errors"
 	infraErrors "github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
-	"github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
+	logger "github.com/goda6565/ai-consultant/backend/internal/pkg/logger"
 	usecaseErrors "github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
 	"github.com/labstack/echo/v4"
 )
@@ -17,36 +17,34 @@ type ErrorResponse struct {
 }
 
 const (
-	InternalServerErrorMessage = "Internal Server Error"
-	BadRequestErrorMessage     = "Bad Request"
-	ConflictErrorMessage       = "Conflict"
-	NotFoundErrorMessage       = "Not Found"
+	BadRequestErrorMessage400     = "Bad Request"
+	UnauthorizedErrorMessage401   = "Unauthorized"
+	ForbiddenErrorMessage403      = "Forbidden"
+	NotFoundErrorMessage404       = "Not Found"
+	ConflictErrorMessage409       = "Conflict"
+	InternalServerErrorMessage500 = "Internal Server Error"
 )
 
 func CustomErrorHandler(err error, c echo.Context) {
 	logger := logger.GetLogger(c.Request().Context())
 	var code int
 	var message string
+	var infraErr *infraErrors.InfrastructureError
+	var domainErr *domainErrors.DomainError
+	var usecaseErr *usecaseErrors.UseCaseError
 	var httpErr *echo.HTTPError
-	if errors.As(err, &httpErr) {
+	if errors.As(err, &infraErr) {
+		code = infraErrToResponse(infraErr)
+	} else if errors.As(err, &domainErr) {
+		code = domainErrToResponse(domainErr)
+	} else if errors.As(err, &usecaseErr) {
+		code = usecaseErrToResponse(usecaseErr)
+	} else if errors.As(err, &httpErr) {
 		code = httpErr.Code
-		if msg, ok := httpErr.Message.(string); ok {
-			message = msg
-		}
 	} else {
-		var infraErr *infraErrors.InfrastructureError
-		var domainErr *domainErrors.DomainError
-		var usecaseErr *usecaseErrors.UseCaseError
-		if errors.As(err, &infraErr) {
-			code, message = infraErrToResponse(infraErr)
-		} else if errors.As(err, &domainErr) {
-			code, message = domainErrToResponse(domainErr)
-		} else if errors.As(err, &usecaseErr) {
-			code, message = usecaseErrToResponse(usecaseErr)
-		} else {
-			code, message = http.StatusInternalServerError, "Internal Server Error"
-		}
+		code = http.StatusInternalServerError
 	}
+	message = codeToMessage(code)
 
 	logger.Error("request failed",
 		"code", code,
@@ -60,34 +58,61 @@ func CustomErrorHandler(err error, c echo.Context) {
 	}
 }
 
-func infraErrToResponse(err *infraErrors.InfrastructureError) (int, string) {
+func infraErrToResponse(err *infraErrors.InfrastructureError) int {
 	switch err.ErrorType {
 	case infraErrors.ExternalServiceError:
-		return http.StatusInternalServerError, InternalServerErrorMessage
+		return http.StatusInternalServerError
+	case infraErrors.UnauthorizedError:
+		return http.StatusUnauthorized
+	case infraErrors.ForbiddenError:
+		return http.StatusForbidden
+	case infraErrors.BadRequestError:
+		return http.StatusBadRequest
 	default:
-		return http.StatusInternalServerError, InternalServerErrorMessage
+		return http.StatusInternalServerError
 	}
 }
 
-func domainErrToResponse(err *domainErrors.DomainError) (int, string) {
+func domainErrToResponse(err *domainErrors.DomainError) int {
 	switch err.ErrorType {
 	case domainErrors.ValidationError:
-		return http.StatusBadRequest, err.Message
+		return http.StatusBadRequest
+	case domainErrors.InvalidFunctionName:
+		return http.StatusInternalServerError
 	default:
-		return http.StatusInternalServerError, InternalServerErrorMessage
+		return http.StatusInternalServerError
 	}
 }
 
-func usecaseErrToResponse(err *usecaseErrors.UseCaseError) (int, string) {
+func usecaseErrToResponse(err *usecaseErrors.UseCaseError) int {
 	switch err.ErrorType {
 	case usecaseErrors.DuplicateError:
-		return http.StatusConflict, ConflictErrorMessage
+		return http.StatusConflict
 	case usecaseErrors.NotFoundError:
-		return http.StatusNotFound, NotFoundErrorMessage
+		return http.StatusNotFound
 	case usecaseErrors.InternalError:
-		return http.StatusInternalServerError, InternalServerErrorMessage
+		return http.StatusInternalServerError
 	default:
-		return http.StatusInternalServerError, InternalServerErrorMessage
+		return http.StatusInternalServerError
+	}
+}
+
+func codeToMessage(code int) string {
+	switch code {
+	case http.StatusBadRequest:
+		return BadRequestErrorMessage400
+	case http.StatusConflict:
+		return ConflictErrorMessage409
+	case http.StatusNotFound:
+		return NotFoundErrorMessage404
+	case http.StatusInternalServerError:
+		return InternalServerErrorMessage500
+	case http.StatusUnauthorized:
+		return UnauthorizedErrorMessage401
+	case http.StatusForbidden:
+		return ForbiddenErrorMessage403
+	default:
+		return InternalServerErrorMessage500
 	}
 }
 

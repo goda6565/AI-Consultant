@@ -13,6 +13,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	"github.com/goda6565/ai-consultant/backend/internal/pkg/uuid"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/errors"
+	syncQueuePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/queue"
 	storagePort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/storage"
 )
 
@@ -21,13 +22,13 @@ type CreateDocumentInputPort interface {
 }
 
 type CreateDocumentUseCaseInput struct {
-	Title             string
-	DocumentExtension string
-	File              io.Reader
+	Title        string
+	DocumentType string
+	File         io.Reader
 }
 
 type CreateDocumentOutput struct {
-	DocumentID string
+	Document *entity.Document
 }
 
 type CreateDocumentInteractor struct {
@@ -35,14 +36,16 @@ type CreateDocumentInteractor struct {
 	storagePort        storagePort.StoragePort
 	documentRepository repository.DocumentRepository
 	duplicateChecker   *documentService.DuplicateChecker
+	syncQueue          syncQueuePort.SyncQueue
 }
 
-func NewCreateDocumentUseCase(env *environment.Environment, documentRepository repository.DocumentRepository, storagePort storagePort.StoragePort, duplicateChecker *documentService.DuplicateChecker) CreateDocumentInputPort {
+func NewCreateDocumentUseCase(env *environment.Environment, documentRepository repository.DocumentRepository, storagePort storagePort.StoragePort, duplicateChecker *documentService.DuplicateChecker, syncQueue syncQueuePort.SyncQueue) CreateDocumentInputPort {
 	return &CreateDocumentInteractor{
 		env:                env,
 		documentRepository: documentRepository,
 		storagePort:        storagePort,
 		duplicateChecker:   duplicateChecker,
+		syncQueue:          syncQueue,
 	}
 }
 
@@ -51,9 +54,13 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 	if err != nil {
 		return nil, fmt.Errorf("failed to create title: %w", err)
 	}
+	documentType, err := value.NewDocumentType(input.DocumentType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create document type: %w", err)
+	}
 
 	// check duplicate
-	isDuplicate, err := i.duplicateChecker.CheckDuplicateByTitle(ctx, title)
+	isDuplicate, err := i.duplicateChecker.Execute(ctx, title)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check duplicate: %w", err)
 	}
@@ -63,8 +70,9 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 
 	// upload file to storage
 	bucketName := i.env.BucketName
-	storagePath := value.NewStorageInfo(bucketName, input.Title)
-	err = i.storagePort.Upload(ctx, bucketName, input.Title, input.File)
+	objectName := fmt.Sprintf("%s.%s", input.Title, documentType.GetExtension())
+	storagePath := value.NewStorageInfo(bucketName, objectName)
+	err = i.storagePort.Upload(ctx, storagePath, input.File)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file to storage: %w", err)
 	}
@@ -75,19 +83,15 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 	if err != nil {
 		return nil, fmt.Errorf("failed to create id: %w", err)
 	}
-	documentExtension, err := value.NewDocumentExtension(input.DocumentExtension)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create document extension: %w", err)
-	}
 
 	// create document
 	document := entity.NewDocument(
 		id,
 		title,
-		documentExtension,
+		documentType,
 		storagePath,
-		value.DocumentStatusProcessing,
-		value.SyncStepPending,
+		value.DocumentStatusPending, // initial document status is pending
+		value.NewRetryCount(0),      // initial retry count is 0
 		nil,
 		nil,
 	)
@@ -95,10 +99,18 @@ func (i *CreateDocumentInteractor) Execute(ctx context.Context, input CreateDocu
 	// save document
 	err = i.documentRepository.Create(ctx, document)
 	if err != nil {
+		// delete document from storage
+		err = i.storagePort.Delete(ctx, storagePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete document from storage after failed to save document: %w", err)
+		}
 		return nil, fmt.Errorf("failed to save document: %w", err)
 	}
 
-	//TODO: create vector by async
+	// publish sync queue message to vector service
+	if err := i.syncQueue.Enqueue(ctx, syncQueuePort.SyncQueueMessage{DocumentID: document.GetID().Value()}); err != nil {
+		return nil, fmt.Errorf("failed to publish sync queue message to vector service: %w", err)
+	}
 
-	return &CreateDocumentOutput{DocumentID: document.GetID().Value()}, nil
+	return &CreateDocumentOutput{Document: document}, nil
 }

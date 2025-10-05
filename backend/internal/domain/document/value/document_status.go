@@ -5,6 +5,7 @@ import "github.com/goda6565/ai-consultant/backend/internal/domain/errors"
 type DocumentStatus string
 
 const (
+	DocumentStatusPending    DocumentStatus = "pending"
 	DocumentStatusProcessing DocumentStatus = "processing"
 	DocumentStatusDone       DocumentStatus = "done"
 	DocumentStatusFailed     DocumentStatus = "failed"
@@ -20,6 +21,8 @@ func (d DocumentStatus) Value() string {
 
 func NewDocumentStatus(value string) (DocumentStatus, error) {
 	switch value {
+	case "pending":
+		return DocumentStatusPending, nil
 	case "processing":
 		return DocumentStatusProcessing, nil
 	case "done":

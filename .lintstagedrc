@@ -2,7 +2,16 @@
     "backend/**/*.go": [
         "bash -c 'pnpm backend-check'"
     ],
+    "frontend/**/*.ts": [
+        "bash -c 'pnpm frontend-check'"
+    ],
     "infrastructure/terraform/environments/shared/*.tf": [
         "bash -c 'pnpm shared-tf-check'"
+    ],
+    "infrastructure/terraform/environments/development/*.tf": [
+        "bash -c 'pnpm dev-tf-check'"
+    ],
+    "infrastructure/terraform/environments/staging/*.tf": [
+        "bash -c 'pnpm stage-tf-check'"
     ]
 }

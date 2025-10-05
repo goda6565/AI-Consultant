@@ -19,7 +19,7 @@ func TestDuplicateChecker_CheckDuplicateByTitle(t *testing.T) {
 	mockRepo := mock.NewMockDocumentRepository(ctrl)
 
 	testTitle, _ := value.NewTitle("Test Document")
-	testDocExt, _ := value.NewDocumentExtension("pdf")
+	testDocExt, _ := value.NewDocumentType("pdf")
 	testID := sharedValue.ID("test-id")
 	testStoragePath := value.NewStorageInfo("test-bucket", "test-object")
 
@@ -29,7 +29,7 @@ func TestDuplicateChecker_CheckDuplicateByTitle(t *testing.T) {
 		testDocExt,
 		testStoragePath,
 		value.DocumentStatusProcessing,
-		value.SyncStepPending,
+		value.NewRetryCount(0),
 		nil,
 		nil,
 	)
@@ -84,7 +84,7 @@ func TestDuplicateChecker_CheckDuplicateByTitle(t *testing.T) {
 			tt.mockSetup()
 			checker := NewDuplicateCheckService(mockRepo)
 
-			result, err := checker.CheckDuplicateByTitle(context.Background(), tt.title)
+			result, err := checker.Execute(context.Background(), tt.title)
 
 			if tt.expectedError && err == nil {
 				t.Errorf("expected error but no error occurred")

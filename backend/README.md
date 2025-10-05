@@ -9,8 +9,17 @@ This is the backend for AI Consultant.
 There are 3 services in the backend.
 
 - Admin: Document Management (rest)
-- Agent: AI Consultant Agent (websocket)
-- Vector: Sync Document to Vector Database (pubsub)
+- Agent: Hearing Agent (rest)
+- Vector: Sync Document to Vector Database (cloud tasks)
+- Proposal Job: Generate Proposal Agent (cloud run job)
+
+All services are running on the cloud run.
+
+### Database
+
+There are 2 databases in the backend.
+- App: Document Management (postgres)
+- Vector: Vector Database (postgres with pgvector extension)
 
 ## Run Application
 
@@ -18,4 +27,5 @@ There are 3 services in the backend.
 go run main.go admin run
 go run main.go agent run
 go run main.go vector run
+go run main.go proposal-job run
 ```

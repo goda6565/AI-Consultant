@@ -1,17 +1,19 @@
 {
-	"dependencies": {
-		"husky": "^9.1.7",
-		"lint-staged": "^16.1.6"
-	},
-	"scripts": {
-		"prepare": "husky",
-		"backend-check": "cd backend && go fmt ./... && golangci-lint run && go test ./...",
-		"backend-format": "cd backend && go fmt ./...",
-		"backend-lint": "cd backend && golangci-lint run",
-		"backend-test": "cd backend && go test ./...",
-		"shared-tf-check": "cd infrastructure/terraform/environments/shared && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan",
-		"dev-tf-check": "cd infrastructure/terraform/environments/development && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan",
-		"stage-tf-check": "cd infrastructure/terraform/environments/staging && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan",
-		"prod-tf-check": "cd infrastructure/terraform/environments/production && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan"
-	}
+  "dependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "backend-check": "cd backend && go fmt ./... && golangci-lint run && go test ./...",
+    "backend-format": "cd backend && go fmt ./...",
+    "backend-lint": "cd backend && golangci-lint run",
+    "backend-test": "cd backend && go test ./...",
+    "frontend-check": "cd frontend && pnpm lint",
+    "frontend-format": "cd frontend && pnpm format",
+    "shared-tf-check": "cd infrastructure/terraform/environments/shared && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan",
+    "dev-tf-check": "cd infrastructure/terraform/environments/development && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan",
+    "stage-tf-check": "cd infrastructure/terraform/environments/staging && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan",
+    "prod-tf-check": "cd infrastructure/terraform/environments/production && terraform init && terraform fmt -recursive -check && terraform validate && terraform plan"
+  }
 }

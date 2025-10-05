@@ -1,0 +1,134 @@
+locals {
+  common_env_vars = [
+    {
+      name  = "ENV"
+      value = "development"
+    },
+    {
+      name  = "LISTEN_ADDRESS"
+      value = "0.0.0.0:8080"
+    },
+    {
+      name  = "SHUTDOWN_TIMEOUT"
+      value = "10s"
+    },
+    {
+      name  = "VECTOR_DB_HOST"
+      value = "${var.vector_db_host}"
+    },
+    {
+      name  = "VECTOR_DB_PORT"
+      value = "5432"
+    },
+    {
+      name  = "VECTOR_DB_NAME"
+      value = "${var.environment}_vector_db"
+    },
+    {
+      name  = "VECTOR_DB_SSL_MODE"
+      value = "disable"
+    },
+    {
+      name  = "APP_DB_HOST"
+      value = "${var.app_db_host}"
+    },
+    {
+      name  = "APP_DB_PORT"
+      value = "5432"
+    },
+    {
+      name  = "APP_DB_NAME"
+      value = "${var.environment}_app_db"
+    },
+    {
+      name  = "APP_DB_SSL_MODE"
+      value = "disable"
+    },
+    {
+      name  = "GOOGLE_CLOUD_PROJECT_ID"
+      value = "${var.project_id}"
+    },
+    {
+      name  = "CLOUD_STORAGE_BUCKET_NAME"
+      value = "${var.environment}-${var.service}-documents-bucket"
+    },
+    {
+      name  = "DOCUMENT_AI_PROCESSOR_ID"
+      value = "fdb37644f200783e"
+    },
+    {
+      name  = "DOCUMENT_AI_LOCATION"
+      value = "us"
+    },
+    {
+      name  = "VERTEX_AI_LOCATION"
+      value = "global"
+    },
+    {
+      name  = "SYNC_QUEUE_NAME"
+      value = "${var.environment}-${var.service}-document-processing"
+    },
+    {
+      name  = "SYNC_QUEUE_LOCATION"
+      value = "${var.region}"
+    },
+    {
+      name  = "SEARCH_ENGINE_ID"
+      value = "73a44b6d80ee442c9"
+    },
+    {
+      name  = "SEARCH_ENDPOINT"
+      value = "https://customsearch.googleapis.com/customsearch/v1"
+    },
+    {
+      name  = "CLOUD_RUN_JOB_REGION"
+      value = "asia-northeast1"
+    },
+    {
+      name  = "CLOUD_RUN_JOB_NAME"
+      value = "dev-ai-consultant-backend-proposal-job"
+    },
+    {
+      name = "VECTOR_DB_USERNAME"
+      secret_key_ref = {
+        secret  = "dev-ai-consultant-vector-db-username"
+        version = "latest"
+      }
+    },
+    {
+      name = "VECTOR_DB_PASSWORD"
+      secret_key_ref = {
+        secret  = "dev-ai-consultant-vector-db-password"
+        version = "latest"
+      }
+    },
+    {
+      name = "APP_DB_USERNAME"
+      secret_key_ref = {
+        secret  = "dev-ai-consultant-app-db-username"
+        version = "latest"
+      }
+    },
+    {
+      name = "APP_DB_PASSWORD"
+      secret_key_ref = {
+        secret  = "dev-ai-consultant-app-db-password"
+        version = "latest"
+      }
+    },
+    {
+      name = "REDIS_URL"
+      secret_key_ref = {
+        secret  = "shared-ai-consultant-redis-url"
+        version = "latest"
+      }
+    },
+    {
+      name = "CUSTOM_SEARCH_API_KEY"
+      secret_key_ref = {
+        secret  = "dev-ai-consultant-custom-search-api-key"
+        version = "latest"
+      }
+    },
+  ]
+}

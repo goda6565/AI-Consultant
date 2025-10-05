@@ -12,19 +12,30 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/internal/gen/app"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/helper"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type DocumentRepository struct {
+	tx   pgx.Tx
 	pool *database.AppPool
 }
 
 func NewDocumentRepository(pool *database.AppPool) repository.DocumentRepository {
-	return &DocumentRepository{pool: pool}
+	return &DocumentRepository{tx: nil, pool: pool}
+}
+
+func (r *DocumentRepository) WithTx(tx pgx.Tx) *DocumentRepository {
+	return &DocumentRepository{tx: tx, pool: r.pool}
 }
 
 func (r *DocumentRepository) FindAll(ctx context.Context) ([]entity.Document, error) {
-	q := app.New(r.pool)
+	var q *app.Queries
+	if r.tx != nil {
+		q = app.New(r.pool).WithTx(r.tx)
+	} else {
+		q = app.New(r.pool)
+	}
 	documents, err := q.GetAllDocuments(ctx)
 	if err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get all documents: %v", err))
@@ -75,13 +86,13 @@ func (r *DocumentRepository) Create(ctx context.Context, document *entity.Docume
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
 	}
 	err := q.CreateDocument(ctx, app.CreateDocumentParams{
-		ID:                id,
-		Title:             document.GetTitle().Value(),
-		DocumentExtension: document.GetDocumentExtension().Value(),
-		BucketName:        document.GetStoragePath().BucketName(),
-		ObjectName:        document.GetStoragePath().ObjectName(),
-		DocumentStatus:    document.GetStatus().Value(),
-		SyncStep:          document.GetSyncStep().Value(),
+		ID:             id,
+		Title:          document.GetTitle().Value(),
+		DocumentType:   document.GetDocumentType().Value(),
+		BucketName:     document.GetStorageInfo().BucketName(),
+		ObjectName:     document.GetStorageInfo().ObjectName(),
+		DocumentStatus: document.GetStatus().Value(),
+		RetryCount:     int32(document.GetRetryCount().Value()),
 	})
 	if err != nil {
 		return errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to create document: %v", err))
@@ -96,13 +107,13 @@ func (r *DocumentRepository) Update(ctx context.Context, document *entity.Docume
 		return 0, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to scan id: %v", err))
 	}
 	numUpdated, err = q.UpdateDocument(ctx, app.UpdateDocumentParams{
-		ID:                id,
-		Title:             document.GetTitle().Value(),
-		DocumentExtension: document.GetDocumentExtension().Value(),
-		BucketName:        document.GetStoragePath().BucketName(),
-		ObjectName:        document.GetStoragePath().ObjectName(),
-		DocumentStatus:    document.GetStatus().Value(),
-		SyncStep:          document.GetSyncStep().Value(),
+		ID:             id,
+		Title:          document.GetTitle().Value(),
+		DocumentType:   document.GetDocumentType().Value(),
+		BucketName:     document.GetStorageInfo().BucketName(),
+		ObjectName:     document.GetStorageInfo().ObjectName(),
+		DocumentStatus: document.GetStatus().Value(),
+		RetryCount:     int32(document.GetRetryCount().Value()),
 	})
 	if err != nil {
 		return 0, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to update document: %v", err))
@@ -132,29 +143,26 @@ func toEntity(document app.Document) (*entity.Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create title: %w", err)
 	}
-	documentExtension, err := value.NewDocumentExtension(document.DocumentExtension)
+	documentType, err := value.NewDocumentType(document.DocumentType)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create document extension: %w", err)
+		return nil, fmt.Errorf("failed to create document type: %w", err)
 	}
 	documentStatus, err := value.NewDocumentStatus(document.DocumentStatus)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document status: %w", err)
 	}
-	syncStep, err := value.NewSyncStep(document.SyncStep)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sync step: %w", err)
-	}
-	storageInfo := value.NewStorageInfo(document.BucketName, document.ObjectName)
+	retryCount := value.NewRetryCount(int(document.RetryCount))
+	storagePath := value.NewStorageInfo(document.BucketName, document.ObjectName)
 	createdAt := document.CreatedAt.Time
 	updatedAt := document.UpdatedAt.Time
 
 	return entity.NewDocument(
 		id,
 		title,
-		documentExtension,
-		storageInfo,
+		documentType,
+		storagePath,
 		documentStatus,
-		syncStep,
+		retryCount,
 		&createdAt,
 		&updatedAt,
 	), nil

@@ -10,6 +10,14 @@ type loggerKeyType struct{}
 
 var LoggerKey = loggerKeyType{}
 
+func WithLogger(ctx context.Context, logger Logger) context.Context {
+	return context.WithValue(ctx, LoggerKey, logger)
+}
+
+func GetLogger(ctx context.Context) Logger {
+	return ctx.Value(LoggerKey).(Logger)
+}
+
 type Logger interface {
 	Info(msg string, keysAndValues ...interface{})
 	Debug(msg string, keysAndValues ...interface{})
@@ -19,12 +27,4 @@ type Logger interface {
 	Panic(msg string, keysAndValues ...interface{})
 	LogUsage(llm.Usage)
 	Sync() error
-}
-
-func WithLogger(ctx context.Context, logger Logger) context.Context {
-	return context.WithValue(ctx, LoggerKey, logger)
-}
-
-func GetLogger(ctx context.Context) Logger {
-	return ctx.Value(LoggerKey).(Logger)
 }

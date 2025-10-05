@@ -27,11 +27,15 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// Defines values for DocumentExtension.
+// Defines values for ActionType.
 const (
-	Csv      DocumentExtension = "csv"
-	Markdown DocumentExtension = "markdown"
-	Pdf      DocumentExtension = "pdf"
+	ActionTypeAnalyze        ActionType = "analyze"
+	ActionTypeDone           ActionType = "done"
+	ActionTypeExternalSearch ActionType = "externalSearch"
+	ActionTypeInternalSearch ActionType = "internalSearch"
+	ActionTypePlan           ActionType = "plan"
+	ActionTypeReview         ActionType = "review"
+	ActionTypeWrite          ActionType = "write"
 )
 
 // Defines values for DocumentStatus.
@@ -39,6 +43,13 @@ const (
 	DocumentStatusDone       DocumentStatus = "done"
 	DocumentStatusFailed     DocumentStatus = "failed"
 	DocumentStatusProcessing DocumentStatus = "processing"
+)
+
+// Defines values for DocumentType.
+const (
+	Csv      DocumentType = "csv"
+	Markdown DocumentType = "markdown"
+	Pdf      DocumentType = "pdf"
 )
 
 // Defines values for ErrorCode.
@@ -51,40 +62,144 @@ const (
 	N500 ErrorCode = 500
 )
 
-// Defines values for SyncStep.
+// Defines values for EventType.
 const (
-	SyncStepDone    SyncStep = "done"
-	SyncStepPending SyncStep = "pending"
-	SyncStepVector  SyncStep = "vector"
+	EventTypeAction EventType = "action"
+	EventTypeInput  EventType = "input"
+	EventTypeOutput EventType = "output"
 )
+
+// Defines values for HearingMessageRole.
+const (
+	Assistant HearingMessageRole = "assistant"
+	User      HearingMessageRole = "user"
+)
+
+// Defines values for ProblemStatus.
+const (
+	ProblemStatusDone       ProblemStatus = "done"
+	ProblemStatusFailed     ProblemStatus = "failed"
+	ProblemStatusHearing    ProblemStatus = "hearing"
+	ProblemStatusPending    ProblemStatus = "pending"
+	ProblemStatusProcessing ProblemStatus = "processing"
+)
+
+// Action defines model for Action.
+type Action struct {
+	ActionType ActionType         `json:"actionType"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Id         openapi_types.UUID `json:"id"`
+	Input      string             `json:"input"`
+	Output     string             `json:"output"`
+	ProblemId  openapi_types.UUID `json:"problemId"`
+}
 
 // Document defines model for Document.
 type Document struct {
-	BucketName        string             `json:"bucketName"`
-	CreatedAt         time.Time          `json:"createdAt"`
-	DocumentExtension DocumentExtension  `json:"documentExtension"`
-	DocumentStatus    DocumentStatus     `json:"documentStatus"`
-	Id                openapi_types.UUID `json:"id"`
-	ObjectName        string             `json:"objectName"`
-	SyncStep          SyncStep           `json:"syncStep"`
-	Title             string             `json:"title"`
-	UpdatedAt         time.Time          `json:"updatedAt"`
+	BucketName     string             `json:"bucketName"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	DocumentStatus DocumentStatus     `json:"documentStatus"`
+	DocumentType   DocumentType       `json:"documentType"`
+	Id             openapi_types.UUID `json:"id"`
+	ObjectName     string             `json:"objectName"`
+	RetryCount     int                `json:"retryCount"`
+	Title          string             `json:"title"`
+	UpdatedAt      time.Time          `json:"updatedAt"`
 }
 
-// DocumentExtension defines model for documentExtension.
-type DocumentExtension string
+// Event defines model for Event.
+type Event struct {
+	ActionType ActionType         `json:"actionType"`
+	EventType  EventType          `json:"eventType"`
+	Id         openapi_types.UUID `json:"id"`
+	Message    string             `json:"message"`
+}
+
+// Hearing defines model for Hearing.
+type Hearing struct {
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	ProblemId openapi_types.UUID `json:"problemId"`
+}
+
+// HearingMessage defines model for HearingMessage.
+type HearingMessage struct {
+	CreatedAt      time.Time          `json:"createdAt"`
+	HearingId      openapi_types.UUID `json:"hearingId"`
+	Id             openapi_types.UUID `json:"id"`
+	Message        string             `json:"message"`
+	ProblemFieldId openapi_types.UUID `json:"problemFieldId"`
+	Role           HearingMessageRole `json:"role"`
+}
+
+// JobConfig defines model for JobConfig.
+type JobConfig struct {
+	EnableInternalSearch bool               `json:"enableInternalSearch"`
+	Id                   openapi_types.UUID `json:"id"`
+	ProblemId            openapi_types.UUID `json:"problemId"`
+}
+
+// Problem defines model for Problem.
+type Problem struct {
+	CreatedAt   time.Time          `json:"createdAt"`
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Status      ProblemStatus      `json:"status"`
+	Title       string             `json:"title"`
+}
+
+// Report defines model for Report.
+type Report struct {
+	Content   string             `json:"content"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	ProblemId openapi_types.UUID `json:"problemId"`
+}
+
+// ActionType defines model for actionType.
+type ActionType string
 
 // DocumentStatus defines model for documentStatus.
 type DocumentStatus string
 
+// DocumentType defines model for documentType.
+type DocumentType string
+
 // ErrorCode defines model for errorCode.
 type ErrorCode int
 
-// SyncStep defines model for syncStep.
-type SyncStep string
+// EventType defines model for eventType.
+type EventType string
+
+// HearingMessageRole defines model for hearingMessageRole.
+type HearingMessageRole string
+
+// ProblemStatus defines model for problemStatus.
+type ProblemStatus string
 
 // DocumentIdPathParameter defines model for DocumentIdPathParameter.
 type DocumentIdPathParameter = openapi_types.UUID
+
+// HearingIdPathParameter defines model for HearingIdPathParameter.
+type HearingIdPathParameter = openapi_types.UUID
+
+// ProblemIdPathParameter defines model for ProblemIdPathParameter.
+type ProblemIdPathParameter = openapi_types.UUID
+
+// CreateDocumentSuccess defines model for CreateDocumentSuccess.
+type CreateDocumentSuccess struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+// CreateHearingSuccess defines model for CreateHearingSuccess.
+type CreateHearingSuccess struct {
+	HearingId openapi_types.UUID `json:"hearingId"`
+}
+
+// CreateProblemSuccess defines model for CreateProblemSuccess.
+type CreateProblemSuccess struct {
+	Id openapi_types.UUID `json:"id"`
+}
 
 // Error defines model for Error.
 type Error struct {
@@ -92,35 +207,99 @@ type Error struct {
 	Message string    `json:"message"`
 }
 
-// MultipleDocuments defines model for MultipleDocuments.
-type MultipleDocuments struct {
+// GetDocumentSuccess defines model for GetDocumentSuccess.
+type GetDocumentSuccess = Document
+
+// GetHearingSuccess defines model for GetHearingSuccess.
+type GetHearingSuccess = Hearing
+
+// GetJobConfigSuccess defines model for GetJobConfigSuccess.
+type GetJobConfigSuccess = JobConfig
+
+// GetProblemSuccess defines model for GetProblemSuccess.
+type GetProblemSuccess = Problem
+
+// GetReportSuccess defines model for GetReportSuccess.
+type GetReportSuccess = Report
+
+// ListActionsSuccess defines model for ListActionsSuccess.
+type ListActionsSuccess struct {
+	Actions []Action `json:"actions"`
+}
+
+// ListDocumentsSuccess defines model for ListDocumentsSuccess.
+type ListDocumentsSuccess struct {
 	Documents []Document `json:"documents"`
 }
 
-// SingleDocument defines model for SingleDocument.
-type SingleDocument = Document
+// ListEventsSuccess defines model for ListEventsSuccess.
+type ListEventsSuccess struct {
+	Events []Event `json:"events"`
+}
+
+// ListHearingMessagesSuccess defines model for ListHearingMessagesSuccess.
+type ListHearingMessagesSuccess struct {
+	HearingMessages []HearingMessage `json:"hearingMessages"`
+}
+
+// ListProblemsSuccess defines model for ListProblemsSuccess.
+type ListProblemsSuccess struct {
+	Problems []Problem `json:"problems"`
+}
+
+// UpdateJobConfigSuccess defines model for UpdateJobConfigSuccess.
+type UpdateJobConfigSuccess = JobConfig
 
 // CreateDocument defines model for CreateDocument.
 type CreateDocument struct {
 	// Data File data in base64
-	Data              []byte            `json:"data"`
-	DocumentExtension DocumentExtension `json:"documentExtension"`
-	Title             string            `json:"title"`
+	Data         []byte       `json:"data"`
+	DocumentType DocumentType `json:"documentType"`
+	Title        string       `json:"title"`
+}
+
+// CreateProblem defines model for CreateProblem.
+type CreateProblem struct {
+	Description string `json:"description"`
+}
+
+// UpdateJobConfig defines model for UpdateJobConfig.
+type UpdateJobConfig struct {
+	EnableInternalSearch bool `json:"enableInternalSearch"`
 }
 
 // CreateDocumentJSONBody defines parameters for CreateDocument.
 type CreateDocumentJSONBody struct {
 	// Data File data in base64
-	Data              []byte            `json:"data"`
-	DocumentExtension DocumentExtension `json:"documentExtension"`
-	Title             string            `json:"title"`
+	Data         []byte       `json:"data"`
+	DocumentType DocumentType `json:"documentType"`
+	Title        string       `json:"title"`
+}
+
+// UpdateJobConfigJSONBody defines parameters for UpdateJobConfig.
+type UpdateJobConfigJSONBody struct {
+	EnableInternalSearch bool `json:"enableInternalSearch"`
+}
+
+// CreateProblemJSONBody defines parameters for CreateProblem.
+type CreateProblemJSONBody struct {
+	Description string `json:"description"`
 }
 
 // CreateDocumentJSONRequestBody defines body for CreateDocument for application/json ContentType.
 type CreateDocumentJSONRequestBody CreateDocumentJSONBody
 
+// UpdateJobConfigJSONRequestBody defines body for UpdateJobConfig for application/json ContentType.
+type UpdateJobConfigJSONRequestBody UpdateJobConfigJSONBody
+
+// CreateProblemJSONRequestBody defines body for CreateProblem for application/json ContentType.
+type CreateProblemJSONRequestBody CreateProblemJSONBody
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List actions by problem id
+	// (GET /api/actions/{problemId})
+	ListActions(ctx echo.Context, problemId ProblemIdPathParameter) error
 	// List documents
 	// (GET /api/documents)
 	ListDocuments(ctx echo.Context) error
@@ -133,11 +312,62 @@ type ServerInterface interface {
 	// Get a document by document id
 	// (GET /api/documents/{documentId})
 	GetDocument(ctx echo.Context, documentId DocumentIdPathParameter) error
+	// List events by problem id
+	// (GET /api/events/{problemId})
+	ListEvents(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// List hearing messages by hearing id
+	// (GET /api/hearings/{hearingId}/messages)
+	ListHearingMessages(ctx echo.Context, hearingId HearingIdPathParameter) error
+	// Get a hearing by problem id
+	// (GET /api/hearings/{problemId})
+	GetHearing(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Create a hearing
+	// (POST /api/hearings/{problemId})
+	CreateHearing(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Get a job config by problem id
+	// (GET /api/job-configs/{problemId})
+	GetJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Update a job config by problem id
+	// (PATCH /api/job-configs/{problemId})
+	UpdateJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// List problems
+	// (GET /api/problems)
+	ListProblems(ctx echo.Context) error
+	// Create a problem
+	// (POST /api/problems)
+	CreateProblem(ctx echo.Context) error
+	// Delete a problem by problem id
+	// (DELETE /api/problems/{problemId})
+	DeleteProblem(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Get a problem by problem id
+	// (GET /api/problems/{problemId})
+	GetProblem(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Get a report by problem id
+	// (GET /api/reports/{problemId})
+	GetReport(ctx echo.Context, problemId ProblemIdPathParameter) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// ListActions converts echo context to params.
+func (w *ServerInterfaceWrapper) ListActions(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListActions(ctx, problemId)
+	return err
 }
 
 // ListDocuments converts echo context to params.
@@ -198,6 +428,190 @@ func (w *ServerInterfaceWrapper) GetDocument(ctx echo.Context) error {
 	return err
 }
 
+// ListEvents converts echo context to params.
+func (w *ServerInterfaceWrapper) ListEvents(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListEvents(ctx, problemId)
+	return err
+}
+
+// ListHearingMessages converts echo context to params.
+func (w *ServerInterfaceWrapper) ListHearingMessages(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "hearingId" -------------
+	var hearingId HearingIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hearingId", ctx.Param("hearingId"), &hearingId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter hearingId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListHearingMessages(ctx, hearingId)
+	return err
+}
+
+// GetHearing converts echo context to params.
+func (w *ServerInterfaceWrapper) GetHearing(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetHearing(ctx, problemId)
+	return err
+}
+
+// CreateHearing converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateHearing(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreateHearing(ctx, problemId)
+	return err
+}
+
+// GetJobConfig converts echo context to params.
+func (w *ServerInterfaceWrapper) GetJobConfig(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetJobConfig(ctx, problemId)
+	return err
+}
+
+// UpdateJobConfig converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateJobConfig(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateJobConfig(ctx, problemId)
+	return err
+}
+
+// ListProblems converts echo context to params.
+func (w *ServerInterfaceWrapper) ListProblems(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListProblems(ctx)
+	return err
+}
+
+// CreateProblem converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateProblem(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.CreateProblem(ctx)
+	return err
+}
+
+// DeleteProblem converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteProblem(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteProblem(ctx, problemId)
+	return err
+}
+
+// GetProblem converts echo context to params.
+func (w *ServerInterfaceWrapper) GetProblem(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetProblem(ctx, problemId)
+	return err
+}
+
+// GetReport converts echo context to params.
+func (w *ServerInterfaceWrapper) GetReport(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetReport(ctx, problemId)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -226,11 +640,35 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/api/actions/:problemId", wrapper.ListActions)
 	router.GET(baseURL+"/api/documents", wrapper.ListDocuments)
 	router.POST(baseURL+"/api/documents", wrapper.CreateDocument)
 	router.DELETE(baseURL+"/api/documents/:documentId", wrapper.DeleteDocument)
 	router.GET(baseURL+"/api/documents/:documentId", wrapper.GetDocument)
+	router.GET(baseURL+"/api/events/:problemId", wrapper.ListEvents)
+	router.GET(baseURL+"/api/hearings/:hearingId/messages", wrapper.ListHearingMessages)
+	router.GET(baseURL+"/api/hearings/:problemId", wrapper.GetHearing)
+	router.POST(baseURL+"/api/hearings/:problemId", wrapper.CreateHearing)
+	router.GET(baseURL+"/api/job-configs/:problemId", wrapper.GetJobConfig)
+	router.PATCH(baseURL+"/api/job-configs/:problemId", wrapper.UpdateJobConfig)
+	router.GET(baseURL+"/api/problems", wrapper.ListProblems)
+	router.POST(baseURL+"/api/problems", wrapper.CreateProblem)
+	router.DELETE(baseURL+"/api/problems/:problemId", wrapper.DeleteProblem)
+	router.GET(baseURL+"/api/problems/:problemId", wrapper.GetProblem)
+	router.GET(baseURL+"/api/reports/:problemId", wrapper.GetReport)
 
+}
+
+type CreateDocumentSuccessJSONResponse struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type CreateHearingSuccessJSONResponse struct {
+	HearingId openapi_types.UUID `json:"hearingId"`
+}
+
+type CreateProblemSuccessJSONResponse struct {
+	Id openapi_types.UUID `json:"id"`
 }
 
 type ErrorJSONResponse struct {
@@ -238,11 +676,111 @@ type ErrorJSONResponse struct {
 	Message string    `json:"message"`
 }
 
-type MultipleDocumentsJSONResponse struct {
+type GetDocumentSuccessJSONResponse Document
+
+type GetHearingSuccessJSONResponse Hearing
+
+type GetJobConfigSuccessJSONResponse JobConfig
+
+type GetProblemSuccessJSONResponse Problem
+
+type GetReportSuccessJSONResponse Report
+
+type ListActionsSuccessJSONResponse struct {
+	Actions []Action `json:"actions"`
+}
+
+type ListDocumentsSuccessJSONResponse struct {
 	Documents []Document `json:"documents"`
 }
 
-type SingleDocumentJSONResponse Document
+type ListEventsSuccessJSONResponse struct {
+	Events []Event `json:"events"`
+}
+
+type ListHearingMessagesSuccessJSONResponse struct {
+	HearingMessages []HearingMessage `json:"hearingMessages"`
+}
+
+type ListProblemsSuccessJSONResponse struct {
+	Problems []Problem `json:"problems"`
+}
+
+type UpdateJobConfigSuccessJSONResponse JobConfig
+
+type ListActionsRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type ListActionsResponseObject interface {
+	VisitListActionsResponse(w http.ResponseWriter) error
+}
+
+type ListActions200JSONResponse struct{ ListActionsSuccessJSONResponse }
+
+func (response ListActions200JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions400JSONResponse struct{ ErrorJSONResponse }
+
+func (response ListActions400JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions401JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions403JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions404JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions500JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
 
 type ListDocumentsRequestObject struct {
 }
@@ -251,7 +789,9 @@ type ListDocumentsResponseObject interface {
 	VisitListDocumentsResponse(w http.ResponseWriter) error
 }
 
-type ListDocuments200JSONResponse struct{ MultipleDocumentsJSONResponse }
+type ListDocuments200JSONResponse struct {
+	ListDocumentsSuccessJSONResponse
+}
 
 func (response ListDocuments200JSONResponse) VisitListDocumentsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -313,7 +853,9 @@ type CreateDocumentResponseObject interface {
 	VisitCreateDocumentResponse(w http.ResponseWriter) error
 }
 
-type CreateDocument201JSONResponse struct{ SingleDocumentJSONResponse }
+type CreateDocument201JSONResponse struct {
+	CreateDocumentSuccessJSONResponse
+}
 
 func (response CreateDocument201JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -460,7 +1002,7 @@ type GetDocumentResponseObject interface {
 	VisitGetDocumentResponse(w http.ResponseWriter) error
 }
 
-type GetDocument200JSONResponse struct{ SingleDocumentJSONResponse }
+type GetDocument200JSONResponse struct{ GetDocumentSuccessJSONResponse }
 
 func (response GetDocument200JSONResponse) VisitGetDocumentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -526,8 +1068,824 @@ func (response GetDocument500JSONResponse) VisitGetDocumentResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ListEventsRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type ListEventsResponseObject interface {
+	VisitListEventsResponse(w http.ResponseWriter) error
+}
+
+type ListEvents200JSONResponse struct{ ListEventsSuccessJSONResponse }
+
+func (response ListEvents200JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListEvents400JSONResponse struct{ ErrorJSONResponse }
+
+func (response ListEvents400JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListEvents401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListEvents401JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListEvents403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListEvents403JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListEvents404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListEvents404JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListEvents500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListEvents500JSONResponse) VisitListEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListHearingMessagesRequestObject struct {
+	HearingId HearingIdPathParameter `json:"hearingId"`
+}
+
+type ListHearingMessagesResponseObject interface {
+	VisitListHearingMessagesResponse(w http.ResponseWriter) error
+}
+
+type ListHearingMessages200JSONResponse struct {
+	ListHearingMessagesSuccessJSONResponse
+}
+
+func (response ListHearingMessages200JSONResponse) VisitListHearingMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListHearingMessages400JSONResponse struct{ ErrorJSONResponse }
+
+func (response ListHearingMessages400JSONResponse) VisitListHearingMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListHearingMessages401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListHearingMessages401JSONResponse) VisitListHearingMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListHearingMessages403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListHearingMessages403JSONResponse) VisitListHearingMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListHearingMessages404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListHearingMessages404JSONResponse) VisitListHearingMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListHearingMessages500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListHearingMessages500JSONResponse) VisitListHearingMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetHearingRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type GetHearingResponseObject interface {
+	VisitGetHearingResponse(w http.ResponseWriter) error
+}
+
+type GetHearing200JSONResponse struct{ GetHearingSuccessJSONResponse }
+
+func (response GetHearing200JSONResponse) VisitGetHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetHearing400JSONResponse struct{ ErrorJSONResponse }
+
+func (response GetHearing400JSONResponse) VisitGetHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetHearing401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetHearing401JSONResponse) VisitGetHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetHearing403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetHearing403JSONResponse) VisitGetHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetHearing404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetHearing404JSONResponse) VisitGetHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetHearing500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetHearing500JSONResponse) VisitGetHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateHearingRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type CreateHearingResponseObject interface {
+	VisitCreateHearingResponse(w http.ResponseWriter) error
+}
+
+type CreateHearing201JSONResponse struct {
+	CreateHearingSuccessJSONResponse
+}
+
+func (response CreateHearing201JSONResponse) VisitCreateHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateHearing400JSONResponse struct{ ErrorJSONResponse }
+
+func (response CreateHearing400JSONResponse) VisitCreateHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateHearing401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateHearing401JSONResponse) VisitCreateHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateHearing403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateHearing403JSONResponse) VisitCreateHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateHearing409JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateHearing409JSONResponse) VisitCreateHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateHearing500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateHearing500JSONResponse) VisitCreateHearingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfigRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type GetJobConfigResponseObject interface {
+	VisitGetJobConfigResponse(w http.ResponseWriter) error
+}
+
+type GetJobConfig200JSONResponse struct {
+	GetJobConfigSuccessJSONResponse
+}
+
+func (response GetJobConfig200JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig400JSONResponse struct{ ErrorJSONResponse }
+
+func (response GetJobConfig400JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig401JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig403JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig404JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig500JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfigRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+	Body      *UpdateJobConfigJSONRequestBody
+}
+
+type UpdateJobConfigResponseObject interface {
+	VisitUpdateJobConfigResponse(w http.ResponseWriter) error
+}
+
+type UpdateJobConfig200JSONResponse struct {
+	UpdateJobConfigSuccessJSONResponse
+}
+
+func (response UpdateJobConfig200JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig400JSONResponse struct{ ErrorJSONResponse }
+
+func (response UpdateJobConfig400JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig401JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig403JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig404JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig500JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblemsRequestObject struct {
+}
+
+type ListProblemsResponseObject interface {
+	VisitListProblemsResponse(w http.ResponseWriter) error
+}
+
+type ListProblems200JSONResponse struct {
+	ListProblemsSuccessJSONResponse
+}
+
+func (response ListProblems200JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems400JSONResponse struct{ ErrorJSONResponse }
+
+func (response ListProblems400JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListProblems401JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListProblems403JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListProblems500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListProblems500JSONResponse) VisitListProblemsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblemRequestObject struct {
+	Body *CreateProblemJSONRequestBody
+}
+
+type CreateProblemResponseObject interface {
+	VisitCreateProblemResponse(w http.ResponseWriter) error
+}
+
+type CreateProblem201JSONResponse struct {
+	CreateProblemSuccessJSONResponse
+}
+
+func (response CreateProblem201JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem400JSONResponse struct{ ErrorJSONResponse }
+
+func (response CreateProblem400JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem401JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem403JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem409JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem409JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateProblem500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response CreateProblem500JSONResponse) VisitCreateProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblemRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type DeleteProblemResponseObject interface {
+	VisitDeleteProblemResponse(w http.ResponseWriter) error
+}
+
+type DeleteProblem204Response struct {
+}
+
+func (response DeleteProblem204Response) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteProblem400JSONResponse struct{ ErrorJSONResponse }
+
+func (response DeleteProblem400JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem401JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem403JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem404JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteProblem500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response DeleteProblem500JSONResponse) VisitDeleteProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblemRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type GetProblemResponseObject interface {
+	VisitGetProblemResponse(w http.ResponseWriter) error
+}
+
+type GetProblem200JSONResponse struct{ GetProblemSuccessJSONResponse }
+
+func (response GetProblem200JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem400JSONResponse struct{ ErrorJSONResponse }
+
+func (response GetProblem400JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem401JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem403JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem404JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetProblem500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetProblem500JSONResponse) VisitGetProblemResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReportRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type GetReportResponseObject interface {
+	VisitGetReportResponse(w http.ResponseWriter) error
+}
+
+type GetReport200JSONResponse struct{ GetReportSuccessJSONResponse }
+
+func (response GetReport200JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport400JSONResponse struct{ ErrorJSONResponse }
+
+func (response GetReport400JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport401JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport403JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport404JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetReport500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetReport500JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// List actions by problem id
+	// (GET /api/actions/{problemId})
+	ListActions(ctx context.Context, request ListActionsRequestObject) (ListActionsResponseObject, error)
 	// List documents
 	// (GET /api/documents)
 	ListDocuments(ctx context.Context, request ListDocumentsRequestObject) (ListDocumentsResponseObject, error)
@@ -540,6 +1898,39 @@ type StrictServerInterface interface {
 	// Get a document by document id
 	// (GET /api/documents/{documentId})
 	GetDocument(ctx context.Context, request GetDocumentRequestObject) (GetDocumentResponseObject, error)
+	// List events by problem id
+	// (GET /api/events/{problemId})
+	ListEvents(ctx context.Context, request ListEventsRequestObject) (ListEventsResponseObject, error)
+	// List hearing messages by hearing id
+	// (GET /api/hearings/{hearingId}/messages)
+	ListHearingMessages(ctx context.Context, request ListHearingMessagesRequestObject) (ListHearingMessagesResponseObject, error)
+	// Get a hearing by problem id
+	// (GET /api/hearings/{problemId})
+	GetHearing(ctx context.Context, request GetHearingRequestObject) (GetHearingResponseObject, error)
+	// Create a hearing
+	// (POST /api/hearings/{problemId})
+	CreateHearing(ctx context.Context, request CreateHearingRequestObject) (CreateHearingResponseObject, error)
+	// Get a job config by problem id
+	// (GET /api/job-configs/{problemId})
+	GetJobConfig(ctx context.Context, request GetJobConfigRequestObject) (GetJobConfigResponseObject, error)
+	// Update a job config by problem id
+	// (PATCH /api/job-configs/{problemId})
+	UpdateJobConfig(ctx context.Context, request UpdateJobConfigRequestObject) (UpdateJobConfigResponseObject, error)
+	// List problems
+	// (GET /api/problems)
+	ListProblems(ctx context.Context, request ListProblemsRequestObject) (ListProblemsResponseObject, error)
+	// Create a problem
+	// (POST /api/problems)
+	CreateProblem(ctx context.Context, request CreateProblemRequestObject) (CreateProblemResponseObject, error)
+	// Delete a problem by problem id
+	// (DELETE /api/problems/{problemId})
+	DeleteProblem(ctx context.Context, request DeleteProblemRequestObject) (DeleteProblemResponseObject, error)
+	// Get a problem by problem id
+	// (GET /api/problems/{problemId})
+	GetProblem(ctx context.Context, request GetProblemRequestObject) (GetProblemResponseObject, error)
+	// Get a report by problem id
+	// (GET /api/reports/{problemId})
+	GetReport(ctx context.Context, request GetReportRequestObject) (GetReportResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -552,6 +1943,31 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// ListActions operation middleware
+func (sh *strictHandler) ListActions(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request ListActionsRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListActions(ctx.Request().Context(), request.(ListActionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListActions")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ListActionsResponseObject); ok {
+		return validResponse.VisitListActionsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // ListDocuments operation middleware
@@ -656,25 +2072,325 @@ func (sh *strictHandler) GetDocument(ctx echo.Context, documentId DocumentIdPath
 	return nil
 }
 
+// ListEvents operation middleware
+func (sh *strictHandler) ListEvents(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request ListEventsRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListEvents(ctx.Request().Context(), request.(ListEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListEvents")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ListEventsResponseObject); ok {
+		return validResponse.VisitListEventsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// ListHearingMessages operation middleware
+func (sh *strictHandler) ListHearingMessages(ctx echo.Context, hearingId HearingIdPathParameter) error {
+	var request ListHearingMessagesRequestObject
+
+	request.HearingId = hearingId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListHearingMessages(ctx.Request().Context(), request.(ListHearingMessagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListHearingMessages")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ListHearingMessagesResponseObject); ok {
+		return validResponse.VisitListHearingMessagesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetHearing operation middleware
+func (sh *strictHandler) GetHearing(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request GetHearingRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetHearing(ctx.Request().Context(), request.(GetHearingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetHearing")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetHearingResponseObject); ok {
+		return validResponse.VisitGetHearingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// CreateHearing operation middleware
+func (sh *strictHandler) CreateHearing(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request CreateHearingRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateHearing(ctx.Request().Context(), request.(CreateHearingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateHearing")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(CreateHearingResponseObject); ok {
+		return validResponse.VisitCreateHearingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetJobConfig operation middleware
+func (sh *strictHandler) GetJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request GetJobConfigRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetJobConfig(ctx.Request().Context(), request.(GetJobConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetJobConfig")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetJobConfigResponseObject); ok {
+		return validResponse.VisitGetJobConfigResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UpdateJobConfig operation middleware
+func (sh *strictHandler) UpdateJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request UpdateJobConfigRequestObject
+
+	request.ProblemId = problemId
+
+	var body UpdateJobConfigJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateJobConfig(ctx.Request().Context(), request.(UpdateJobConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateJobConfig")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UpdateJobConfigResponseObject); ok {
+		return validResponse.VisitUpdateJobConfigResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// ListProblems operation middleware
+func (sh *strictHandler) ListProblems(ctx echo.Context) error {
+	var request ListProblemsRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProblems(ctx.Request().Context(), request.(ListProblemsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProblems")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ListProblemsResponseObject); ok {
+		return validResponse.VisitListProblemsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// CreateProblem operation middleware
+func (sh *strictHandler) CreateProblem(ctx echo.Context) error {
+	var request CreateProblemRequestObject
+
+	var body CreateProblemJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateProblem(ctx.Request().Context(), request.(CreateProblemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateProblem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(CreateProblemResponseObject); ok {
+		return validResponse.VisitCreateProblemResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeleteProblem operation middleware
+func (sh *strictHandler) DeleteProblem(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request DeleteProblemRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteProblem(ctx.Request().Context(), request.(DeleteProblemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteProblem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeleteProblemResponseObject); ok {
+		return validResponse.VisitDeleteProblemResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetProblem operation middleware
+func (sh *strictHandler) GetProblem(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request GetProblemRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetProblem(ctx.Request().Context(), request.(GetProblemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetProblem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetProblemResponseObject); ok {
+		return validResponse.VisitGetProblemResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetReport operation middleware
+func (sh *strictHandler) GetReport(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request GetReportRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetReport(ctx.Request().Context(), request.(GetReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetReport")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetReportResponseObject); ok {
+		return validResponse.VisitGetReportResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RX32/bNhD+V4TbHtlIWdQB9VuatIWHrQiQAXsI/ECLZ5utRHLkKZth6H8fKOqXJTux",
-	"V2xw32zyePd9990dqR1kujBaoSIHsx0YbnmBhLb+d6+zskBFc/HAafPQ7vktgS6z0pDUCmadYTS/BwbS",
-	"LxlOG2CgeIEwA9F5AgYW/yylRQEzsiUycNkGC+69rrQtOMEMylJ6S9oaf9qRlWoNVVWFw+jovRYSa5B3",
-	"Fjlhi8CvZFpR85Mbk8uMe5jxF+ex7gbhjNUGLTWOBCc+pfZR5hj5rUiqaMkd/pwC64Eut4RToKwj/OFv",
-	"QuVkiPyjxRXM4Ie4T3oc0Lh4eqBiQJJy9CfHiRgm8akxOxSUBVaLDqFefsGM+lT2OoQVZ7RyIR8frNX2",
-	"G/KZaYGvsUYf484bVgwKdI6vT+DbGrIQ4zC7fRkDmYrBb2VO0uRdwbhvqZihD0lYuNf4dmVadZi5tXw7",
-	"odi7PoVdRyZqFfQBHqVa5/+uM07jMAUSQkYt+gGcqu3zvckyzemyzL4ifa7Hxm7aV1nd7eKW9saF4IRv",
-	"SBb/YSu2i4/EqXSnumisKwZSnDDgWKPxUfpuq7JHQvNa/M7uhSHCoDTivGSOijRQeGH4DMTcozZJ54DZ",
-	"UOMhxGkfHJEWVVl4dEasgEHB7Veh//JoMvc88DItkF7azoXVGTrn7byZ8shXXOYoDjrqp1nvI00SlibX",
-	"LE1uWJqkLE3esbdJ0h+XinCNdqxuBwGVCPGfMSNtWyCLQ+I4zEorafvoyyD003vkFu1tSZu6u+p/H1up",
-	"f/njd2j60nsKu73sGyITulyqlZ7ejbfzN3dauTInrii6FYVU0e3DvCuKlyye0QbB4PoquUrq2jeouJEw",
-	"g5ur5OoGWP2IqFnE3Mh4b9yusa5aPzrqITYXMINfpaN+sI/us5+S5FjbdHbx9HqoGKSnnOxumDS5Psv6",
-	"5gzrt2cgGdQDzJ72K+FpUS0YuLIouN02iYvEIHPE1250D1UMjHYHsj56gQ3faNvjaAfPuHjkoZood0JG",
-	"R7fdRcmWJu8uQOSQ5Yh3Qh/RuWKjfot3/fu9CmMgR8JpJdzX64NKGH5PPB2m1JvEx743PI1RQaTTafRZ",
-	"R837Jgr4IldmfnyvyjzfXlpBpBdQEEGuQUFEy23/O9zuB+fAweH7Cen/UD753kfBJSj/Cels2X2AZn03",
-	"/q53UC2qfwIAAP//f/Oqfk0QAAA=",
+	"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",
+	"Huvb+s8AAAD//8csYFvYPQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

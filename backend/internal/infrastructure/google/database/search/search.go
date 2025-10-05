@@ -4,51 +4,55 @@ import (
 	"context"
 	"fmt"
 
-	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
+	searchClient "github.com/goda6565/ai-consultant/backend/internal/domain/search"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/internal/gen/app"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/internal/gen/vector"
-	searchPort "github.com/goda6565/ai-consultant/backend/internal/usecase/ports/search"
 	"github.com/pgvector/pgvector-go"
 )
 
 type SearchClient struct {
-	pool *database.VectorPool
+	vectorPool *database.VectorPool
+	appPool    *database.AppPool
 }
 
-func NewSearchClient(pool *database.VectorPool) searchPort.SearchPort {
-	return &SearchClient{pool: pool}
+func NewSearchClient(vectorPool *database.VectorPool, appPool *database.AppPool) searchClient.DocumentSearchClient {
+	return &SearchClient{vectorPool: vectorPool, appPool: appPool}
 }
 
-func (v *SearchClient) Search(ctx context.Context, input searchPort.SearchInput) (*searchPort.SearchOutput, error) {
-	q := vector.New(v.pool)
-	pgVector := pgvector.NewVector(input.Embedding)
+func (v *SearchClient) Search(ctx context.Context, input searchClient.DocumentSearchInput) (*searchClient.DocumentSearchOutput, error) {
+	vectorQ := vector.New(v.vectorPool)
+	appQ := app.New(v.appPool)
+	if input.Embedding == nil {
+		return nil, errors.NewInfrastructureError(errors.InternalError, "embedding is required")
+	}
+	pgVector := pgvector.NewVector(*input.Embedding)
 	// <=> cosine similarity
-	rows, err := q.SearchVector(ctx, vector.SearchVectorParams{
+	rows, err := vectorQ.SearchVector(ctx, vector.SearchVectorParams{
 		Embedding: pgVector,
-		Limit:     int32(input.NumResults),
+		Limit:     int32(input.MaxNumResults),
 	})
 	if err != nil {
 		return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to search vector: %v", err))
 	}
 
-	results := []searchPort.SearchResult{}
+	results := []searchClient.DocumentSearchResult{}
 	for _, row := range rows {
-		id, err := sharedValue.NewID(row.ID.String())
+		document, err := appQ.GetDocument(ctx, row.DocumentID)
 		if err != nil {
-			return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to convert id to sharedValue.ID: %v", err))
+			return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to get document: %v", err))
 		}
-		documentID, err := sharedValue.NewID(row.DocumentID.String())
-		if err != nil {
-			return nil, errors.NewInfrastructureError(errors.ExternalServiceError, fmt.Sprintf("failed to convert documentId to sharedValue.ID: %v", err))
-		}
-		result := searchPort.SearchResult{
-			ID:         id,
-			DocumentID: documentID,
-			Content:    row.Content,
-			Similarity: row.Similarity,
+		url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", document.BucketName, document.ObjectName)
+		result := searchClient.DocumentSearchResult{
+			Title:   document.Title,
+			Content: row.ParentContent,
+			URL:     url,
 		}
 		results = append(results, result)
 	}
-	return &searchPort.SearchOutput{Results: results}, nil
+	if input.MaxNumResults > 0 && input.MaxNumResults < len(results) {
+		results = results[:input.MaxNumResults]
+	}
+	return &searchClient.DocumentSearchOutput{Results: results}, nil
 }

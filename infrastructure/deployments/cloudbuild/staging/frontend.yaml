@@ -1,0 +1,53 @@
+substitutions:
+  _REGION: 'asia-northeast1'
+  _ENV: 'staging'
+  _APP_NAME: 'frontend'
+  _CONTAINER: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/shared-ai-consultant-artifact-registry/${_APP_NAME}/${_ENV}:${SHORT_SHA}'
+
+options:
+  automapSubstitutions: true
+  logging: CLOUD_LOGGING_ONLY
+  env:
+    - DOCKER_BUILDKIT=1
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/ai-consultant-471305/secrets/staging-ai-consultant-admin-api-url/versions/latest
+      env: ADMIN_API_URL
+    - versionName: projects/ai-consultant-471305/secrets/staging-ai-consultant-agent-api-url/versions/latest
+      env: AGENT_API_URL
+    - versionName: projects/ai-consultant-471305/secrets/shared-ai-consultant-identity-platform-api-key/versions/latest
+      env: IDENTITY_PLATFORM_API_KEY
+    - versionName: projects/ai-consultant-471305/secrets/shared-ai-consultant-identity-platform-auth-domain/versions/latest
+      env: IDENTITY_PLATFORM_AUTH_DOMAIN
+
+steps:
+- name: 'ubuntu'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      touch frontend/.env.production
+      echo "NEXT_PUBLIC_ADMIN_API_URL=$$ADMIN_API_URL" >> frontend/.env.production
+      echo "NEXT_PUBLIC_AGENT_API_URL=$$AGENT_API_URL" >> frontend/.env.production
+      echo "NEXT_PUBLIC_IDENTITY_PLATFORM_API_KEY=$$IDENTITY_PLATFORM_API_KEY" >> frontend/.env.production
+      echo "NEXT_PUBLIC_IDENTITY_PLATFORM_AUTH_DOMAIN=$$IDENTITY_PLATFORM_AUTH_DOMAIN" >> frontend/.env.production
+  
+  secretEnv: ['ADMIN_API_URL', 'AGENT_API_URL', 'IDENTITY_PLATFORM_API_KEY', 'IDENTITY_PLATFORM_AUTH_DOMAIN']
+
+- name: 'gcr.io/kaniko-project/executor:latest'
+  args:
+  - --destination=${_CONTAINER}
+  - --cache=true
+  - --cache-ttl=24h
+  - --context=frontend/
+  - --dockerfile=Dockerfile
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - run
+    - deploy
+    - staging-ai-consultant-frontend
+    - '--image=${_CONTAINER}'
+    - '--region=${_REGION}'
+    - --port=3000

@@ -12,28 +12,28 @@ import (
 )
 
 const createDocument = `-- name: CreateDocument :exec
-INSERT INTO documents (id, title, document_extension, bucket_name, object_name, document_status, sync_step) VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO documents (id, title, document_type, bucket_name, object_name, document_status, retry_count) VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateDocumentParams struct {
-	ID                pgtype.UUID
-	Title             string
-	DocumentExtension string
-	BucketName        string
-	ObjectName        string
-	DocumentStatus    string
-	SyncStep          string
+	ID             pgtype.UUID
+	Title          string
+	DocumentType   string
+	BucketName     string
+	ObjectName     string
+	DocumentStatus string
+	RetryCount     int32
 }
 
 func (q *Queries) CreateDocument(ctx context.Context, arg CreateDocumentParams) error {
 	_, err := q.db.Exec(ctx, createDocument,
 		arg.ID,
 		arg.Title,
-		arg.DocumentExtension,
+		arg.DocumentType,
 		arg.BucketName,
 		arg.ObjectName,
 		arg.DocumentStatus,
-		arg.SyncStep,
+		arg.RetryCount,
 	)
 	return err
 }
@@ -51,7 +51,7 @@ func (q *Queries) DeleteDocument(ctx context.Context, id pgtype.UUID) (int64, er
 }
 
 const getAllDocuments = `-- name: GetAllDocuments :many
-SELECT id, title, document_extension, bucket_name, object_name, document_status, sync_step, created_at, updated_at FROM documents ORDER BY created_at DESC
+SELECT id, title, document_type, bucket_name, object_name, document_status, retry_count, created_at, updated_at FROM documents ORDER BY created_at DESC
 `
 
 func (q *Queries) GetAllDocuments(ctx context.Context) ([]Document, error) {
@@ -66,11 +66,11 @@ func (q *Queries) GetAllDocuments(ctx context.Context) ([]Document, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
-			&i.DocumentExtension,
+			&i.DocumentType,
 			&i.BucketName,
 			&i.ObjectName,
 			&i.DocumentStatus,
-			&i.SyncStep,
+			&i.RetryCount,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -85,7 +85,7 @@ func (q *Queries) GetAllDocuments(ctx context.Context) ([]Document, error) {
 }
 
 const getDocument = `-- name: GetDocument :one
-SELECT id, title, document_extension, bucket_name, object_name, document_status, sync_step, created_at, updated_at FROM documents WHERE id = $1
+SELECT id, title, document_type, bucket_name, object_name, document_status, retry_count, created_at, updated_at FROM documents WHERE id = $1
 `
 
 func (q *Queries) GetDocument(ctx context.Context, id pgtype.UUID) (Document, error) {
@@ -94,11 +94,11 @@ func (q *Queries) GetDocument(ctx context.Context, id pgtype.UUID) (Document, er
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
-		&i.DocumentExtension,
+		&i.DocumentType,
 		&i.BucketName,
 		&i.ObjectName,
 		&i.DocumentStatus,
-		&i.SyncStep,
+		&i.RetryCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -106,7 +106,7 @@ func (q *Queries) GetDocument(ctx context.Context, id pgtype.UUID) (Document, er
 }
 
 const getDocumentByTitle = `-- name: GetDocumentByTitle :one
-SELECT id, title, document_extension, bucket_name, object_name, document_status, sync_step, created_at, updated_at FROM documents WHERE title = $1
+SELECT id, title, document_type, bucket_name, object_name, document_status, retry_count, created_at, updated_at FROM documents WHERE title = $1
 `
 
 func (q *Queries) GetDocumentByTitle(ctx context.Context, title string) (Document, error) {
@@ -115,11 +115,11 @@ func (q *Queries) GetDocumentByTitle(ctx context.Context, title string) (Documen
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
-		&i.DocumentExtension,
+		&i.DocumentType,
 		&i.BucketName,
 		&i.ObjectName,
 		&i.DocumentStatus,
-		&i.SyncStep,
+		&i.RetryCount,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -127,28 +127,28 @@ func (q *Queries) GetDocumentByTitle(ctx context.Context, title string) (Documen
 }
 
 const updateDocument = `-- name: UpdateDocument :execrows
-UPDATE documents SET title = $2, document_extension = $3, bucket_name = $4, object_name = $5, document_status = $6, sync_step = $7 WHERE id = $1
+UPDATE documents SET title = $2, document_type = $3, bucket_name = $4, object_name = $5, document_status = $6, retry_count = $7 WHERE id = $1
 `
 
 type UpdateDocumentParams struct {
-	ID                pgtype.UUID
-	Title             string
-	DocumentExtension string
-	BucketName        string
-	ObjectName        string
-	DocumentStatus    string
-	SyncStep          string
+	ID             pgtype.UUID
+	Title          string
+	DocumentType   string
+	BucketName     string
+	ObjectName     string
+	DocumentStatus string
+	RetryCount     int32
 }
 
 func (q *Queries) UpdateDocument(ctx context.Context, arg UpdateDocumentParams) (int64, error) {
 	result, err := q.db.Exec(ctx, updateDocument,
 		arg.ID,
 		arg.Title,
-		arg.DocumentExtension,
+		arg.DocumentType,
 		arg.BucketName,
 		arg.ObjectName,
 		arg.DocumentStatus,
-		arg.SyncStep,
+		arg.RetryCount,
 	)
 	if err != nil {
 		return 0, err

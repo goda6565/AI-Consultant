@@ -6,6 +6,13 @@ info:
 
 tags:
   - name: documents
+  - name: problems
+  - name: hearings
+  - name: hearingMessages
+  - name: events
+  - name: reports
+  - name: actions
+  - name: jobConfigs
 
 paths:
   /api/documents/{documentId}:
@@ -20,7 +27,7 @@ paths:
         - $ref: "#/components/parameters/DocumentIdPathParameter"
       responses:
         "200":
-          $ref: "#/components/responses/SingleDocument"
+          $ref: "#/components/responses/GetDocumentSuccess"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -65,7 +72,7 @@ paths:
         - BearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/MultipleDocuments"
+          $ref: "#/components/responses/ListDocumentsSuccess"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -86,7 +93,7 @@ paths:
         $ref: "#/components/requestBodies/CreateDocument"
       responses:
         "201":
-          $ref: "#/components/responses/SingleDocument"
+          $ref: "#/components/responses/CreateDocumentSuccess"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -94,6 +101,288 @@ paths:
         "403":
           $ref: "#/components/responses/Error"
         "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/problems:
+    get:
+      tags:
+        - problems
+      summary: "List problems"
+      operationId: "ListProblems"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/ListProblemsSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+    post:
+      tags:
+        - problems
+      summary: "Create a problem"
+      operationId: "CreateProblem"
+      security:
+        - BearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/CreateProblem"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateProblemSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+  
+  /api/problems/{problemId}:
+    get:
+      tags:
+        - problems
+      summary: "Get a problem by problem id"
+      operationId: "GetProblem"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetProblemSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+    delete:
+      tags:
+        - problems
+      summary: "Delete a problem by problem id"
+      operationId: "DeleteProblem"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "204":
+          description: "No content delete successfully"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/hearings/{problemId}:
+    post:
+      tags:
+        - hearings
+      summary: "Create a hearing"
+      operationId: "CreateHearing"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "201":
+          $ref: "#/components/responses/CreateHearingSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+    get:
+      tags:
+        - hearings
+      summary: "Get a hearing by problem id"
+      operationId: "GetHearing"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetHearingSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/hearings/{hearingId}/messages:
+    get:
+      tags:
+        - hearingMessages
+      summary: "List hearing messages by hearing id"
+      operationId: "ListHearingMessages"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/HearingIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListHearingMessagesSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/events/{problemId}:
+    get:
+      tags:
+        - events
+      summary: "List events by problem id"
+      description: "Event History of Problem"
+      operationId: "ListEvents"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListEventsSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/reports/{problemId}:
+    get:
+      tags:
+        - reports
+      summary: "Get a report by problem id"
+      operationId: "GetReport"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetReportSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/actions/{problemId}:
+    get:
+      tags:
+        - actions
+      summary: "List actions by problem id"
+      operationId: "ListActions"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/ListActionsSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/job-configs/{problemId}:
+    get:
+      tags:
+        - jobConfigs
+      summary: "Get a job config by problem id"
+      operationId: "GetJobConfig"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetJobConfigSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+    patch:
+      tags:
+        - jobConfigs
+      summary: "Update a job config by problem id"
+      operationId: "UpdateJobConfig"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateJobConfig"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateJobConfigSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
           $ref: "#/components/responses/Error"
         "500":
           $ref: "#/components/responses/Error"
@@ -106,7 +395,7 @@ components:
       bearerFormat: JWT
 
   schemas:
-    documentExtension:
+    documentType:
       type: string
       enum:
         - pdf
@@ -120,13 +409,39 @@ components:
         - done
         - failed
 
-    syncStep:
+    problemStatus:
       type: string
       enum:
         - pending
-        - vector
+        - hearing
+        - processing
         - done
+        - failed
 
+    hearingMessageRole:
+      type: string
+      enum:
+        - user
+        - assistant
+
+    eventType:
+      type: string
+      enum:
+        - action
+        - input
+        - output
+
+    actionType:
+      type: string
+      enum:
+        - plan
+        - externalSearch
+        - internalSearch
+        - analyze
+        - write
+        - review
+        - done
+      
     errorCode:
       type: integer
       enum:
@@ -145,16 +460,16 @@ components:
           format: uuid
         title:
           type: string
-        documentExtension:
-          $ref: "#/components/schemas/documentExtension"
+        documentType:
+          $ref: "#/components/schemas/documentType"
         bucketName:
           type: string
         objectName:
           type: string
         documentStatus:
           $ref: "#/components/schemas/documentStatus"
-        syncStep:
-          $ref: "#/components/schemas/syncStep"
+        retryCount:
+          type: integer
         createdAt:
           type: string
           format: date-time
@@ -164,13 +479,163 @@ components:
       required:
         - id
         - title
-        - documentExtension
+        - documentType
         - bucketName
         - objectName
         - documentStatus
-        - syncStep
+        - retryCount
         - createdAt
         - updatedAt
+
+    Problem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/problemStatus"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - status
+        - createdAt
+
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - problemId
+        - createdAt
+
+    HearingMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hearingId:
+          type: string
+          format: uuid
+        problemFieldId:
+          type: string
+          format: uuid
+        role:
+          $ref: "#/components/schemas/hearingMessageRole"
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+      required:
+        - id
+        - hearingId
+        - problemFieldId
+        - role
+        - message
+        - createdAt
+  
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          $ref: "#/components/schemas/eventType"
+        actionType:
+          type: string
+          $ref: "#/components/schemas/actionType"
+        message:
+          type: string
+      required:
+        - id
+        - eventType
+        - actionType
+        - message
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - problemId
+        - content
+        - createdAt
+
+    Action:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        actionType:
+          type: string
+          $ref: "#/components/schemas/actionType"
+        input:
+          type: string
+        output:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - problemId
+        - actionType
+        - input
+        - output
+        - createdAt
+
+    JobConfig:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        enableInternalSearch:
+          type: boolean
+      required:
+        - id
+        - problemId
+        - enableInternalSearch
 
   parameters:
     DocumentIdPathParameter:
@@ -178,6 +643,24 @@ components:
       in: path
       required: true
       description: "Document ID"
+      schema:
+        type: string
+        format: uuid
+
+    ProblemIdPathParameter:
+      name: problemId
+      in: path
+      required: true
+      description: "Problem ID"
+      schema:
+        type: string
+        format: uuid
+
+    HearingIdPathParameter:
+      name: hearingId
+      in: path
+      required: true
+      description: "Hearing ID"
       schema:
         type: string
         format: uuid
@@ -192,17 +675,41 @@ components:
             properties:
               title:
                 type: string
-              documentExtension:
-                $ref: "#/components/schemas/documentExtension"
+              documentType:
+                $ref: "#/components/schemas/documentType"
               data:
                 type: string
                 format: byte
                 description: "File data in base64"
             required:
               - title
-              - documentExtension
+              - documentType
               - data
-  
+
+    CreateProblem:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              description:
+                type: string
+            required:
+              - description
+
+    UpdateJobConfig:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              enableInternalSearch:
+                type: boolean
+            required:
+              - enableInternalSearch
+
   responses:
     Error:
       description: "Error"
@@ -219,15 +726,28 @@ components:
               - message
               - code
     
-    SingleDocument:
-      description: "Single document response"
+    CreateDocumentSuccess:
+      description: "Create document response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+            required:
+              - id
+
+    GetDocumentSuccess:
+      description: "Get document response"
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Document"
 
-    MultipleDocuments:
-      description: "Documents response"
+    ListDocumentsSuccess:
+      description: "List documents response"
       content:
         application/json:
           schema:
@@ -239,3 +759,120 @@ components:
                   $ref: "#/components/schemas/Document"
             required:
               - documents
+
+    CreateProblemSuccess:
+      description: "Create problem response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+            required:
+              - id
+
+    GetProblemSuccess:
+      description: "Get problem response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+    ListProblemsSuccess:
+      description: "List problems response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              problems:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Problem"
+            required:
+              - problems
+
+    CreateHearingSuccess:
+      description: "Create hearing response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              hearingId:
+                type: string
+                format: uuid
+            required:
+              - hearingId
+            
+    GetHearingSuccess:
+      description: "Get hearing response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Hearing"
+
+    ListHearingMessagesSuccess:
+      description: "List hearing messages response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              hearingMessages:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HearingMessage"
+            required:
+              - hearingMessages
+
+    ListEventsSuccess:
+      description: "List proposal events response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              events:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+            required:
+              - events
+
+    GetReportSuccess:
+      description: "Get report response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Report"
+
+    ListActionsSuccess:
+      description: "List actions response"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              actions:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Action"
+            required:
+              - actions
+
+    GetJobConfigSuccess:
+      description: "Get job config response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JobConfig"
+
+    UpdateJobConfigSuccess:
+      description: "Update job config response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JobConfig"

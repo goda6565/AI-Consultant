@@ -3,7 +3,9 @@ package errors
 type DomainErrorType string
 
 const (
-	ValidationError DomainErrorType = "validation_error"
+	ValidationError     DomainErrorType = "validation_error"
+	InvalidFunctionName DomainErrorType = "invalid_function_name"
+	InvalidActionType   DomainErrorType = "invalid_action_type"
 )
 
 type DomainError struct {

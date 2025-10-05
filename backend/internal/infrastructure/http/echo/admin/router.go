@@ -4,21 +4,27 @@ import (
 	"encoding/json"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/environment"
 	echoRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
-	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
+	gen "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/middleware"
+	"github.com/goda6565/ai-consultant/backend/internal/pkg/auth"
 	"github.com/labstack/echo/v4"
+	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"github.com/swaggo/swag"
 )
 
 type AdminRouter struct {
-	handlers    gen.StrictServerInterface
-	environment *environment.Environment
+	authenticator auth.Authenticator
+	handlers      *handler.AdminHandlers
+	environment   *environment.Environment
 }
 
-func NewAdminRouter(handlers gen.StrictServerInterface, environment *environment.Environment) echoRouter.Router {
-	return &AdminRouter{handlers: handlers, environment: environment}
+func NewAdminRouter(authenticator auth.Authenticator, handlers *handler.AdminHandlers, environment *environment.Environment) echoRouter.Router {
+	return &AdminRouter{authenticator: authenticator, handlers: handlers, environment: environment}
 }
 
 func setUpSwagger(e *echo.Echo, environment *environment.Environment) (*openapi3.T, error) {
@@ -40,10 +46,18 @@ func setUpSwagger(e *echo.Echo, environment *environment.Environment) (*openapi3
 }
 
 func (r *AdminRouter) RegisterRoutes(e *echo.Echo) *echo.Echo {
-	_, err := setUpSwagger(e, r.environment)
+	e.Use(middleware.CORSMiddleware())
+	swagger, err := setUpSwagger(e, r.environment)
 	if err != nil {
 		panic(err)
 	}
-	gen.RegisterHandlers(e, gen.NewStrictHandler(r.handlers, nil))
+	e.GET("/api/events/:problemId/stream", echo.HandlerFunc(r.handlers.Stream))
+	subGroup := e.Group("")
+	subGroup.Use(oapiMiddleware.OapiRequestValidatorWithOptions(swagger, &oapiMiddleware.Options{
+		Options: openapi3filter.Options{
+			AuthenticationFunc: middleware.AuthMiddlewareFunc(r.authenticator),
+		},
+	}))
+	gen.RegisterHandlers(subGroup, gen.NewStrictHandler(r.handlers.Rest, nil))
 	return e
 }

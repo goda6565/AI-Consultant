@@ -8,6 +8,9 @@ help: ## Show help messages
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 
+
+## For Development
+
 # format
 .PHONY: format
 format: ## Format the code
@@ -23,6 +26,10 @@ lint: ## Lint the code
 check: ## Check the code
 	go fmt ./... && golangci-lint run && go test ./...
 
+
+## For Code Generation
+
+
 # mock_gen
 .PHONY: mock_gen
 mock_gen: ## Generate mock files
@@ -32,6 +39,21 @@ mock_gen: ## Generate mock files
 .PHONY: sqlc
 sqlc: ## Generate the sqlc files
 	go tool sqlc generate
+
+# code_gen
+.PHONY: code_gen
+code_gen: ## generate oapi-codegen
+	go tool oapi-codegen --config=./oapi-codegen.admin.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml
+	go tool oapi-codegen --config=./oapi-codegen.agent.yaml ../infrastructure/schemas/openapi/agent/openapi.yaml
+
+# wire_gen
+.PHONY: wire_gen
+wire_gen: ## generate wire
+	go run github.com/google/wire/cmd/wire ./di	
+
+
+## For Running
+
 
 # run
 .PHONY: run
@@ -52,6 +74,34 @@ run: ## Run the application
 stop: ## Stop the application
 	docker compose down --volumes --remove-orphans
 
+# run-admin
+.PHONY: run-admin
+run-admin: ## Run the application
+	set -a && . .env.admin && set +a && go run main.go admin run
+
+# run-vector
+.PHONY: run-vector
+run-vector: ## Run the application
+	set -a && . .env.vector && set +a && go run main.go vector run
+
+# run-agent
+.PHONY: run-agent
+run-agent: ## Run the application
+	set -a && . .env.agent && set +a && go run main.go agent run
+
+# run-proposal-job
+.PHONY: run-proposal-job
+run-proposal-job: ## Run the application
+	set -a && . .env.proposal-job && set +a && go run main.go proposal-job run
+
+# run-proposal-job-eval
+.PHONY: run-proposal-job-eval
+run-proposal-job-eval: ## Run the application
+	set -a && . .env.proposal-job-eval && set +a && go run main.go proposal-job-eval run
+
+## For Migrations
+
+
 # migrate-app-up
 .PHONY: migrate-app-up
 migrate-app-up: ## Run the migrations app up
@@ -71,13 +121,3 @@ migrate-app-down: ## Run the migrations app down
 .PHONY: migrate-vector-down
 migrate-vector-down: ## Run the migrations vector down
 	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path ../infrastructure/schemas/migrations/vector -database postgres://postgres:password@localhost:5432/vector_db?sslmode=disable down -all
-
-# oapi-codegen
-.PHONY: oapi-codegen
-oapi-codegen: ## generate oapi-codegen
-	go tool oapi-codegen --config=./oapi-codegen.yaml ../infrastructure/schemas/openapi/admin/openapi.yaml
-
-# wire_gen
-.PHONY: wire_gen
-wire_gen: ## generate wire
-	go run github.com/google/wire/cmd/wire ./di	
