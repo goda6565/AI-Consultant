@@ -60,3 +60,9 @@ variable "enable_public_access" {
   type        = bool
   default     = false
 }
+
+variable "ingress" {
+  description = "Ingress configuration for the Cloud Run service"
+  type        = string
+  default     = "INGRESS_TRAFFIC_ALL"
+}

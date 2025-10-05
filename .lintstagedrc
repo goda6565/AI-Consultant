@@ -10,5 +10,8 @@
     ],
     "infrastructure/terraform/environments/development/*.tf": [
         "bash -c 'pnpm dev-tf-check'"
+    ],
+    "infrastructure/terraform/environments/staging/*.tf": [
+        "bash -c 'pnpm stage-tf-check'"
     ]
 }

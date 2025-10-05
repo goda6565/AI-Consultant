@@ -37,7 +37,7 @@ module "cloudsql" {
   database_version = "POSTGRES_17"
   tier             = "db-f1-micro"
   vpc_id           = module.network.vpc_id
-  databases        = ["dev_app_db", "dev_vector_db"]
+  databases        = ["dev_app_db", "dev_vector_db", "staging_app_db", "staging_vector_db"]
 }
 
 module "cloudbuild-connection" {
