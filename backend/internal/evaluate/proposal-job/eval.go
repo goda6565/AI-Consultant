@@ -18,6 +18,7 @@ import (
 	mockEventRepository "github.com/goda6565/ai-consultant/backend/internal/domain/event/repository/mock"
 	mockHearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository/mock"
 	mockHearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository/mock"
+	mockJobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/repository/mock"
 	mockProblemRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository/mock"
 	mockProblemFieldRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/repository/mock"
 	reportEntity "github.com/goda6565/ai-consultant/backend/internal/domain/report/entity"
@@ -74,7 +75,7 @@ func (e *ProposalJobEval) prepareForEvaluation(ctx context.Context) (proposal.Ex
 
 	// モックデータプロバイダーを作成
 	mockProvider := NewMockDataProvider()
-	mockProblem, mockProblemFields, mockHearing, mockHearingMessages := mockProvider.GetMockData(EvaluateProblemID)
+	mockProblem, mockProblemFields, mockHearing, mockHearingMessages, mockJobConfig := mockProvider.GetMockData(EvaluateProblemID)
 
 	problemRepository := mockProblemRepository.NewMockProblemRepository(ctrl)
 	problemRepository.EXPECT().FindById(gomock.Any(), gomock.Any()).Return(mockProblem, nil).AnyTimes()
@@ -92,6 +93,9 @@ func (e *ProposalJobEval) prepareForEvaluation(ctx context.Context) (proposal.Ex
 	eventRepository := mockEventRepository.NewMockEventRepository(ctrl)
 	eventRepository.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
+	jobConfigRepository := mockJobConfigRepository.NewMockJobConfigRepository(ctrl)
+	jobConfigRepository.EXPECT().FindByProblemID(gomock.Any(), gomock.Any()).Return(mockJobConfig, nil).AnyTimes()
+
 	executeProposalUseCase := proposal.NewExecuteProposalUseCase(
 		problemRepository,
 		problemFieldRepository,
@@ -105,6 +109,7 @@ func (e *ProposalJobEval) prepareForEvaluation(ctx context.Context) (proposal.Ex
 		e.terminator,
 		e.actionFactory,
 		e.reportRepository,
+		jobConfigRepository,
 	)
 	return executeProposalUseCase, nil
 }
@@ -280,7 +285,7 @@ func (e *ProposalJobEval) runLLMJudgment(ctx context.Context, report *reportEnti
 	fmt.Println("\n🤖 LLM-as-a-Judge評価を開始します...")
 
 	mockProvider := NewMockDataProvider()
-	mockProblem, _, _, _ := mockProvider.GetMockData(EvaluateProblemID)
+	mockProblem, _, _, _, _ := mockProvider.GetMockData(EvaluateProblemID)
 	problemDescription := mockProblem.GetDescription().Value()
 
 	startTime := time.Now()

@@ -435,7 +435,8 @@ components:
       type: string
       enum:
         - plan
-        - search
+        - externalSearch
+        - internalSearch
         - analyze
         - write
         - review

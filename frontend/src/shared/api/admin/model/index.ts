@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from "./action";
 export * from "./actionType";
 export * from "./createDocumentBody";
 export * from "./createDocumentSuccessResponse";
@@ -21,11 +22,14 @@ export * from "./event";
 export * from "./eventType";
 export * from "./getDocumentSuccessResponse";
 export * from "./getHearingSuccessResponse";
+export * from "./getJobConfigSuccessResponse";
 export * from "./getProblemSuccessResponse";
 export * from "./getReportSuccessResponse";
 export * from "./hearing";
 export * from "./hearingMessage";
 export * from "./hearingMessageRole";
+export * from "./jobConfig";
+export * from "./listActionsSuccessResponse";
 export * from "./listDocumentsSuccessResponse";
 export * from "./listEventsSuccessResponse";
 export * from "./listHearingMessagesSuccessResponse";
@@ -33,3 +37,5 @@ export * from "./listProblemsSuccessResponse";
 export * from "./problem";
 export * from "./problemStatus";
 export * from "./report";
+export * from "./updateJobConfigBody";
+export * from "./updateJobConfigSuccessResponse";

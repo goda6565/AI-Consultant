@@ -20,12 +20,18 @@ const sampleEvents: Event[] = [
   },
   {
     id: "2",
-    eventType: "input",
-    actionType: "search",
+    eventType: "action",
+    actionType: "externalSearch",
     message: "関連情報を検索中...",
   },
   {
     id: "3",
+    eventType: "action",
+    actionType: "internalSearch",
+    message: "関連情報を検索中...",
+  },
+  {
+    id: "4",
     eventType: "output",
     actionType: "analyze",
     message: "分析結果を出力しています",

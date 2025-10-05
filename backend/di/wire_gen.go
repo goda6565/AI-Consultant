@@ -259,7 +259,8 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	reviewActionInterface := service9.NewReviewAction(llmClient, promptBuilder)
 	actionFactory := service9.NewActionFactory(planActionInterface, externalSearchActionInterface, internalSearchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
 	reportRepository := report.NewReportRepository(appPool)
-	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, terminator, actionFactory, reportRepository)
+	jobConfigRepository := jobconfig.NewJobConfigRepository(appPool)
+	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, terminator, actionFactory, reportRepository, jobConfigRepository)
 	jobApplication := proposal2.NewExecuteProposal(ctx, executeProposalInputPort)
 	jobJob := job.NewBaseJob(ctx, logger, jobApplication)
 	diJob := &Job{

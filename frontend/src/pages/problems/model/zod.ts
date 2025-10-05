@@ -14,7 +14,15 @@ export type Message = z.infer<typeof MessageSchema>;
 export const EventSchema = z.object({
   id: z.string(),
   eventType: z.enum(["action", "input", "output"]),
-  actionType: z.enum(["plan", "search", "analyze", "write", "review", "done"]),
+  actionType: z.enum([
+    "plan",
+    "externalSearch",
+    "internalSearch",
+    "analyze",
+    "write",
+    "review",
+    "done",
+  ]),
   message: z.string(),
 });
 

@@ -1,6 +1,7 @@
 import {
   LucideBrain,
   LucideCheck,
+  LucideDatabase,
   LucideEye,
   LucideKeyboard,
   LucidePenTool,
@@ -140,7 +141,8 @@ const OutputItem = ({ event }: { event: Event }) => {
 
 const actionTypeIconMap: Record<string, React.ReactNode> = {
   plan: <LucideTarget className="h-4 w-4 text-blue-600" />,
-  search: <LucideSearch className="h-4 w-4 text-blue-600" />,
+  externalSearch: <LucideSearch className="h-4 w-4 text-blue-600" />,
+  internalSearch: <LucideDatabase className="h-4 w-4 text-blue-600" />,
   analyze: <LucideBrain className="h-4 w-4 text-blue-600" />,
   write: <LucidePenTool className="h-4 w-4 text-blue-600" />,
   review: <LucideEye className="h-4 w-4 text-blue-600" />,
@@ -149,7 +151,8 @@ const actionTypeIconMap: Record<string, React.ReactNode> = {
 
 const actionTypeLabels: Record<string, string> = {
   plan: "計画立案",
-  search: "情報検索",
+  externalSearch: "外部情報検索",
+  internalSearch: "内部情報検索",
   analyze: "分析",
   write: "執筆",
   review: "レビュー",

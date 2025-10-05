@@ -6,6 +6,7 @@ import (
 	hearingEntity "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/entity"
 	hearingMessageEntity "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/entity"
 	hearingMessageValue "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/value"
+	jobConfigEntity "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/entity"
 	problemEntity "github.com/goda6565/ai-consultant/backend/internal/domain/problem/entity"
 	problemValue "github.com/goda6565/ai-consultant/backend/internal/domain/problem/value"
 	problemFieldEntity "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/entity"
@@ -230,15 +231,23 @@ func (m *MockDataProvider) CreateMockHearingMessages() []hearingMessageEntity.He
 	return messages
 }
 
+func (m *MockDataProvider) CreateMockJobConfig() *jobConfigEntity.JobConfig {
+	jobConfigID, _ := sharedValue.NewID(uuid.New().String())
+	problemID, _ := sharedValue.NewID(EvaluateProblemID)
+	return jobConfigEntity.NewJobConfig(jobConfigID, problemID, false)
+}
+
 // GetMockData returns all mock data needed for evaluation
 func (m *MockDataProvider) GetMockData(problemId string) (
 	*problemEntity.Problem,
 	[]problemFieldEntity.ProblemField,
 	*hearingEntity.Hearing,
 	[]hearingMessageEntity.HearingMessage,
+	*jobConfigEntity.JobConfig,
 ) {
 	return m.CreateMockProblem(),
 		m.CreateMockProblemFields(),
 		m.CreateMockHearing(),
-		m.CreateMockHearingMessages()
+		m.CreateMockHearingMessages(),
+		m.CreateMockJobConfig()
 }

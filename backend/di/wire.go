@@ -182,6 +182,7 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 		problemFieldRepository.Set,
 		hearingRepository.Set,
 		hearingMessageRepository.Set,
+		jobConfigRepository.Set,
 		eventRepository.Set,
 		reportRepository.Set,
 		actionRepository.Set,
