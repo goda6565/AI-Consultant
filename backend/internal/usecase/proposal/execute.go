@@ -17,6 +17,8 @@ import (
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
 	hearingMessageEntity "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/entity"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
+	jobConfigEntity "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/entity"
+	jobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/llm"
 	problemEntity "github.com/goda6565/ai-consultant/backend/internal/domain/problem/entity"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
@@ -57,6 +59,7 @@ type ExecuteProposalInteractor struct {
 	terminator               *agentService.Terminator
 	actionFactory            *actionService.ActionFactory
 	reportRepository         reportRepository.ReportRepository
+	jobConfigRepository      jobConfigRepository.JobConfigRepository
 }
 
 func NewExecuteProposalUseCase(
@@ -72,6 +75,7 @@ func NewExecuteProposalUseCase(
 	terminator *agentService.Terminator,
 	actionFactory *actionService.ActionFactory,
 	reportRepository reportRepository.ReportRepository,
+	jobConfigRepository jobConfigRepository.JobConfigRepository,
 ) ExecuteProposalInputPort {
 	return &ExecuteProposalInteractor{
 		problemRepository:        problemRepository,
@@ -86,6 +90,7 @@ func NewExecuteProposalUseCase(
 		terminator:               terminator,
 		actionFactory:            actionFactory,
 		reportRepository:         reportRepository,
+		jobConfigRepository:      jobConfigRepository,
 	}
 }
 
@@ -111,11 +116,15 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 			}
 		}
 	}()
-	problem, problemFields, hearingMessages, err := i.preFetch(ctx, problemID)
+	preFetchOutput, err := i.preFetch(ctx, problemID)
 	if err != nil {
 		return fmt.Errorf("failed to pre-fetch: %w", err)
 	}
-	state := state.NewState(*problem, *value.NewContent(""), problemFields, hearingMessages, *value.NewHistory(""), []actionValue.ActionType{})
+	problem := preFetchOutput.Problem
+	problemFields := preFetchOutput.ProblemFields
+	hearingMessages := preFetchOutput.HearingMessages
+	jobConfig := preFetchOutput.JobConfig
+	state := state.NewState(*problem, *value.NewContent(""), problemFields, hearingMessages, *value.NewHistory(""), []actionValue.ActionType{}, jobConfig.GetEnableInternalSearch())
 	// goal
 	goal, err := i.goalService.Execute(ctx, agentService.GoalServiceInput{State: *state})
 	if err != nil {
@@ -247,33 +256,52 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 	return nil
 }
 
-func (i *ExecuteProposalInteractor) preFetch(ctx context.Context, problemID sharedValue.ID) (*problemEntity.Problem, []problemFieldEntity.ProblemField, []hearingMessageEntity.HearingMessage, error) {
+type PreFetchOutput struct {
+	Problem         *problemEntity.Problem
+	ProblemFields   []problemFieldEntity.ProblemField
+	HearingMessages []hearingMessageEntity.HearingMessage
+	JobConfig       *jobConfigEntity.JobConfig
+}
+
+func (i *ExecuteProposalInteractor) preFetch(ctx context.Context, problemID sharedValue.ID) (*PreFetchOutput, error) {
 	problem, err := i.problemRepository.FindById(ctx, problemID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to find problem: %w", err)
+		return nil, fmt.Errorf("failed to find problem: %w", err)
 	}
 	if problem == nil {
-		return nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "problem not found")
+		return nil, errors.NewUseCaseError(errors.NotFoundError, "problem not found")
 	}
 	problemFields, err := i.problemFieldRepository.FindByProblemID(ctx, problemID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to find problem fields: %w", err)
+		return nil, fmt.Errorf("failed to find problem fields: %w", err)
 	}
 	if len(problemFields) == 0 {
-		return nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "problem fields not found")
+		return nil, errors.NewUseCaseError(errors.NotFoundError, "problem fields not found")
 	}
 	hearing, err := i.hearingRepository.FindByProblemId(ctx, problemID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to find hearing: %w", err)
+		return nil, fmt.Errorf("failed to find hearing: %w", err)
 	}
 	if hearing == nil {
-		return nil, nil, nil, errors.NewUseCaseError(errors.NotFoundError, "hearing not found")
+		return nil, errors.NewUseCaseError(errors.NotFoundError, "hearing not found")
 	}
 	hearingMessages, err := i.hearingMessageRepository.FindByHearingID(ctx, hearing.GetID())
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to find hearing messages: %w", err)
+		return nil, fmt.Errorf("failed to find hearing messages: %w", err)
 	}
-	return problem, problemFields, hearingMessages, nil
+	jobConfig, err := i.jobConfigRepository.FindByProblemID(ctx, problemID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find job config: %w", err)
+	}
+	if jobConfig == nil {
+		return nil, errors.NewUseCaseError(errors.NotFoundError, "job config not found")
+	}
+	return &PreFetchOutput{
+		Problem:         problem,
+		ProblemFields:   problemFields,
+		HearingMessages: hearingMessages,
+		JobConfig:       jobConfig,
+	}, nil
 }
 
 func (i *ExecuteProposalInteractor) saveAction(ctx context.Context, action actionEntity.Action) error {

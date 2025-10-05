@@ -31,6 +31,7 @@ import (
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
+	jobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/job_config"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	problemFieldRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
 	reportRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/report"
@@ -48,6 +49,7 @@ import (
 	documentHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
 	hearingHandlerAdmin "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	hearingMessageHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
+	jobConfigHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/job_config"
 	problemHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	reportHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/report"
 	agentRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent"
@@ -66,6 +68,7 @@ import (
 	eventUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/event"
 	hearingUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing"
 	hearingMessageUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_message"
+	jobConfigUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/job_config"
 	problemUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 	proposalUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/proposal"
 	reportUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/report"
@@ -88,6 +91,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		eventRepository.Set,
 		reportRepository.Set,
 		actionRepository.Set,
+		jobConfigRepository.Set,
 		transaction.Set,
 		storageClient.Set,
 		cloudtasksClient.Set,
@@ -102,12 +106,14 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		eventUseCase.Set,
 		reportUseCase.Set,
 		actionUseCase.Set,
+		jobConfigUseCase.Set,
 		actionHandler.Set,
 		reportHandler.Set,
 		documentHandler.Set,
 		problemHandler.Set,
 		hearingHandlerAdmin.Set,
 		hearingMessageHandler.Set,
+		jobConfigHandler.Set,
 		adminHandler.Set,
 		adminRouter.Set,
 		baseServer.Set,
@@ -145,6 +151,7 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 		jobClient.Set,
 		transaction.Set,
 		documentRepository.Set,
+		jobConfigRepository.Set,
 		hearingRepository.Set,
 		hearingMessageRepository.Set,
 		problemRepository.Set,
@@ -175,6 +182,7 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 		problemFieldRepository.Set,
 		hearingRepository.Set,
 		hearingMessageRepository.Set,
+		jobConfigRepository.Set,
 		eventRepository.Set,
 		reportRepository.Set,
 		actionRepository.Set,

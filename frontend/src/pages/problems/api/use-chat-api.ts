@@ -1,4 +1,4 @@
-import { useGetHearing, useGetProblem } from "@/shared/api";
+import { useGetHearing, useGetJobConfig, useGetProblem } from "@/shared/api";
 
 export const useChatApi = (problemId: string) => {
   const { data: problem, isLoading, error, mutate } = useGetProblem(problemId);
@@ -9,13 +9,21 @@ export const useChatApi = (problemId: string) => {
     mutate: mutateHearing,
   } = useGetHearing(problemId);
 
+  const {
+    data: jobConfig,
+    isLoading: isJobConfigLoading,
+    error: isJobConfigError,
+    mutate: mutateJobConfig,
+  } = useGetJobConfig(problemId);
+
   const mutateChat = () => {
     mutate();
     mutateHearing();
+    mutateJobConfig();
   };
 
-  const isChatLoading = isLoading || isHearingLoading;
-  const isChatError = error || isHearingError;
+  const isChatLoading = isLoading || isHearingLoading || isJobConfigLoading;
+  const isChatError = error || isHearingError || isJobConfigError;
 
   return {
     mutateChat,
@@ -23,5 +31,6 @@ export const useChatApi = (problemId: string) => {
     isChatError,
     problem,
     hearing,
+    jobConfig,
   };
 };

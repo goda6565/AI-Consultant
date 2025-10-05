@@ -11,7 +11,8 @@ export type ActionType = (typeof ActionType)[keyof typeof ActionType];
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ActionType = {
   plan: "plan",
-  search: "search",
+  externalSearch: "externalSearch",
+  internalSearch: "internalSearch",
   analyze: "analyze",
   write: "write",
   review: "review",

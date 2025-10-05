@@ -12,20 +12,21 @@ import (
 )
 
 type State struct {
-	problem            problemEntity.Problem
-	goal               value.Goal
-	content            value.Content
-	problemFields      []problemFieldEntity.ProblemField
-	hearingMessages    []hearingMessageEntity.HearingMessage
-	history            value.History
-	currentAction      actionValue.ActionType
-	actionHistory      []actionValue.ActionType
-	currentActionCount int
-	actionLoopCount    int
+	problem              problemEntity.Problem
+	goal                 value.Goal
+	content              value.Content
+	problemFields        []problemFieldEntity.ProblemField
+	hearingMessages      []hearingMessageEntity.HearingMessage
+	history              value.History
+	currentAction        actionValue.ActionType
+	actionHistory        []actionValue.ActionType
+	currentActionCount   int
+	actionLoopCount      int
+	enableInternalSearch bool
 }
 
-func NewState(problem problemEntity.Problem, content value.Content, problemFields []problemFieldEntity.ProblemField, hearingMessages []hearingMessageEntity.HearingMessage, history value.History, actionHistory []actionValue.ActionType) *State {
-	return &State{problem: problem, content: content, problemFields: problemFields, hearingMessages: hearingMessages, history: history, currentAction: actionValue.ActionTypePlan, actionHistory: actionHistory, currentActionCount: 0, actionLoopCount: 0}
+func NewState(problem problemEntity.Problem, content value.Content, problemFields []problemFieldEntity.ProblemField, hearingMessages []hearingMessageEntity.HearingMessage, history value.History, actionHistory []actionValue.ActionType, enableInternalSearch bool) *State {
+	return &State{problem: problem, content: content, problemFields: problemFields, hearingMessages: hearingMessages, history: history, currentAction: actionValue.ActionTypePlan, actionHistory: actionHistory, currentActionCount: 0, actionLoopCount: 0, enableInternalSearch: enableInternalSearch}
 }
 
 func (s *State) GetProblem() problemEntity.Problem {
@@ -50,7 +51,7 @@ func (s *State) GetCurrentAction() actionValue.ActionType {
 
 func (s *State) ToNextAction(canProceed bool) {
 	if canProceed {
-		s.currentAction = s.currentAction.Proceed()
+		s.currentAction = s.currentAction.Proceed(s.enableInternalSearch)
 		s.currentActionCount = 0
 	} else {
 		s.currentActionCount++
@@ -88,6 +89,10 @@ func (s *State) IsInitialAction() bool {
 
 func (s *State) GetCurrentActionCount() int {
 	return s.currentActionCount
+}
+
+func (s *State) GetEnableInternalSearch() bool {
+	return s.enableInternalSearch
 }
 
 func (s *State) AddHistory(actionType actionValue.ActionType, content string) {
@@ -178,7 +183,7 @@ func (s *State) ToPrompt() string {
 
 	b.WriteString("\n=== アクションルート ===\n")
 	b.WriteString("**このアクション以外はできないので、今後の計画にこれら以外のActionは考慮しないでください**")
-	b.WriteString(actionValue.ActionRoute())
+	b.WriteString(actionValue.ActionRoute(s.enableInternalSearch))
 
 	return b.String()
 }

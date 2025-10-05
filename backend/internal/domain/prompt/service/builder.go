@@ -7,8 +7,10 @@ import (
 )
 
 type PromptBuilderInput struct {
+	Name       string
 	ActionType actionValue.ActionType
 	State      agentState.State
+	Input      string
 }
 
 type PromptBuilderOutput struct {
@@ -30,10 +32,41 @@ func (b *PromptBuilder) Build(input PromptBuilderInput) *PromptBuilderOutput {
 			SystemPrompt: prompts.PlanSystemPrompt(input.State),
 			UserPrompt:   prompts.PlanUserPrompt(input.State),
 		}
-	case actionValue.ActionTypeSearch:
-		return &PromptBuilderOutput{
-			SystemPrompt: prompts.SearchSystemPrompt(input.State),
-			UserPrompt:   prompts.SearchUserPrompt(input.State),
+	case actionValue.ActionTypeExternalSearch:
+		switch input.Name {
+		case "decompose":
+			return &PromptBuilderOutput{
+				SystemPrompt: prompts.ExternalDecomposeSystemPrompt(),
+				UserPrompt:   prompts.ExternalDecomposeUserPrompt(input.Input, input.State),
+			}
+		case "explore":
+			return &PromptBuilderOutput{
+				SystemPrompt: prompts.SearchExplorePrompt(),
+				UserPrompt:   prompts.SearchExploreUserPrompt(input.Input),
+			}
+		case "synthesize":
+			return &PromptBuilderOutput{
+				SystemPrompt: prompts.SearchSynthesizePrompt(),
+				UserPrompt:   prompts.SearchSynthesizeUserPrompt(input.Input),
+			}
+		}
+	case actionValue.ActionTypeInternalSearch:
+		switch input.Name {
+		case "decompose":
+			return &PromptBuilderOutput{
+				SystemPrompt: prompts.InternalDecomposeSystemPrompt(),
+				UserPrompt:   prompts.InternalDecomposeUserPrompt(input.Input, input.State),
+			}
+		case "explore":
+			return &PromptBuilderOutput{
+				SystemPrompt: prompts.SearchExplorePrompt(),
+				UserPrompt:   prompts.SearchExploreUserPrompt(input.Input),
+			}
+		case "synthesize":
+			return &PromptBuilderOutput{
+				SystemPrompt: prompts.SearchSynthesizePrompt(),
+				UserPrompt:   prompts.SearchSynthesizeUserPrompt(input.Input),
+			}
 		}
 	case actionValue.ActionTypeAnalyze:
 		return &PromptBuilderOutput{

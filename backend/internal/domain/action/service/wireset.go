@@ -4,7 +4,8 @@ import "github.com/google/wire"
 
 var Set = wire.NewSet(
 	NewPlanAction,
-	NewSearchAction,
+	NewExternalSearchAction,
+	NewInternalSearchAction,
 	NewAnalyzeAction,
 	NewWriteAction,
 	NewReviewAction,

@@ -44,6 +44,12 @@ type HearingMessage struct {
 	ProblemFieldID pgtype.UUID
 }
 
+type JobConfig struct {
+	ID                   string
+	ProblemID            string
+	EnableInternalSearch bool
+}
+
 type Problem struct {
 	ID          pgtype.UUID
 	Title       string

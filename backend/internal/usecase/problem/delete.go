@@ -134,6 +134,12 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 		if numDeleted == 0 {
 			return errors.NewUseCaseError(errors.NotFoundError, "problem not found")
 		}
+
+		// delete job config
+		_, err = i.adminUnitOfWork.JobConfigRepository(ctx).DeleteByProblemID(ctx, problem.GetID())
+		if err != nil {
+			return fmt.Errorf("failed to delete job config: %w", err)
+		}
 		return nil
 	})
 
