@@ -44,6 +44,7 @@ import (
 	baseServer "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
 	adminRouter "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
 	adminHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
+	actionHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/action"
 	documentHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
 	hearingHandlerAdmin "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	hearingMessageHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
@@ -59,6 +60,7 @@ import (
 	redis "github.com/goda6565/ai-consultant/backend/internal/infrastructure/upstash/redis"
 	eventRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/upstash/redis/repository/event"
 	zap "github.com/goda6565/ai-consultant/backend/internal/infrastructure/zap"
+	actionUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/action"
 	chunkUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	documentUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
 	eventUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/event"
@@ -99,6 +101,8 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		hearingMessageUseCase.Set,
 		eventUseCase.Set,
 		reportUseCase.Set,
+		actionUseCase.Set,
+		actionHandler.Set,
 		reportHandler.Set,
 		documentHandler.Set,
 		problemHandler.Set,

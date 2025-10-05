@@ -63,9 +63,9 @@ const (
 
 // Defines values for EventType.
 const (
-	Action EventType = "action"
-	Input  EventType = "input"
-	Output EventType = "output"
+	EventTypeAction EventType = "action"
+	EventTypeInput  EventType = "input"
+	EventTypeOutput EventType = "output"
 )
 
 // Defines values for HearingMessageRole.
@@ -82,6 +82,16 @@ const (
 	ProblemStatusPending    ProblemStatus = "pending"
 	ProblemStatusProcessing ProblemStatus = "processing"
 )
+
+// Action defines model for Action.
+type Action struct {
+	ActionType ActionType         `json:"actionType"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Id         openapi_types.UUID `json:"id"`
+	Input      string             `json:"input"`
+	Output     string             `json:"output"`
+	ProblemId  openapi_types.UUID `json:"problemId"`
+}
 
 // Document defines model for Document.
 type Document struct {
@@ -201,6 +211,11 @@ type GetProblemSuccess = Problem
 // GetReportSuccess defines model for GetReportSuccess.
 type GetReportSuccess = Report
 
+// ListActionsSuccess defines model for ListActionsSuccess.
+type ListActionsSuccess struct {
+	Actions []Action `json:"actions"`
+}
+
 // ListDocumentsSuccess defines model for ListDocumentsSuccess.
 type ListDocumentsSuccess struct {
 	Documents []Document `json:"documents"`
@@ -255,6 +270,9 @@ type CreateProblemJSONRequestBody CreateProblemJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List actions by problem id
+	// (GET /api/actions/{problemId})
+	ListActions(ctx echo.Context, problemId ProblemIdPathParameter) error
 	// List documents
 	// (GET /api/documents)
 	ListDocuments(ctx echo.Context) error
@@ -299,6 +317,24 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// ListActions converts echo context to params.
+func (w *ServerInterfaceWrapper) ListActions(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListActions(ctx, problemId)
+	return err
 }
 
 // ListDocuments converts echo context to params.
@@ -535,6 +571,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/api/actions/:problemId", wrapper.ListActions)
 	router.GET(baseURL+"/api/documents", wrapper.ListDocuments)
 	router.POST(baseURL+"/api/documents", wrapper.CreateDocument)
 	router.DELETE(baseURL+"/api/documents/:documentId", wrapper.DeleteDocument)
@@ -576,6 +613,10 @@ type GetProblemSuccessJSONResponse Problem
 
 type GetReportSuccessJSONResponse Report
 
+type ListActionsSuccessJSONResponse struct {
+	Actions []Action `json:"actions"`
+}
+
 type ListDocumentsSuccessJSONResponse struct {
 	Documents []Document `json:"documents"`
 }
@@ -590,6 +631,80 @@ type ListHearingMessagesSuccessJSONResponse struct {
 
 type ListProblemsSuccessJSONResponse struct {
 	Problems []Problem `json:"problems"`
+}
+
+type ListActionsRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type ListActionsResponseObject interface {
+	VisitListActionsResponse(w http.ResponseWriter) error
+}
+
+type ListActions200JSONResponse struct{ ListActionsSuccessJSONResponse }
+
+func (response ListActions200JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions400JSONResponse struct{ ErrorJSONResponse }
+
+func (response ListActions400JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions401JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions403JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions404JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListActions500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response ListActions500JSONResponse) VisitListActionsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type ListDocumentsRequestObject struct {
@@ -1540,6 +1655,9 @@ func (response GetReport500JSONResponse) VisitGetReportResponse(w http.ResponseW
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// List actions by problem id
+	// (GET /api/actions/{problemId})
+	ListActions(ctx context.Context, request ListActionsRequestObject) (ListActionsResponseObject, error)
 	// List documents
 	// (GET /api/documents)
 	ListDocuments(ctx context.Context, request ListDocumentsRequestObject) (ListDocumentsResponseObject, error)
@@ -1591,6 +1709,31 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// ListActions operation middleware
+func (sh *strictHandler) ListActions(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request ListActionsRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListActions(ctx.Request().Context(), request.(ListActionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListActions")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ListActionsResponseObject); ok {
+		return validResponse.VisitListActionsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // ListDocuments operation middleware
@@ -1925,34 +2068,36 @@ func (sh *strictHandler) GetReport(ctx echo.Context, problemId ProblemIdPathPara
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"kh0E44niw3ikRkbNffNPAAAA//9zsd0ecTYAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
