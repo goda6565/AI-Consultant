@@ -64,15 +64,17 @@ export function ProblemPage({ params }: ProblemPageProps) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll only when length changes
   useEffect(() => {
     if (scrollRef.current) {
-      // ScrollAreaの内部コンテンツを最下部にスクロール
       const scrollContainer = scrollRef.current.querySelector(
         "[data-radix-scroll-area-viewport]",
       );
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: "smooth",
+        });
       }
     }
-  }, [localMessages.length, !!report, events.length]);
+  }, [localMessages.length]);
 
   // Mutation API
   const { trigger: executeHearing, isMutating: isExecuteHearingMutating } =

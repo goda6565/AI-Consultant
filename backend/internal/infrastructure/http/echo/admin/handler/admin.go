@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/action"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/event"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
@@ -24,6 +25,7 @@ type AdminRestHandlers struct {
 	*hearingmessage.ListHearingMessageHandler
 	*event.ListEventHandler
 	*report.GetReportHandler
+	*action.ListActionHandler
 }
 
 func NewAdminHandlers(
@@ -40,6 +42,7 @@ func NewAdminHandlers(
 	listHearingMessageHandler *hearingmessage.ListHearingMessageHandler,
 	listEventHandler *event.ListEventHandler,
 	getReportHandler *report.GetReportHandler,
+	listActionHandler *action.ListActionHandler,
 ) gen.StrictServerInterface {
 	return &AdminRestHandlers{
 		createDocumentHandler,
@@ -55,5 +58,6 @@ func NewAdminHandlers(
 		listHearingMessageHandler,
 		listEventHandler,
 		getReportHandler,
+		listActionHandler,
 	}
 }

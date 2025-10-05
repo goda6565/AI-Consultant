@@ -45,6 +45,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler"
+	action3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/action"
 	document3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
 	event3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/event"
 	hearing3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
@@ -62,6 +63,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/upstash/redis"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/upstash/redis/repository/event"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/zap"
+	action2 "github.com/goda6565/ai-consultant/backend/internal/usecase/action"
 	chunk2 "github.com/goda6565/ai-consultant/backend/internal/usecase/chunk"
 	document2 "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
 	event2 "github.com/goda6565/ai-consultant/backend/internal/usecase/event"
@@ -124,7 +126,9 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	listEventHandler := event3.NewListEventHandler(listEventInputPort)
 	getReportInputPort := report2.NewGetReportUseCase(reportRepository)
 	getReportHandler := report3.NewGetReportHandler(getReportInputPort)
-	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, createHearingHandler, getHearingHandler, listHearingMessageHandler, listEventHandler, getReportHandler)
+	listActionInputPort := action2.NewListActionUseCase(actionRepository)
+	listActionHandler := action3.NewListActionHandler(listActionInputPort)
+	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, createHearingHandler, getHearingHandler, listHearingMessageHandler, listEventHandler, getReportHandler, listActionHandler)
 	streamEventInputPort := event2.NewStreamEventUseCase(eventRepository)
 	streamEventHandler := event3.NewStreamEventHandler(streamEventInputPort)
 	adminHandlers := &handler.AdminHandlers{
