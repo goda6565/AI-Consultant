@@ -7,6 +7,7 @@ import (
 	actionRepository "github.com/goda6565/ai-consultant/backend/internal/domain/action/repository"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
+	jobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
 	reportRepository "github.com/goda6565/ai-consultant/backend/internal/domain/report/repository"
 	sharedValue "github.com/goda6565/ai-consultant/backend/internal/domain/shared/value"
@@ -30,6 +31,7 @@ type DeleteProblemInteractor struct {
 	actionRepository         actionRepository.ActionRepository
 	adminUnitOfWork          transaction.AdminUnitOfWork
 	reportRepository         reportRepository.ReportRepository
+	jobConfigRepository      jobConfigRepository.JobConfigRepository
 }
 
 func NewDeleteProblemUseCase(
@@ -39,6 +41,7 @@ func NewDeleteProblemUseCase(
 	actionRepository actionRepository.ActionRepository,
 	adminUnitOfWork transaction.AdminUnitOfWork,
 	reportRepository reportRepository.ReportRepository,
+	jobConfigRepository jobConfigRepository.JobConfigRepository,
 ) DeleteProblemInputPort {
 	return &DeleteProblemInteractor{
 		problemRepository:        problemRepository,
@@ -47,6 +50,7 @@ func NewDeleteProblemUseCase(
 		actionRepository:         actionRepository,
 		adminUnitOfWork:          adminUnitOfWork,
 		reportRepository:         reportRepository,
+		jobConfigRepository:      jobConfigRepository,
 	}
 }
 
@@ -68,7 +72,7 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 	}
 
 	// check if job config exists
-	jobConfig, err := i.adminUnitOfWork.JobConfigRepository(ctx).FindByProblemID(ctx, problemID)
+	jobConfig, err := i.jobConfigRepository.FindByProblemID(ctx, problemID)
 	if err != nil {
 		return fmt.Errorf("failed to find job config: %w", err)
 	}
