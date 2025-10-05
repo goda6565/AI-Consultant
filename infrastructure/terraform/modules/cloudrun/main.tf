@@ -2,7 +2,7 @@ resource "google_cloud_run_v2_service" "cloudrun_service" {
   name                = var.cloudrun_service_name
   location            = var.region
   deletion_protection = false
-  ingress             = "INGRESS_TRAFFIC_ALL"
+  ingress             = var.ingress
 
   template {
     containers {
