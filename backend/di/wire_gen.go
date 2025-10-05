@@ -111,7 +111,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository, actionRepository, reportRepository, jobConfigRepository)
 	createProblemInputPort := problem2.NewCreateProblemUseCase(generateTitleService, problemRepository, problemFieldRepository, generateProblemFieldService, adminUnitOfWork)
 	createProblemHandler := problem3.NewCreateProblemHandler(createProblemInputPort)
-	deleteProblemInputPort := problem2.NewDeleteProblemUseCase(problemRepository, hearingMessageRepository, hearingRepository, actionRepository, adminUnitOfWork, reportRepository)
+	deleteProblemInputPort := problem2.NewDeleteProblemUseCase(problemRepository, hearingMessageRepository, hearingRepository, actionRepository, adminUnitOfWork, reportRepository, jobConfigRepository)
 	deleteProblemHandler := problem3.NewDeleteProblemHandler(deleteProblemInputPort)
 	getProblemInputPort := problem2.NewGetProblemUseCase(problemRepository)
 	getProblemHandler := problem3.NewGetProblemHandler(getProblemInputPort)
