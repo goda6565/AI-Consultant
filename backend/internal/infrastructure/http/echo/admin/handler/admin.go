@@ -6,6 +6,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/event"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/job_config"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/report"
 	gen "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/internal"
@@ -26,6 +27,8 @@ type AdminRestHandlers struct {
 	*event.ListEventHandler
 	*report.GetReportHandler
 	*action.ListActionHandler
+	*jobconfig.UpdateJobConfigHandler
+	*jobconfig.GetJobConfigHandler
 }
 
 func NewAdminHandlers(
@@ -43,6 +46,8 @@ func NewAdminHandlers(
 	listEventHandler *event.ListEventHandler,
 	getReportHandler *report.GetReportHandler,
 	listActionHandler *action.ListActionHandler,
+	updateJobConfigHandler *jobconfig.UpdateJobConfigHandler,
+	getJobConfigHandler *jobconfig.GetJobConfigHandler,
 ) gen.StrictServerInterface {
 	return &AdminRestHandlers{
 		createDocumentHandler,
@@ -59,5 +64,7 @@ func NewAdminHandlers(
 		listEventHandler,
 		getReportHandler,
 		listActionHandler,
+		updateJobConfigHandler,
+		getJobConfigHandler,
 	}
 }

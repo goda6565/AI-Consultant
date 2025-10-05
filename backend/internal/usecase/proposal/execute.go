@@ -41,7 +41,8 @@ type ExecuteProposalInputPort interface {
 }
 
 type ExecuteProposalUseCaseInput struct {
-	ProblemID string
+	ProblemID            string
+	EnableInternalSearch bool
 }
 
 type ExecuteProposalInteractor struct {
@@ -115,7 +116,7 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 	if err != nil {
 		return fmt.Errorf("failed to pre-fetch: %w", err)
 	}
-	state := state.NewState(*problem, *value.NewContent(""), problemFields, hearingMessages, *value.NewHistory(""), []actionValue.ActionType{})
+	state := state.NewState(*problem, *value.NewContent(""), problemFields, hearingMessages, *value.NewHistory(""), []actionValue.ActionType{}, input.EnableInternalSearch)
 	// goal
 	goal, err := i.goalService.Execute(ctx, agentService.GoalServiceInput{State: *state})
 	if err != nil {

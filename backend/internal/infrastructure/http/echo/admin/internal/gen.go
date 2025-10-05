@@ -131,6 +131,13 @@ type HearingMessage struct {
 	Role           HearingMessageRole `json:"role"`
 }
 
+// JobConfig defines model for JobConfig.
+type JobConfig struct {
+	EnableInternalSearch bool               `json:"enableInternalSearch"`
+	Id                   openapi_types.UUID `json:"id"`
+	ProblemId            openapi_types.UUID `json:"problemId"`
+}
+
 // Problem defines model for Problem.
 type Problem struct {
 	CreatedAt   time.Time          `json:"createdAt"`
@@ -205,6 +212,9 @@ type GetDocumentSuccess = Document
 // GetHearingSuccess defines model for GetHearingSuccess.
 type GetHearingSuccess = Hearing
 
+// GetJobConfigSuccess defines model for GetJobConfigSuccess.
+type GetJobConfigSuccess = JobConfig
+
 // GetProblemSuccess defines model for GetProblemSuccess.
 type GetProblemSuccess = Problem
 
@@ -236,6 +246,9 @@ type ListProblemsSuccess struct {
 	Problems []Problem `json:"problems"`
 }
 
+// UpdateJobConfigSuccess defines model for UpdateJobConfigSuccess.
+type UpdateJobConfigSuccess = JobConfig
+
 // CreateDocument defines model for CreateDocument.
 type CreateDocument struct {
 	// Data File data in base64
@@ -249,12 +262,22 @@ type CreateProblem struct {
 	Description string `json:"description"`
 }
 
+// UpdateJobConfig defines model for UpdateJobConfig.
+type UpdateJobConfig struct {
+	EnableInternalSearch bool `json:"enableInternalSearch"`
+}
+
 // CreateDocumentJSONBody defines parameters for CreateDocument.
 type CreateDocumentJSONBody struct {
 	// Data File data in base64
 	Data         []byte       `json:"data"`
 	DocumentType DocumentType `json:"documentType"`
 	Title        string       `json:"title"`
+}
+
+// UpdateJobConfigJSONBody defines parameters for UpdateJobConfig.
+type UpdateJobConfigJSONBody struct {
+	EnableInternalSearch bool `json:"enableInternalSearch"`
 }
 
 // CreateProblemJSONBody defines parameters for CreateProblem.
@@ -264,6 +287,9 @@ type CreateProblemJSONBody struct {
 
 // CreateDocumentJSONRequestBody defines body for CreateDocument for application/json ContentType.
 type CreateDocumentJSONRequestBody CreateDocumentJSONBody
+
+// UpdateJobConfigJSONRequestBody defines body for UpdateJobConfig for application/json ContentType.
+type UpdateJobConfigJSONRequestBody UpdateJobConfigJSONBody
 
 // CreateProblemJSONRequestBody defines body for CreateProblem for application/json ContentType.
 type CreateProblemJSONRequestBody CreateProblemJSONBody
@@ -297,6 +323,12 @@ type ServerInterface interface {
 	// Create a hearing
 	// (POST /api/hearings/{problemId})
 	CreateHearing(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Get a job config by problem id
+	// (GET /api/job-configs/{problemId})
+	GetJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error
+	// Update a job config by problem id
+	// (PATCH /api/job-configs/{problemId})
+	UpdateJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error
 	// List problems
 	// (GET /api/problems)
 	ListProblems(ctx echo.Context) error
@@ -467,6 +499,42 @@ func (w *ServerInterfaceWrapper) CreateHearing(ctx echo.Context) error {
 	return err
 }
 
+// GetJobConfig converts echo context to params.
+func (w *ServerInterfaceWrapper) GetJobConfig(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetJobConfig(ctx, problemId)
+	return err
+}
+
+// UpdateJobConfig converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateJobConfig(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "problemId" -------------
+	var problemId ProblemIdPathParameter
+
+	err = runtime.BindStyledParameterWithOptions("simple", "problemId", ctx.Param("problemId"), &problemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter problemId: %s", err))
+	}
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateJobConfig(ctx, problemId)
+	return err
+}
+
 // ListProblems converts echo context to params.
 func (w *ServerInterfaceWrapper) ListProblems(ctx echo.Context) error {
 	var err error
@@ -580,6 +648,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/api/hearings/:hearingId/messages", wrapper.ListHearingMessages)
 	router.GET(baseURL+"/api/hearings/:problemId", wrapper.GetHearing)
 	router.POST(baseURL+"/api/hearings/:problemId", wrapper.CreateHearing)
+	router.GET(baseURL+"/api/job-configs/:problemId", wrapper.GetJobConfig)
+	router.PATCH(baseURL+"/api/job-configs/:problemId", wrapper.UpdateJobConfig)
 	router.GET(baseURL+"/api/problems", wrapper.ListProblems)
 	router.POST(baseURL+"/api/problems", wrapper.CreateProblem)
 	router.DELETE(baseURL+"/api/problems/:problemId", wrapper.DeleteProblem)
@@ -609,6 +679,8 @@ type GetDocumentSuccessJSONResponse Document
 
 type GetHearingSuccessJSONResponse Hearing
 
+type GetJobConfigSuccessJSONResponse JobConfig
+
 type GetProblemSuccessJSONResponse Problem
 
 type GetReportSuccessJSONResponse Report
@@ -632,6 +704,8 @@ type ListHearingMessagesSuccessJSONResponse struct {
 type ListProblemsSuccessJSONResponse struct {
 	Problems []Problem `json:"problems"`
 }
+
+type UpdateJobConfigSuccessJSONResponse JobConfig
 
 type ListActionsRequestObject struct {
 	ProblemId ProblemIdPathParameter `json:"problemId"`
@@ -1293,6 +1367,159 @@ func (response CreateHearing500JSONResponse) VisitCreateHearingResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetJobConfigRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+}
+
+type GetJobConfigResponseObject interface {
+	VisitGetJobConfigResponse(w http.ResponseWriter) error
+}
+
+type GetJobConfig200JSONResponse struct {
+	GetJobConfigSuccessJSONResponse
+}
+
+func (response GetJobConfig200JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig400JSONResponse struct{ ErrorJSONResponse }
+
+func (response GetJobConfig400JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig401JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig403JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig404JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetJobConfig500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response GetJobConfig500JSONResponse) VisitGetJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfigRequestObject struct {
+	ProblemId ProblemIdPathParameter `json:"problemId"`
+	Body      *UpdateJobConfigJSONRequestBody
+}
+
+type UpdateJobConfigResponseObject interface {
+	VisitUpdateJobConfigResponse(w http.ResponseWriter) error
+}
+
+type UpdateJobConfig200JSONResponse struct {
+	UpdateJobConfigSuccessJSONResponse
+}
+
+func (response UpdateJobConfig200JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig400JSONResponse struct{ ErrorJSONResponse }
+
+func (response UpdateJobConfig400JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig401JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig401JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig403JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig403JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig404JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig404JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateJobConfig500JSONResponse struct {
+	Code    ErrorCode `json:"code"`
+	Message string    `json:"message"`
+}
+
+func (response UpdateJobConfig500JSONResponse) VisitUpdateJobConfigResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type ListProblemsRequestObject struct {
 }
 
@@ -1682,6 +1909,12 @@ type StrictServerInterface interface {
 	// Create a hearing
 	// (POST /api/hearings/{problemId})
 	CreateHearing(ctx context.Context, request CreateHearingRequestObject) (CreateHearingResponseObject, error)
+	// Get a job config by problem id
+	// (GET /api/job-configs/{problemId})
+	GetJobConfig(ctx context.Context, request GetJobConfigRequestObject) (GetJobConfigResponseObject, error)
+	// Update a job config by problem id
+	// (PATCH /api/job-configs/{problemId})
+	UpdateJobConfig(ctx context.Context, request UpdateJobConfigRequestObject) (UpdateJobConfigResponseObject, error)
 	// List problems
 	// (GET /api/problems)
 	ListProblems(ctx context.Context, request ListProblemsRequestObject) (ListProblemsResponseObject, error)
@@ -1938,6 +2171,62 @@ func (sh *strictHandler) CreateHearing(ctx echo.Context, problemId ProblemIdPath
 	return nil
 }
 
+// GetJobConfig operation middleware
+func (sh *strictHandler) GetJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request GetJobConfigRequestObject
+
+	request.ProblemId = problemId
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetJobConfig(ctx.Request().Context(), request.(GetJobConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetJobConfig")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetJobConfigResponseObject); ok {
+		return validResponse.VisitGetJobConfigResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UpdateJobConfig operation middleware
+func (sh *strictHandler) UpdateJobConfig(ctx echo.Context, problemId ProblemIdPathParameter) error {
+	var request UpdateJobConfigRequestObject
+
+	request.ProblemId = problemId
+
+	var body UpdateJobConfigJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateJobConfig(ctx.Request().Context(), request.(UpdateJobConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateJobConfig")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UpdateJobConfigResponseObject); ok {
+		return validResponse.VisitUpdateJobConfigResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // ListProblems operation middleware
 func (sh *strictHandler) ListProblems(ctx echo.Context) error {
 	var request ListProblemsRequestObject
@@ -2068,36 +2357,39 @@ func (sh *strictHandler) GetReport(ctx echo.Context, problemId ProblemIdPathPara
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"kh0E44niw3ikRkbNffNPAAAA//9zsd0ecTYAAA==",
+	"H4sIAAAAAAAC/+xbS2/buBb+KwLvXaqxe+NeoNmlaZummCmCpoNZFFnQEp0olUQNSaXwGPrvAz5FSaRN",
+	"2cokg/Euofg4j48fD8+hNyDBRYVLVDIKzjagggQWiCEi/nuPk7pAJbtKryG7v9bf+KcU0YRkFctwCc5M",
+	"x+jqPYhBxpsqyO5BDEpYIHAGUjMTiAFBf9QZQSk4Y6RGMaDJPSogn3WFSQEZOAN1nfGebF3x0ZSRrLwD",
+	"TRODTwjyv3dKpPp5BbrX8xwozzXByxwVO+VR/bzyVHqeg+Rp5GBE2TucZkg48YIgyJD2EG9JcMnUn7Cq",
+	"8iyBXMjZA+WSbqzlKoIrRJiaKIUMDhX7mOUo4p+irIyWkKL/L0DcCrpcMzQUNDaA+CY+bMB/CVqBM/Cf",
+	"WYvHmRSEzjp9mxiwjOVi0NAdrem+q269pWKpxq0RCS8fUMJa27WGb2JlO+W7Q0xnm2yX3HbnQDl/q1LI",
+	"0Ge8vMDlKrs7QFJUwmWOrkqGSAnzGwRJcm+JvMQ4R7AcyOwcFiS8aKEVLqkLrjd1kiBKD1AoS8M2sq1N",
+	"lnpk70JfihppfEVaD2CQo1jocC1auhqtTDt0hE5qkEMltRn+CY5RnNpR4gMhmBwgdYLTnXyF+BoXvGMT",
+	"gwJRCu8C6Ep3jOUaIXpKZZoYXCJ2yI7Zpow5OBzrXyLmRv8lYgdAf5s4alqfNC7cXiJmmHFqcVrK9Qj0",
+	"gJdRInr0ZTpgI22TSB9WHnlce+ISsa+owmRy7MhZfaIQ8bUjyS8ZZecJ70MPJxgoJxJcw1BBd0krFxYB",
+	"htx4kBC4HuxTPW3IBuX6RGrAQFG9syZQVW/CcGXbbb1D3XbqYIXNkIHKHx6n0Rc9jlJWLLtTUzVpsJpc",
+	"JExhHsmBA2UVVf0qeZ1OFgToCYPV7wqy0w79ZYINoslXnWRDiyhumsAUisbCbWBocYfyZuIxMBAjOtr2",
+	"AvK/9diRa7tPnkbfJoUsivE8zBlyNbN6NjFIRNyVnrNOZMelecWywnkPDIoC+Y25qpkjhooBrpnvU3un",
+	"3ifQjDt3cktRLY1Z21Z8CJsY2HfvrqGXdfIDsS8iBeBQYA97au69YZDVNPRmrXofeC8P9KU0jFdpghhZ",
+	"X+C6tJ2alQzdIbLt9h+DWgB/hLlcTvdkDSxPdTQYWLyjgO1CWz4XSuQhNdleFIdSyLC2Y7gLgy81Yni7",
+	"Qm8f6Wlc5tCB/vAG9mQkMyVfbGeE3ok8hY5jMgQT+Nlo+zFDeRq4KsH5Tjh2o4+vfITT2HYCtyeKWii2",
+	"r9Rb3dFJnO2XD3sWkAVm3UyWehKgbc9lBtuBBh1QStv2fArM/Xap3JLYLLwLE+ru6kgAmfhtivP6OahJ",
+	"abDLAt2TB5V1IQLkHAorSrDFAJYwX//JdftJMpHrJ+gxQz/FyVja3L4tSDGzE8wDZd5PjY/BCmY5SrdO",
+	"NBAyXfHtD8mPFP/k4ib00TlBm6prRy/m83gxfx0v5qfxYr6IF/O38Zv5vB1uBSOdU1avLg03jBNv/bRt",
+	"0501U00R4TamNKMMlu4punvEtgIqU2lJtYoEQriB+TZFSU0ytr7hG1LugHcIEkTOayaIcCn++6gh+fn3",
+	"b0DdMQQ/iq8tRu8Zq+SdJStXeFhNOr96dYFLWudc2+g8LbIyOr++Mpt5W49HRKic5fXJ/GQuQs0KlbDK",
+	"wBk4PZmfnHL9IbsXWsxglamQic42Zn80/NsdEjuYb3txO+Pbzs5NiXnaQul3N4e1XWaeKmFz2yt+/G8+",
+	"9zGi6TdzJMmaGCxChpqE8WL+elTv01G9FyN6vxkht4VHYXUbid9vuTVpXRSQrPupt+XaJD4lY8I72snl",
+	"8akFIjqZNC8OTOoO7OvAQfLvRbnwSZ2SWsbTjrCyjJzRMHUYvlfItkvda7+0VjV81puhGTgvwKLu+uQL",
+	"24BvX4CvVREOGn973D3YebNN+1qkkUdEjhgaAuK9aLcAMY6Ufa9bHKy8GJ5UX3CkAqlIyhdRiYVVnefr",
+	"IyMPASHdZQGC07L5u8PLXTpw0rBV8nxKzweYwlF8PXp/4P1LxEa7XlODLLB4orReSZx3jT5llGGyjvAq",
+	"0lff2HGMy3LU80dz3bLYETzuuEGV2XyxnC7fGdSoSw+dbUyuqJkVVvHMG971KnejAeJ5pLg/QDylxCNS",
+	"3EgZFCKXa9PWwcyg1OkAT8DVsH3u8rxcMnx2c0SI5yDScPCxifb/zvvI0zs++FLysn3/ou4kbULM4XDN",
+	"AQ94+UpW0INpoK0kPDcRDN4eHKnAQwXWQwkfGzxoYyo+gExWgbr+77/CnhQCI1MdfVmafWDkecVyRNIA",
+	"SerNzXgwaa6xHzR541L9fmrvrGP/Ada/J+lYtabTfmifeu044tsr5J4ZR+vx2b5ne++18PFs95/tlXGX",
+	"w9P9/dY/2LfnGlskPNXhfsw0Tplp1Pzro+IOBfhiuqd3elhE97Ip4OXEcyOcrtlA/hQhOMpXb0OeGxDd",
+	"H20c8eDBg/qdiQ8OyvccDY1p3fR/uMztu+n9WLfTZu6PwzaTXrI+qWyl1aLlsJp0edpqsoLH5rb5KwAA",
+	"//8Na4Tuvz0AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

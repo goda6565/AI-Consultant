@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	jobConfigEntity "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/entity"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/entity"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
@@ -86,19 +87,32 @@ func (i *CreateProblemInteractor) Execute(ctx context.Context, input CreateProbl
 		problemFieldsEntities[i] = problemFieldEntity.NewProblemField(id, problem.GetID(), *field, *problemFieldValue.NewAnswered(false), nil)
 	}
 
+	// create job config
+	jobConfigID, err := sharedValue.NewID(uuid.NewUUID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create job config id: %w", err)
+	}
+	jobConfig := jobConfigEntity.NewJobConfig(jobConfigID, problem.GetID(), false)
+
 	// save problem and problem fields in transaction
 	err = i.adminUnitOfWork.WithTx(ctx, func(ctx context.Context) error {
 		// save problem first (parent)
-		if err := i.problemRepository.Create(ctx, problem); err != nil {
+		if err := i.adminUnitOfWork.ProblemRepository(ctx).Create(ctx, problem); err != nil {
 			return fmt.Errorf("failed to save problem: %w", err)
 		}
 
 		// then save problem fields (children)
 		for _, problemField := range problemFieldsEntities {
-			if err := i.problemFieldRepository.Create(ctx, problemField); err != nil {
+			if err := i.adminUnitOfWork.ProblemFieldRepository(ctx).Create(ctx, problemField); err != nil {
 				return fmt.Errorf("failed to save problem field: %w", err)
 			}
 		}
+
+		// then save job config
+		if err := i.adminUnitOfWork.JobConfigRepository(ctx).Create(ctx, jobConfig); err != nil {
+			return fmt.Errorf("failed to save job config: %w", err)
+		}
+
 		return nil
 	})
 

@@ -7,6 +7,7 @@ import (
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/domain/document/repository"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
+	jobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/repository"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
 	problemFieldRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/repository"
 	reportRepository "github.com/goda6565/ai-consultant/backend/internal/domain/report/repository"
@@ -15,6 +16,7 @@ import (
 	documentRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
 	hearingRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
 	hearingMessageRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
+	jobConfigRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/job_config"
 	problemRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	problemFieldRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
 	reportRepositoryImpl "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/report"
@@ -31,6 +33,7 @@ type AdminUnitOfWork struct {
 	problemFieldRepository   problemFieldRepository.ProblemFieldRepository
 	actionRepository         actionRepository.ActionRepository
 	reportRepository         reportRepository.ReportRepository
+	jobConfigRepository      jobConfigRepository.JobConfigRepository
 }
 
 func NewAdminUnitOfWork(
@@ -43,6 +46,7 @@ func NewAdminUnitOfWork(
 	problemFieldRepository problemFieldRepository.ProblemFieldRepository,
 	actionRepository actionRepository.ActionRepository,
 	reportRepository reportRepository.ReportRepository,
+	jobConfigRepository jobConfigRepository.JobConfigRepository,
 ) transaction.AdminUnitOfWork {
 	return &AdminUnitOfWork{
 		pool:                     pool,
@@ -53,6 +57,7 @@ func NewAdminUnitOfWork(
 		problemFieldRepository:   problemFieldRepository,
 		actionRepository:         actionRepository,
 		reportRepository:         reportRepository,
+		jobConfigRepository:      jobConfigRepository,
 	}
 }
 
@@ -159,6 +164,18 @@ func (u *AdminUnitOfWork) ReportRepository(ctx context.Context) reportRepository
 	impl := u.reportRepository.(*reportRepositoryImpl.ReportRepository)
 	if impl == nil {
 		panic("reportRepository is not a reportRepositoryImpl.ReportRepository")
+	}
+	return impl.WithTx(tx)
+}
+
+func (u *AdminUnitOfWork) JobConfigRepository(ctx context.Context) jobConfigRepository.JobConfigRepository {
+	tx, ok := ctx.Value(transaction.AdminTxKey).(pgx.Tx)
+	if !ok {
+		panic("tx is not a pgx.Tx")
+	}
+	impl := u.jobConfigRepository.(*jobConfigRepositoryImpl.JobConfigRepository)
+	if impl == nil {
+		panic("jobConfigRepository is not a jobConfigRepositoryImpl.JobConfigRepository")
 	}
 	return impl.WithTx(tx)
 }

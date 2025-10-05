@@ -32,6 +32,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/job_config"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem_field"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/report"
@@ -50,6 +51,7 @@ import (
 	event3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/event"
 	hearing3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
 	hearingmessage2 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
+	jobconfig3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/job_config"
 	problem3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
 	report3 "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/report"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/agent"
@@ -69,6 +71,7 @@ import (
 	event2 "github.com/goda6565/ai-consultant/backend/internal/usecase/event"
 	hearing2 "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_message"
+	jobconfig2 "github.com/goda6565/ai-consultant/backend/internal/usecase/job_config"
 	problem2 "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
 	"github.com/goda6565/ai-consultant/backend/internal/usecase/proposal"
 	report2 "github.com/goda6565/ai-consultant/backend/internal/usecase/report"
@@ -104,7 +107,8 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
 	actionRepository := action.NewActionRepository(appPool)
 	reportRepository := report.NewReportRepository(appPool)
-	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository, actionRepository, reportRepository)
+	jobConfigRepository := jobconfig.NewJobConfigRepository(appPool)
+	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository, actionRepository, reportRepository, jobConfigRepository)
 	createProblemInputPort := problem2.NewCreateProblemUseCase(generateTitleService, problemRepository, problemFieldRepository, generateProblemFieldService, adminUnitOfWork)
 	createProblemHandler := problem3.NewCreateProblemHandler(createProblemInputPort)
 	deleteProblemInputPort := problem2.NewDeleteProblemUseCase(problemRepository, hearingMessageRepository, hearingRepository, actionRepository, adminUnitOfWork, reportRepository)
@@ -128,7 +132,11 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	getReportHandler := report3.NewGetReportHandler(getReportInputPort)
 	listActionInputPort := action2.NewListActionUseCase(actionRepository)
 	listActionHandler := action3.NewListActionHandler(listActionInputPort)
-	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, createHearingHandler, getHearingHandler, listHearingMessageHandler, listEventHandler, getReportHandler, listActionHandler)
+	updateJobConfigInputPort := jobconfig2.NewUpdateJobConfigUseCase(jobConfigRepository)
+	updateJobConfigHandler := jobconfig3.NewUpdateJobConfigHandler(updateJobConfigInputPort)
+	getJobConfigInputPort := jobconfig2.NewGetJobConfigUseCase(jobConfigRepository)
+	getJobConfigHandler := jobconfig3.NewGetJobConfigHandler(getJobConfigInputPort)
+	strictServerInterface := handler.NewAdminHandlers(createDocumentHandler, deleteDocumentHandler, getDocumentHandler, listDocumentHandler, createProblemHandler, deleteProblemHandler, getProblemHandler, listProblemHandler, createHearingHandler, getHearingHandler, listHearingMessageHandler, listEventHandler, getReportHandler, listActionHandler, updateJobConfigHandler, getJobConfigHandler)
 	streamEventInputPort := event2.NewStreamEventUseCase(eventRepository)
 	streamEventHandler := event3.NewStreamEventHandler(streamEventInputPort)
 	adminHandlers := &handler.AdminHandlers{
@@ -199,7 +207,8 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 	documentRepository := document.NewDocumentRepository(appPool)
 	actionRepository := action.NewActionRepository(appPool)
 	reportRepository := report.NewReportRepository(appPool)
-	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository, actionRepository, reportRepository)
+	jobConfigRepository := jobconfig.NewJobConfigRepository(appPool)
+	adminUnitOfWork := transaction.NewAdminUnitOfWork(ctx, appPool, documentRepository, problemRepository, hearingRepository, hearingMessageRepository, problemFieldRepository, actionRepository, reportRepository, jobConfigRepository)
 	job, err := cloudrunjob.NewCloudRunJobClient(ctx, environmentEnvironment)
 	if err != nil {
 		cleanup2()
@@ -243,11 +252,12 @@ func InitProposalJob(ctx context.Context) (*Job, func(), error) {
 	vectorPool, cleanup4 := database.ProvideVectorPool(ctx, environmentEnvironment)
 	documentSearchClient := search.NewSearchClient(vectorPool, appPool)
 	searchTools := tools.NewSearchTools(llmClient, webSearchClient, documentSearchClient)
-	searchActionInterface := service9.NewSearchAction(llmClient, searchTools, promptBuilder)
+	externalSearchActionInterface := service9.NewExternalSearchAction(llmClient, searchTools, promptBuilder)
+	internalSearchActionInterface := service9.NewInternalSearchAction(llmClient, searchTools, promptBuilder)
 	analyzeActionInterface := service9.NewAnalyzeAction(llmClient, promptBuilder)
 	writeActionInterface := service9.NewWriteAction(llmClient, promptBuilder)
 	reviewActionInterface := service9.NewReviewAction(llmClient, promptBuilder)
-	actionFactory := service9.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
+	actionFactory := service9.NewActionFactory(planActionInterface, externalSearchActionInterface, internalSearchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
 	reportRepository := report.NewReportRepository(appPool)
 	executeProposalInputPort := proposal.NewExecuteProposalUseCase(problemRepository, problemFieldRepository, hearingRepository, hearingMessageRepository, actionRepository, eventRepository, orchestrator, summarizeService, goalService, terminator, actionFactory, reportRepository)
 	jobApplication := proposal2.NewExecuteProposal(ctx, executeProposalInputPort)
@@ -276,11 +286,12 @@ func InitProposalJobEval(ctx context.Context) (*Eval, func(), error) {
 	webSearchClient := googlesearch.NewGoogleSearchClient(environmentEnvironment)
 	documentSearchClient, cleanup2 := mock.NewMockDocumentSearchClient()
 	searchTools := tools.NewSearchTools(llmClient, webSearchClient, documentSearchClient)
-	searchActionInterface := service9.NewSearchAction(llmClient, searchTools, promptBuilder)
+	externalSearchActionInterface := service9.NewExternalSearchAction(llmClient, searchTools, promptBuilder)
+	internalSearchActionInterface := service9.NewInternalSearchAction(llmClient, searchTools, promptBuilder)
 	analyzeActionInterface := service9.NewAnalyzeAction(llmClient, promptBuilder)
 	writeActionInterface := service9.NewWriteAction(llmClient, promptBuilder)
 	reviewActionInterface := service9.NewReviewAction(llmClient, promptBuilder)
-	actionFactory := service9.NewActionFactory(planActionInterface, searchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
+	actionFactory := service9.NewActionFactory(planActionInterface, externalSearchActionInterface, internalSearchActionInterface, analyzeActionInterface, writeActionInterface, reviewActionInterface)
 	reportRepository := memory.NewMemoryReportRepository()
 	actionRepository := memory.NewMemoryActionRepository()
 	judge := llmasjudge.NewJudge(llmClient)

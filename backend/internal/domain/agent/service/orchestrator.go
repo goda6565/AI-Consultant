@@ -83,7 +83,7 @@ func (o *Orchestrator) Execute(ctx context.Context, input OrchestratorInput) (*O
 }
 
 func (o *Orchestrator) createSystemPrompt(state agentState.State) string {
-	return fmt.Sprintf(orchestratorSystemPrompt, actionValue.ActionRoute(), state.ToActionHistory())
+	return fmt.Sprintf(orchestratorSystemPrompt, actionValue.ActionRoute(state.GetEnableInternalSearch()), state.ToActionHistory())
 }
 
 func (o *Orchestrator) createUserPrompt(state agentState.State) string {

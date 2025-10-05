@@ -25,35 +25,40 @@ type ActionTemplate interface {
 }
 
 type PlanActionInterface ActionTemplate
-type SearchActionInterface ActionTemplate
+type ExternalSearchActionInterface ActionTemplate
+type InternalSearchActionInterface ActionTemplate
 type AnalyzeActionInterface ActionTemplate
 type WriteActionInterface ActionTemplate
 type ReviewActionInterface ActionTemplate
 
 type ActionFactory struct {
-	planActionTemplate    PlanActionInterface
-	searchActionTemplate  SearchActionInterface
-	analyzeActionTemplate AnalyzeActionInterface
-	writeActionTemplate   WriteActionInterface
-	reviewActionTemplate  ReviewActionInterface
+	planActionTemplate           PlanActionInterface
+	externalSearchActionTemplate ExternalSearchActionInterface
+	internalSearchActionTemplate InternalSearchActionInterface
+	analyzeActionTemplate        AnalyzeActionInterface
+	writeActionTemplate          WriteActionInterface
+	reviewActionTemplate         ReviewActionInterface
 }
 
 func NewActionFactory(
 	planActionTemplate PlanActionInterface,
-	searchActionTemplate SearchActionInterface,
+	externalSearchActionTemplate ExternalSearchActionInterface,
+	internalSearchActionTemplate InternalSearchActionInterface,
 	analyzeActionTemplate AnalyzeActionInterface,
 	writeActionTemplate WriteActionInterface,
 	reviewActionTemplate ReviewActionInterface,
 ) *ActionFactory {
-	return &ActionFactory{planActionTemplate: planActionTemplate, searchActionTemplate: searchActionTemplate, analyzeActionTemplate: analyzeActionTemplate, writeActionTemplate: writeActionTemplate, reviewActionTemplate: reviewActionTemplate}
+	return &ActionFactory{planActionTemplate: planActionTemplate, externalSearchActionTemplate: externalSearchActionTemplate, internalSearchActionTemplate: internalSearchActionTemplate, analyzeActionTemplate: analyzeActionTemplate, writeActionTemplate: writeActionTemplate, reviewActionTemplate: reviewActionTemplate}
 }
 
 func (f *ActionFactory) GetActionTemplate(actionType value.ActionType) (ActionTemplate, error) {
 	switch actionType {
 	case value.ActionTypePlan:
 		return f.planActionTemplate, nil
-	case value.ActionTypeSearch:
-		return f.searchActionTemplate, nil
+	case value.ActionTypeExternalSearch:
+		return f.externalSearchActionTemplate, nil
+	case value.ActionTypeInternalSearch:
+		return f.internalSearchActionTemplate, nil
 	case value.ActionTypeAnalyze:
 		return f.analyzeActionTemplate, nil
 	case value.ActionTypeWrite:

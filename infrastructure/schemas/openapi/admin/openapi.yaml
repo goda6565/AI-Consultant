@@ -12,6 +12,7 @@ tags:
   - name: events
   - name: reports
   - name: actions
+  - name: jobConfigs
 
 paths:
   /api/documents/{documentId}:
@@ -338,6 +339,54 @@ paths:
         "500":
           $ref: "#/components/responses/Error"
 
+  /api/job-configs/{problemId}:
+    get:
+      tags:
+        - jobConfigs
+      summary: "Get a job config by problem id"
+      operationId: "GetJobConfig"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetJobConfigSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+    patch:
+      tags:
+        - jobConfigs
+      summary: "Update a job config by problem id"
+      operationId: "UpdateJobConfig"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProblemIdPathParameter"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateJobConfig"
+      responses:
+        "200":
+          $ref: "#/components/responses/UpdateJobConfigSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -571,6 +620,22 @@ components:
         - output
         - createdAt
 
+    JobConfig:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        enableInternalSearch:
+          type: boolean
+      required:
+        - id
+        - problemId
+        - enableInternalSearch
+
   parameters:
     DocumentIdPathParameter:
       name: documentId
@@ -631,6 +696,18 @@ components:
                 type: string
             required:
               - description
+
+    UpdateJobConfig:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              enableInternalSearch:
+                type: boolean
+            required:
+              - enableInternalSearch
 
   responses:
     Error:
@@ -784,3 +861,17 @@ components:
                   $ref: "#/components/schemas/Action"
             required:
               - actions
+
+    GetJobConfigSuccess:
+      description: "Get job config response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JobConfig"
+
+    UpdateJobConfigSuccess:
+      description: "Update job config response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/JobConfig"

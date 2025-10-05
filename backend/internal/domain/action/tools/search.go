@@ -33,8 +33,8 @@ const (
 	DocumentSearchDescription = "システム内に蓄積されたドキュメントを検索する。社内ナレッジ、過去の事例、内部文書、ユーザー固有の情報、組織固有のベストプラクティスなどを調べる場合に使用する。"
 )
 
-const defaultWebSearchMaxNumResults = 10
-const defaultDocumentSearchMaxNumResults = 10
+const defaultWebSearchMaxNumResults = 5
+const defaultDocumentSearchMaxNumResults = 5
 
 func NewSearchTools(llmClient llm.LLMClient, webSearchTool search.WebSearchClient, documentSearchTool search.DocumentSearchClient) *SearchTools {
 	return &SearchTools{llmClient: llmClient, WebSearchTool: webSearchTool, DocumentSearchTool: documentSearchTool}
