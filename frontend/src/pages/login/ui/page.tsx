@@ -18,8 +18,8 @@ export function LoginPage() {
         toast.success("Sign in successful");
         router.push("/");
       })
-      .catch((error) => {
-        toast.error(error.message);
+      .catch(() => {
+        toast.error("Password or email is incorrect");
       });
   }
 

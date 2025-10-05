@@ -7,4 +7,5 @@ var Set = wire.NewSet(
 	NewSummarizeService,
 	NewGoalService,
 	NewTerminator,
+	NewSkipper,
 )

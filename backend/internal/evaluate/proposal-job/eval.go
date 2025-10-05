@@ -39,6 +39,7 @@ type ProposalJobEval struct {
 	summarizeService *agentService.SummarizeService
 	goalService      *agentService.GoalService
 	terminator       *agentService.Terminator
+	skipper          *agentService.Skipper
 	actionFactory    *actionService.ActionFactory
 	reportRepository reportRepository.ReportRepository
 	actionRepository actionRepository.ActionRepository
@@ -51,6 +52,7 @@ func NewProposalJobEval(
 	summarizeService *agentService.SummarizeService,
 	goalService *agentService.GoalService,
 	terminator *agentService.Terminator,
+	skipper *agentService.Skipper,
 	actionFactory *actionService.ActionFactory,
 	reportRepository reportRepository.ReportRepository,
 	actionRepository actionRepository.ActionRepository,
@@ -61,6 +63,7 @@ func NewProposalJobEval(
 		summarizeService: summarizeService,
 		goalService:      goalService,
 		terminator:       terminator,
+		skipper:          skipper,
 		actionFactory:    actionFactory,
 		reportRepository: reportRepository,
 		actionRepository: actionRepository,
@@ -107,6 +110,7 @@ func (e *ProposalJobEval) prepareForEvaluation(ctx context.Context) (proposal.Ex
 		e.summarizeService,
 		e.goalService,
 		e.terminator,
+		e.skipper,
 		e.actionFactory,
 		e.reportRepository,
 		jobConfigRepository,
