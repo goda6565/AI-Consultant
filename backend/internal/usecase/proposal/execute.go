@@ -57,6 +57,7 @@ type ExecuteProposalInteractor struct {
 	summarizeService         *agentService.SummarizeService
 	goalService              *agentService.GoalService
 	terminator               *agentService.Terminator
+	skipper                  *agentService.Skipper
 	actionFactory            *actionService.ActionFactory
 	reportRepository         reportRepository.ReportRepository
 	jobConfigRepository      jobConfigRepository.JobConfigRepository
@@ -73,6 +74,7 @@ func NewExecuteProposalUseCase(
 	summarizeService *agentService.SummarizeService,
 	goalService *agentService.GoalService,
 	terminator *agentService.Terminator,
+	skipper *agentService.Skipper,
 	actionFactory *actionService.ActionFactory,
 	reportRepository reportRepository.ReportRepository,
 	jobConfigRepository jobConfigRepository.JobConfigRepository,
@@ -88,6 +90,7 @@ func NewExecuteProposalUseCase(
 		summarizeService:         summarizeService,
 		goalService:              goalService,
 		terminator:               terminator,
+		skipper:                  skipper,
 		actionFactory:            actionFactory,
 		reportRepository:         reportRepository,
 		jobConfigRepository:      jobConfigRepository,
@@ -143,6 +146,7 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 		if err != nil {
 			return fmt.Errorf("failed to execute orchestrator: %w", err)
 		}
+		state.AddHistory(actionValue.SelfActionTypeOrchestrator, decision.Reason)
 
 		if decision.CanProceed && state.GetCurrentAction() == actionValue.ActionTypeReview {
 			state.IncrementActionLoopCount()
@@ -152,6 +156,7 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 			}
 			logger.Debug("terminatorOutput", "shouldTerminate", terminatorOutput.ShouldTerminate)
 			logger.Debug("terminatorOutput", "reason", terminatorOutput.Reason)
+			state.AddHistory(actionValue.SelfActionTypeTerminator, terminatorOutput.Reason)
 			if terminatorOutput.ShouldTerminate {
 				state.Done()
 				err = i.createEvent(ctx, problemID, eventValue.EventTypeAction, state.GetCurrentAction(), "提案作成が完了しました。")
@@ -164,6 +169,18 @@ func (i *ExecuteProposalInteractor) Execute(ctx context.Context, input ExecutePr
 
 		// action
 		state.ToNextAction(decision.CanProceed)
+
+		skipperOutput, err := i.skipper.Execute(ctx, agentService.SkipperInput{State: *state})
+		if err != nil {
+			return fmt.Errorf("failed to execute skipper: %w", err)
+		}
+		logger.Debug("skipperOutput", "shouldSkip", skipperOutput.ShouldSkip)
+		logger.Debug("skipperOutput", "reason", skipperOutput.Reason)
+		state.AddHistory(actionValue.SelfActionTypeSkipper, skipperOutput.Reason)
+		if skipperOutput.ShouldSkip {
+			continue
+		}
+
 		err = i.createEvent(ctx, problemID, eventValue.EventTypeAction, state.GetCurrentAction(), fmt.Sprintf(ActionMessage, state.GetCurrentAction().Value()))
 		if err != nil {
 			return fmt.Errorf("failed to create event: %w", err)
