@@ -82,7 +82,7 @@ import (
 func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 	environmentEnvironment := environment.ProvideEnvironment()
 	logger, cleanup := zap.ProvideZapLogger(environmentEnvironment)
-	authenticator := firebase.NewFirebaseClient()
+	authenticator := firebase.NewFirebaseClient(ctx, environmentEnvironment)
 	appPool, cleanup2 := database.ProvideAppPool(ctx, environmentEnvironment)
 	documentRepository := document.NewDocumentRepository(appPool)
 	storagePort := storage.NewClient(ctx)
@@ -194,7 +194,7 @@ func InitVectorApplication(ctx context.Context) (*App, func(), error) {
 func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 	environmentEnvironment := environment.ProvideEnvironment()
 	logger, cleanup := zap.ProvideZapLogger(environmentEnvironment)
-	authenticator := firebase.NewFirebaseClient()
+	authenticator := firebase.NewFirebaseClient(ctx, environmentEnvironment)
 	appPool, cleanup2 := database.ProvideAppPool(ctx, environmentEnvironment)
 	hearingRepository := hearing.NewHearingRepository(appPool)
 	hearingMessageRepository := hearingmessage.NewHearingMessageRepository(appPool)
