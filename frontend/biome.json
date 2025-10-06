@@ -13,7 +13,8 @@
       "!.next",
       "!dist",
       "!build",
-      "!src/shared/ui/sidebar.tsx"
+      "!src/shared/ui/sidebar.tsx",
+      "!src/shared/ui/item.tsx"
     ]
   },
   "formatter": {
