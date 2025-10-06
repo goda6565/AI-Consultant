@@ -6,6 +6,7 @@ import (
 	actionRepository "github.com/goda6565/ai-consultant/backend/internal/domain/action/repository"
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/domain/document/repository"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
+	hearingMapRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_map/repository"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
 	jobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/repository"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
@@ -26,5 +27,6 @@ type AdminUnitOfWork interface {
 	ActionRepository(ctx context.Context) actionRepository.ActionRepository
 	ReportRepository(ctx context.Context) reportRepository.ReportRepository
 	JobConfigRepository(ctx context.Context) jobConfigRepository.JobConfigRepository
+	HearingMapRepository(ctx context.Context) hearingMapRepository.HearingMapRepository
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
 }

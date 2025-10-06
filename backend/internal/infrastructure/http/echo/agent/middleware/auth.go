@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/errors"
@@ -19,7 +20,7 @@ func AuthMiddlewareFunc(authenticator auth.Authenticator) func(ctx context.Conte
 		}
 		authenticatedValue, err := authenticator.Validate(ctx, token)
 		if err != nil {
-			return errors.NewInfrastructureError(errors.ForbiddenError, "forbidden")
+			return fmt.Errorf("failed to validate token: %w", err)
 		}
 		eCtx := echoMiddleware.GetEchoContext(ctx)
 		eCtx.Set(AuthenticatedValueKey, authenticatedValue)

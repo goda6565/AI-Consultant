@@ -5,6 +5,7 @@ import (
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/event"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
+	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_map"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/job_config"
 	"github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
@@ -29,6 +30,7 @@ type AdminRestHandlers struct {
 	*action.ListActionHandler
 	*jobconfig.UpdateJobConfigHandler
 	*jobconfig.GetJobConfigHandler
+	*hearingmap.GetHearingMapHandler
 }
 
 func NewAdminHandlers(
@@ -48,6 +50,7 @@ func NewAdminHandlers(
 	listActionHandler *action.ListActionHandler,
 	updateJobConfigHandler *jobconfig.UpdateJobConfigHandler,
 	getJobConfigHandler *jobconfig.GetJobConfigHandler,
+	getHearingMapHandler *hearingmap.GetHearingMapHandler,
 ) gen.StrictServerInterface {
 	return &AdminRestHandlers{
 		createDocumentHandler,
@@ -66,5 +69,6 @@ func NewAdminHandlers(
 		listActionHandler,
 		updateJobConfigHandler,
 		getJobConfigHandler,
+		getHearingMapHandler,
 	}
 }
