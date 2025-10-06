@@ -27,8 +27,7 @@ module "backend_admin_cloudrun" {
   )
   vpc_name             = var.vpc_id
   subnet_name          = var.subnet_id
-  enable_public_access = false
-  ingress              = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  enable_public_access = true
   environment          = var.environment
   service              = var.service
 }
@@ -41,8 +40,7 @@ module "backend_agent_cloudrun" {
   env_vars              = local.common_env_vars
   vpc_name              = var.vpc_id
   subnet_name           = var.subnet_id
-  enable_public_access  = false
-  ingress               = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  enable_public_access  = true
   environment           = var.environment
   service               = var.service
 }
@@ -55,7 +53,7 @@ module "backend_vector_cloudrun" {
   env_vars              = local.common_env_vars
   vpc_name              = var.vpc_id
   subnet_name           = var.subnet_id
-  enable_public_access  = false
+  enable_public_access  = true
   ingress               = "INGRESS_TRAFFIC_INTERNAL_ONLY"
   environment           = var.environment
   service               = var.service

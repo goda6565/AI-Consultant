@@ -72,8 +72,6 @@ func (s *ExternalSearchAction) Execute(ctx context.Context, input ActionTemplate
 		results = append(results, result)
 	}
 
-	logger.Debug("explore", "results", results)
-
 	// 3. synthesize
 	synthesizedResults := []string{}
 	for _, result := range results {

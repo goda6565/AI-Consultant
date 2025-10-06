@@ -19,6 +19,8 @@ const (
 
 	// self action type
 	SelfActionTypeOrchestrator ActionType = "orchestrator"
+	SelfActionTypeTerminator   ActionType = "terminator"
+	SelfActionTypeSkipper      ActionType = "skipper"
 	SelfActionTypeReflection   ActionType = "reflection"
 	SelfActionTypeSummarize    ActionType = "summarize"
 )
@@ -131,6 +133,10 @@ func NewActionType(value string) (ActionType, error) {
 		return ActionTypeDone, nil
 	case string(SelfActionTypeOrchestrator):
 		return SelfActionTypeOrchestrator, nil
+	case string(SelfActionTypeTerminator):
+		return SelfActionTypeTerminator, nil
+	case string(SelfActionTypeSkipper):
+		return SelfActionTypeSkipper, nil
 	case string(SelfActionTypeReflection):
 		return SelfActionTypeReflection, nil
 	case string(SelfActionTypeSummarize):
