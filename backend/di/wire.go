@@ -14,6 +14,7 @@ import (
 	chunkService "github.com/goda6565/ai-consultant/backend/internal/domain/chunk/service"
 	documentService "github.com/goda6565/ai-consultant/backend/internal/domain/document/service"
 	hearingService "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/service"
+	hearingMapService "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_map/service"
 	hearingMessageService "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/service"
 	problemService "github.com/goda6565/ai-consultant/backend/internal/domain/problem/service"
 	problemFieldService "github.com/goda6565/ai-consultant/backend/internal/domain/problem_field/service"
@@ -30,6 +31,7 @@ import (
 	chunkRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/chunk"
 	documentRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/document"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing"
+	hearingMapRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_map"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/hearing_message"
 	jobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/job_config"
 	problemRepository "github.com/goda6565/ai-consultant/backend/internal/infrastructure/google/database/repository/problem"
@@ -48,6 +50,7 @@ import (
 	actionHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/action"
 	documentHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/document"
 	hearingHandlerAdmin "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing"
+	hearingMapHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_map"
 	hearingMessageHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/hearing_message"
 	jobConfigHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/job_config"
 	problemHandler "github.com/goda6565/ai-consultant/backend/internal/infrastructure/http/echo/admin/handler/problem"
@@ -67,6 +70,7 @@ import (
 	documentUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/document"
 	eventUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/event"
 	hearingUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing"
+	hearingMapUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_map"
 	hearingMessageUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/hearing_message"
 	jobConfigUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/job_config"
 	problemUseCase "github.com/goda6565/ai-consultant/backend/internal/usecase/problem"
@@ -92,6 +96,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		reportRepository.Set,
 		actionRepository.Set,
 		jobConfigRepository.Set,
+		hearingMapRepository.Set,
 		transaction.Set,
 		storageClient.Set,
 		cloudtasksClient.Set,
@@ -107,6 +112,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		reportUseCase.Set,
 		actionUseCase.Set,
 		jobConfigUseCase.Set,
+		hearingMapUseCase.Set,
 		actionHandler.Set,
 		reportHandler.Set,
 		documentHandler.Set,
@@ -114,6 +120,7 @@ func InitAdminApplication(ctx context.Context) (*App, func(), error) {
 		hearingHandlerAdmin.Set,
 		hearingMessageHandler.Set,
 		jobConfigHandler.Set,
+		hearingMapHandler.Set,
 		adminHandler.Set,
 		adminRouter.Set,
 		baseServer.Set,
@@ -154,12 +161,14 @@ func InitAgentApplication(ctx context.Context) (*App, func(), error) {
 		jobConfigRepository.Set,
 		hearingRepository.Set,
 		hearingMessageRepository.Set,
+		hearingMapRepository.Set,
 		problemRepository.Set,
 		problemFieldRepository.Set,
 		reportRepository.Set,
 		actionRepository.Set,
 		problemFieldService.Set,
 		hearingService.Set,
+		hearingMapService.Set,
 		hearingMessageService.Set,
 		hearingUseCase.Set,
 		problemUseCase.Set,

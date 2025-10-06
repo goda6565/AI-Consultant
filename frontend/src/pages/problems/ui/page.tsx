@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import {
   useExecuteHearing,
+  useGetHearingMap,
   useGetReport,
   useUpdateJobConfig,
 } from "@/shared/api";
@@ -27,6 +28,7 @@ import { useEventSse } from "../api/use-event";
 import { formatEventsAsText } from "../lib/format-event-as-text";
 import type { Message, MessageFormSchema } from "../model/zod";
 import { MessageForm } from "./form";
+import { HearingMapView } from "./hearing-map-view";
 import { MessageView } from "./message-view";
 import { Monitor } from "./monitor";
 import { ReportView } from "./report-view";
@@ -63,6 +65,19 @@ export function ProblemPage({ params }: ProblemPageProps) {
     enabled: problem?.status !== "pending",
   });
 
+  const isHearingMapEnabled =
+    problem?.status === "processing" || problem?.status === "done";
+
+  const {
+    data: hearingMap,
+    isLoading: isHearingMapLoading,
+    error: isHearingMapError,
+  } = useGetHearingMap(hearing?.id ?? "", {
+    swr: {
+      enabled: isHearingMapEnabled,
+    },
+  });
+
   const {
     data: report,
     isLoading: isReportLoading,
@@ -75,18 +90,22 @@ export function ProblemPage({ params }: ProblemPageProps) {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll only when length changes
   useEffect(() => {
-    if (scrollRef.current) {
-      const scrollContainer = scrollRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
-      if (scrollContainer) {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [localMessages.length]);
+    if (!scrollRef.current) return;
+
+    // Radix ScrollArea の viewport 要素を取得
+    const scrollContainer = scrollRef.current.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    ) as HTMLElement | null;
+
+    if (!scrollContainer) return;
+
+    requestAnimationFrame(() => {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    });
+  }, [localMessages.length, hearingMap?.content, report?.content]);
 
   // Mutation API
   const { trigger: executeHearing, isMutating: isExecuteHearingMutating } =
@@ -102,7 +121,12 @@ export function ProblemPage({ params }: ProblemPageProps) {
     );
   }
 
-  if (isChatError || isHearingMessagesError || isReportError) {
+  if (
+    isChatError ||
+    isHearingMessagesError ||
+    isReportError ||
+    isHearingMapError
+  ) {
     toast.error("failed to fetch messages");
   }
 
@@ -156,6 +180,15 @@ export function ProblemPage({ params }: ProblemPageProps) {
     }
   };
 
+  const onCopyHearingMap = () => {
+    try {
+      navigator.clipboard.writeText(hearingMap?.content ?? "");
+      toast.success("ヒアリングマップをコピーしました");
+    } catch (_err) {
+      toast.error("ヒアリングマップをコピーに失敗しました");
+    }
+  };
+
   const onToggleInternalSearch = async () => {
     try {
       await updateJobConfig({
@@ -196,6 +229,13 @@ export function ProblemPage({ params }: ProblemPageProps) {
           <ScrollArea className="h-full" ref={scrollRef}>
             <div className="mb-30">
               <MessageView messages={localMessages} />
+              {isHearingMapEnabled && (
+                <HearingMapView
+                  hearingMap={hearingMap}
+                  isLoading={isHearingMapLoading}
+                  onCopyHearingMap={onCopyHearingMap}
+                />
+              )}
               {problem.status === "processing" && (
                 <Monitor events={events} onCopyEvents={onCopyEvents} />
               )}

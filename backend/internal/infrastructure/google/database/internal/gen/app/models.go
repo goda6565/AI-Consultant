@@ -35,6 +35,13 @@ type Hearing struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type HearingMap struct {
+	ID        pgtype.UUID
+	HearingID pgtype.UUID
+	ProblemID pgtype.UUID
+	Content   string
+}
+
 type HearingMessage struct {
 	ID             pgtype.UUID
 	HearingID      pgtype.UUID

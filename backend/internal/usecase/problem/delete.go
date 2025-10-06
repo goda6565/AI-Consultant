@@ -6,6 +6,8 @@ import (
 
 	actionRepository "github.com/goda6565/ai-consultant/backend/internal/domain/action/repository"
 	hearingRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
+	hearingMapEntity "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_map/entity"
+	hearingMapRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_map/repository"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
 	jobConfigRepository "github.com/goda6565/ai-consultant/backend/internal/domain/job_config/repository"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/problem/repository"
@@ -32,6 +34,7 @@ type DeleteProblemInteractor struct {
 	adminUnitOfWork          transaction.AdminUnitOfWork
 	reportRepository         reportRepository.ReportRepository
 	jobConfigRepository      jobConfigRepository.JobConfigRepository
+	hearingMapRepository     hearingMapRepository.HearingMapRepository
 }
 
 func NewDeleteProblemUseCase(
@@ -42,6 +45,7 @@ func NewDeleteProblemUseCase(
 	adminUnitOfWork transaction.AdminUnitOfWork,
 	reportRepository reportRepository.ReportRepository,
 	jobConfigRepository jobConfigRepository.JobConfigRepository,
+	hearingMapRepository hearingMapRepository.HearingMapRepository,
 ) DeleteProblemInputPort {
 	return &DeleteProblemInteractor{
 		problemRepository:        problemRepository,
@@ -51,6 +55,7 @@ func NewDeleteProblemUseCase(
 		adminUnitOfWork:          adminUnitOfWork,
 		reportRepository:         reportRepository,
 		jobConfigRepository:      jobConfigRepository,
+		hearingMapRepository:     hearingMapRepository,
 	}
 }
 
@@ -81,6 +86,18 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 	hearings, err := i.hearingRepository.FindAllByProblemId(ctx, problemID)
 	if err != nil {
 		return fmt.Errorf("failed to find hearing: %w", err)
+	}
+
+	// check if hearing maps exists
+	hearingMaps := []hearingMapEntity.HearingMap{}
+	for _, hearing := range hearings {
+		hearingMap, err := i.hearingMapRepository.FindByHearingID(ctx, hearing.GetID())
+		if err != nil {
+			return fmt.Errorf("failed to find hearing map: %w", err)
+		}
+		if hearingMap != nil {
+			hearingMaps = append(hearingMaps, *hearingMap)
+		}
 	}
 
 	// check if actions exists
@@ -118,6 +135,16 @@ func (i *DeleteProblemInteractor) Execute(ctx context.Context, input DeleteProbl
 				logger.Info("deleted hearing messages", "hearing_id", hearing.GetID(), "num_deleted", numDeleted)
 				if err != nil {
 					return fmt.Errorf("failed to delete hearing messages: %w", err)
+				}
+			}
+		}
+
+		// delete hearing maps
+		if len(hearingMaps) > 0 {
+			for _, hearingMap := range hearingMaps {
+				_, err := i.adminUnitOfWork.HearingMapRepository(ctx).DeleteByHearingID(ctx, hearingMap.GetHearingID())
+				if err != nil {
+					return fmt.Errorf("failed to delete hearing maps: %w", err)
 				}
 			}
 		}
