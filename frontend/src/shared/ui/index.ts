@@ -15,6 +15,7 @@ export * from "./loading";
 export * from "./loading";
 export * from "./logo";
 export * from "./markdown";
+export * from "./mermaid";
 export * from "./regular-text";
 export * from "./scroll-area";
 export * from "./separator";

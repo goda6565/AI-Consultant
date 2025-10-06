@@ -7,6 +7,9 @@ import (
 	hearingEntity "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/entity"
 	"github.com/goda6565/ai-consultant/backend/internal/domain/hearing/repository"
 	hearingService "github.com/goda6565/ai-consultant/backend/internal/domain/hearing/service"
+	hearingMapEntity "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_map/entity"
+	hearingMapService "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_map/service"
+	hearingMapValue "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_map/value"
 	hearingMessageEntity "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/entity"
 	hearingMessageRepository "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/repository"
 	hearingMessageService "github.com/goda6565/ai-consultant/backend/internal/domain/hearing_message/service"
@@ -51,6 +54,7 @@ type ExecuteHearingInteractor struct {
 	problemFieldRepository             problemFieldRepository.ProblemFieldRepository
 	duplicateCheckerService            *hearingService.DuplicateCheckerService
 	generateHearingMessageService      *hearingMessageService.GenerateHearingMessageService
+	generateHearingMapService          *hearingMapService.GenerateHearingMapService
 	judgeProblemFieldCompletionService *problemFieldService.JudgeProblemFieldCompletionService
 	adminUnitOfWork                    transaction.AdminUnitOfWork
 	jobClient                          job.Job
@@ -64,6 +68,7 @@ func NewExecuteHearingUseCase(
 	problemFieldRepository problemFieldRepository.ProblemFieldRepository,
 	duplicateCheckerService *hearingService.DuplicateCheckerService,
 	generateHearingMessageService *hearingMessageService.GenerateHearingMessageService,
+	generateHearingMapService *hearingMapService.GenerateHearingMapService,
 	judgeProblemFieldCompletionService *problemFieldService.JudgeProblemFieldCompletionService,
 	adminUnitOfWork transaction.AdminUnitOfWork,
 	jobClient job.Job,
@@ -76,6 +81,7 @@ func NewExecuteHearingUseCase(
 		problemFieldRepository:             problemFieldRepository,
 		duplicateCheckerService:            duplicateCheckerService,
 		generateHearingMessageService:      generateHearingMessageService,
+		generateHearingMapService:          generateHearingMapService,
 		judgeProblemFieldCompletionService: judgeProblemFieldCompletionService,
 		adminUnitOfWork:                    adminUnitOfWork,
 		jobClient:                          jobClient,
@@ -176,12 +182,33 @@ func (i *ExecuteHearingInteractor) Execute(ctx context.Context, input ExecuteHea
 				return nil, fmt.Errorf("failed to call job: %w", err)
 			}
 			hearingMessage := hearingMessageEntity.NewHearingMessage(id, hearing.GetID(), targetProblemFieldID, value.RoleAssistant, *messageValue, nil)
+
+			// append hearing message to hearing messages
+			hearingMessages = append(hearingMessages, *hearingMessage)
+
+			// generate hearing map
+			generateHearingMapOutput, err := i.generateHearingMapService.Execute(ctx, hearingMapService.GenerateHearingMapServiceInput{
+				HearingMessages: hearingMessages,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate hearing map: %w", err)
+			}
+
+			// create hearing map
+			content := hearingMapValue.NewContent(generateHearingMapOutput.Content)
+			hearingMap := hearingMapEntity.NewHearingMap(id, hearing.GetID(), problemID, *content)
+
 			// update problem status
 			err = i.adminUnitOfWork.WithTx(ctx, func(txCtx context.Context) error {
 				// save hearing message
 				err = i.adminUnitOfWork.HearingMessageRepository(txCtx).Create(txCtx, hearingMessage)
 				if err != nil {
 					return fmt.Errorf("failed to save hearing message: %w", err)
+				}
+				// save hearing map
+				err = i.adminUnitOfWork.HearingMapRepository(txCtx).Create(txCtx, hearingMap)
+				if err != nil {
+					return fmt.Errorf("failed to save hearing map: %w", err)
 				}
 				// update problem status
 				err = i.adminUnitOfWork.ProblemRepository(txCtx).UpdateStatus(txCtx, problemID, problemValue.StatusProcessing)

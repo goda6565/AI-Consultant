@@ -13,6 +13,7 @@ tags:
   - name: reports
   - name: actions
   - name: jobConfigs
+  - name: hearingMaps
 
 paths:
   /api/documents/{documentId}:
@@ -387,6 +388,30 @@ paths:
         "500":
           $ref: "#/components/responses/Error"
 
+  /api/hearing-maps/{hearingId}:
+    get:
+      tags:
+        - hearingMaps
+      summary: "Get a hearing map by hearing id"
+      operationId: "GetHearingMap"
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/HearingIdPathParameter"
+      responses:
+        "200":
+          $ref: "#/components/responses/GetHearingMapSuccess"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -637,6 +662,26 @@ components:
         - problemId
         - enableInternalSearch
 
+    HearingMap:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hearingId:
+          type: string
+          format: uuid
+        problemId:
+          type: string
+          format: uuid
+        content:
+          type: string
+      required:
+        - id
+        - hearingId
+        - problemId
+        - content
+
   parameters:
     DocumentIdPathParameter:
       name: documentId
@@ -876,3 +921,10 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/JobConfig"
+
+    GetHearingMapSuccess:
+      description: "Get hearing map response"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HearingMap"
