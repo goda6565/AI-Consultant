@@ -180,13 +180,15 @@ export function ProblemPage({ params }: ProblemPageProps) {
         </Accordion>
         <div className="flex gap-6 justify-between items-center">
           <Badge variant="outline">{problem.status}</Badge>
-          <div className="flex w-30 items-center space-x-2">
-            <Switch
-              checked={jobConfig?.enableInternalSearch}
-              onCheckedChange={onToggleInternalSearch}
-            />
-            <Label htmlFor="internal-search">内部検索</Label>
-          </div>
+          {problem.status === "hearing" && (
+            <div className="flex w-30 items-center space-x-2">
+              <Switch
+                checked={jobConfig?.enableInternalSearch}
+                onCheckedChange={onToggleInternalSearch}
+              />
+              <Label htmlFor="internal-search">内部検索</Label>
+            </div>
+          )}
         </div>
       </div>
       <div className="flex flex-col flex-1 justify-between min-h-0 max-w-4xl w-full mx-auto">
